@@ -1,0 +1,4 @@
+dist: bionic
+language: c
+script:
+  - make
