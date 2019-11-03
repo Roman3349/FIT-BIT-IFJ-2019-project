@@ -16,15 +16,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <stdio.h>
+#include "gtest/gtest.h"
 
-/**
- * Main function
- * @param argc Argument count
- * @param argv Arguments
- * @return Execution status
- */
-int main(int argc, char *argv[]) {
-	puts("Hello World!");
-	return 0;
+namespace Tests {
+
+	class ExampleTest : public ::testing::Test {
+
+	};
+
+	TEST_F(ExampleTest, True) {
+		ASSERT_TRUE(true);
+	}
+
 }
