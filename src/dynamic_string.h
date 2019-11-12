@@ -18,7 +18,10 @@
 
 #pragma once
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define DYN_STR_LENGTH 8
 
@@ -59,3 +62,11 @@ void dynStrAppendChar(dynStr_t *string, char c);
  * @param str String to append
  */
 void dynStrAppendString(dynStr_t *string, const char* str);
+
+/**
+ * Equals a dynamic string and a string
+ * @param string Dynamic string
+ * @param str String to compare
+ * @return String equality
+ */
+bool dynStrEqualString(dynStr_t* string, const char* str);
