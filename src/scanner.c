@@ -183,21 +183,7 @@ int getCodeOffset(FILE* file){
  * @returns TRUE if number is decimal, FALSE if not
  */
 int is_dec(char num){
-    switch (num) {
-        case '1' :
-        case '2' :
-        case '3' :
-        case '4' :
-        case '5' :
-        case '6' :
-        case '7' :
-        case '8' :
-        case '9' :
-        case '0' :
-            return TRUE;
-        default:
-            return FALSE;
-    }
+    return ((num >= '0') && (num <= '9'));
 }
 
 /*
@@ -206,19 +192,7 @@ int is_dec(char num){
  * @returns TRUE if number is octal, FALSE if not
  */
 int is_oct(char num){
-    switch (num) {
-        case '1' :
-        case '2' :
-        case '3' :
-        case '4' :
-        case '5' :
-        case '6' :
-        case '7' :
-        case '0' :
-            return TRUE;
-        default:
-            return FALSE;
-    }
+    return ((num >= '0') && (num <= '7'));
 }
 
 /*
@@ -227,33 +201,9 @@ int is_oct(char num){
  * @returns TRUE if number is hexadecimal, FALSE if not
  */
 int is_hex(char num){
-    switch (num) {
-        case '1' :
-        case '2' :
-        case '3' :
-        case '4' :
-        case '5' :
-        case '6' :
-        case '7' :
-        case '8' :
-        case '9' :
-        case '0' :
-        case 'a' :
-        case 'b' :
-        case 'c' :
-        case 'd' :
-        case 'e' :
-        case 'f' :
-        case 'A' :
-        case 'B' :
-        case 'C' :
-        case 'D' :
-        case 'E' :
-        case 'F' :
-            return TRUE;
-        default:
-            return FALSE;
-    }
+    return (((num >= '0') && (num <= '7'))
+         || ((num >= 'a') && (num <= 'f'))
+         || ((num >= 'A') && (num <= 'F')));
 }
 
 /*
@@ -261,14 +211,8 @@ int is_hex(char num){
  * @param num  number to check
  * @returns TRUE if number is binary, FALSE otherwise
  */
-int is_bin(char num){
-    switch (num){
-        case '0' :
-        case '1' :
-            return TRUE;
-        default:
-            return FALSE;
-    }
+int is_bin(char num) {
+    return ((num == '0') || (num == '1'));
 }
 
 /*

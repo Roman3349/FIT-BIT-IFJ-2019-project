@@ -16,4 +16,4 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-add_executable(ic19int main.c)
+add_executable(ic19int main.c scanner.c scanner.h)
