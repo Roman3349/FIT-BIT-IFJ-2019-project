@@ -16,4 +16,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-add_executable(ic19int main.c)
+file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
+
+add_executable(ic19int ${_HDRFILES} ${_SRCFILES})
