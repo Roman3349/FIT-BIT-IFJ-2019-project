@@ -20,6 +20,7 @@ file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 
 add_library(dynamic_string dynamic_string.c dynamic_string.h)
+add_library(scanner scanner.c scanner.h)
 
 add_executable(ic19int ${_HDRFILES} ${_SRCFILES})
 
