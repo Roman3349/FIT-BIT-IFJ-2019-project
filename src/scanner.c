@@ -74,14 +74,16 @@ token_t scan(FILE* file){
             break;
         case '\'':
         case '\"':
-            output_token.type = T_COMMENT;
-            // TODO
-            // process comment / string
+            if(!process_string(file, &output_token, tmp)) {
+                //output_token.data.value = NULL;
+                output_token.type = T_NONE;
+            }
             break;
         case '#' :
-            output_token.type = T_COMMENT;
-            // TODO
-            // process comment to the end of the line
+            if(!process_comment(file, &output_token)) {
+                //output_token.data.value = NULL;
+                output_token.type = T_NONE;
+            }
         case '=' :
         case '+' :
         case '-' :
@@ -118,8 +120,8 @@ token_t scan(FILE* file){
                 output_token.type = T_NONE;
             }
             break;
-        default:
-            if((is_letter(tmp) || is_dec(tmp))) {
+        default: // keyword
+            if(is_letter(tmp)) {
                 if(!process_keyword(file, &output_token, tmp)){
                     //output_token.data.value = NULL;
                     output_token.type = T_NONE;
@@ -374,6 +376,8 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
         return -2;
     }
 
+    token->type = T_KEYWORD;
+
     // allocate output string
     token->data.value = dynStrInit();
     // append first character
@@ -405,10 +409,20 @@ int is_letter(char c) {
     return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
 }
 
+
+/*
+ * Scans string or multiline comment to a token
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @param qmark         first quotation mark, to determine string end
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
 // TODO
 // - check if there can be unescaped quotation marks at the middle
 // of the string
-
 int process_string(FILE* file, token_t* token, char qmark) {
     if(!file) {
         return -1;
@@ -439,7 +453,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
                 token->type = T_STRING;
             }
             else {
-                token->type = T_COMMENT;
+                token->type = T_STRING_ML;
             }
         }
         else if(esc) { // process escaped char
@@ -460,13 +474,11 @@ int process_string(FILE* file, token_t* token, char qmark) {
             beginning = FALSE;
             // unescaped quotation mark that doesn't close
             // the string / comment
-            if(qmark_end) {
-                token->type = T_NONE;
-                return -3;
-            }
-            // empty string, this char is behind it
+            qmark_end = 0;
+
+            // empty string
             if(qmark_beginning == 2) {
-                // seek back char after the string
+                // seek back 1 char
                 fseek(file, -1, SEEK_CUR);
                 // return empty string token
                 token->type = T_STRING;
@@ -484,4 +496,46 @@ int process_string(FILE* file, token_t* token, char qmark) {
 
     return -1; // read failure
 
+}
+
+/*
+ * Scans line comment to a token (everything to the end of the line)
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
+// TODO
+// check if eol can be escaped!
+int process_comment(FILE* file, token_t* token){
+    if(!file) {
+        return -1;
+    }
+    // token must be initialized and empty
+    if(!token || token->data.value) {
+        return -2;
+    }
+
+    token->type = T_COMMENT;
+    token->data.value = dynStrInit();
+    // stores currently processed char
+    char tmp;
+
+    while(fread(&tmp, 1, 1, file) == 1) {
+        // end of line/file = end of 1 line comment
+        if(tmp == '\n' || tmp == '\0') {
+            dynStrAppendChar(token->data.value, '\0');
+            // seek back 1 char
+            fseek(file, -1, SEEK_CUR);
+            return 0; // success
+        }
+        else {
+            // add char to the token data
+            dynStrAppendChar(token->data.value, tmp);
+        }
+    } // while ()
+
+    return -1; // read failure
 }

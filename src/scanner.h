@@ -36,11 +36,12 @@ enum token_type {
     T_NUM_OCTA,
     T_NUM_FLOAT,
     T_STRING,
-    T_KEYWORD,
-    T_NEWBLOCK,
+    T_STRING_ML, // multiline string, can be also multiline comment
+    T_KEYWORD, // var name, if, while, ...
+    T_NEWBLOCK, // :
     T_LPAR,
     T_RPAR,
-    T_COMMENT,
+    T_COMMENT, // #
     T_OFFSET,
     T_UNKNOWN,
     T_NONE
@@ -128,5 +129,28 @@ int process_keyword(FILE* file, token_t* token, char first_char);
  * @returns TRUE if c is letter in given range, FALSE otherwise
  */
 int is_letter(char c);
+
+/*
+ * Scans string or multiline comment to a token
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @param qmark         first quotation mark, to determine string end
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
+int process_string(FILE* file, token_t* token, char qmark);
+
+/*
+ * Scans line comment to a token (everything to the end of the line)
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
+int process_comment(FILE* file, token_t* token);
 
 #endif //FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
