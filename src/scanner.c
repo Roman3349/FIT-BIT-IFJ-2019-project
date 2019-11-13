@@ -114,14 +114,23 @@ token_t scan(FILE* file){
         case '0' :
             // if operation fails return empty token
             if(!process_number(file, &output_token, tmp)) {
-                output_token.data.value = NULL;
+                //output_token.data.value = NULL;
                 output_token.type = T_NONE;
             }
             break;
         default:
-            output_token.type = T_CONTROLWORD;
-            // TODO
-            // output_token.data.value = process_controlword(...);
+            if((is_letter(tmp) || is_dec(tmp))) {
+                if(!process_keyword(file, &output_token, tmp)){
+                    //output_token.data.value = NULL;
+                    output_token.type = T_NONE;
+                }
+            }
+            else {
+                output_token.type = T_UNKNOWN;
+                output_token.data.value = dynStrInit();
+                dynStrAppendChar(output_token.data.value, tmp);
+                dynStrAppendChar(output_token.data.value, '\0');
+            }
             break;
     }
 
@@ -243,15 +252,12 @@ int process_number(FILE* file, token_t* token ,char first_number){
         return -2;
     }
 
-    // allocate some space for number
-    if((token->data.value = malloc(10)) == NULL){
-        return -2;
-    }
-    token->data.value[0] = first_number;
-    // next free position in the token
-    unsigned position = 1;
+    token->data.value = dynStrInit();
+    dynStrAppendChar(token->data.value, first_number);
+    // temporary char buffer
+    char tmp;
 
-    if(fread(&token->data.value[position], 1, 1, file) != 1){
+    if(fread(&tmp, 1, 1, file) != 1){
         return -1; // read fails
     }
 
@@ -259,35 +265,35 @@ int process_number(FILE* file, token_t* token ,char first_number){
     if(first_number == 0) {
         // check second value
         // is number between <0,7> = octal
-        if(is_oct(token->data.value[1])) {
+        if(is_oct(tmp)) {
             token->type = T_NUM_OCTA;
-            position++;
+            dynStrAppendChar(token->data.value, tmp);
         }
         else { // is code
-            switch (token->data.value[1]) {
+            switch (tmp) {
                 // binary
                 case 'B' :
                 case 'b' :
                     token->type = T_NUM_BIN;
-                    position++;
+                    dynStrAppendChar(token->data.value, tmp);
                     break;
                     // hexadecimal
                 case 'X' :
                 case 'x' :
                     token->type = T_NUM_HEX;
-                    position++;
+                    dynStrAppendChar(token->data.value, tmp);
                     break;
                     // octal
                 case 'O' :
                 case 'o' :
                     token->type = T_NUM_OCTA;
-                    position++;
+                    dynStrAppendChar(token->data.value, tmp);
                     break;
                 case 'e' :
                 case 'E' :
                 case '.' :
                     token->type = T_NUM_FLOAT;
-                    position++;
+                    dynStrAppendChar(token->data.value, tmp);
                     break;
                     // none of these
                     // value will be checked in first iteration of
@@ -297,44 +303,42 @@ int process_number(FILE* file, token_t* token ,char first_number){
             }
         }
     }
-    // if value was not set, set it to int
-    if (token->type == T_NONE) {
-        token->type = T_NUM_INT;
-    }
 
     // read rest of the number
     while(TRUE) {
 
-        // skip first 2 positions - first is already checked
-        // second is assigned and needs to be checked
-        if(position > 1) {
-            if (fread(&token->data.value[position], 1, 1, file) != 1) {
+        // if value was not set, set it to int
+        if (token->type == T_NONE) {
+            token->type = T_NUM_INT;
+        }
+        else {
+            if (fread(&tmp, 1, 1, file) != 1) {
                 return -1; // read fails
             }
         }
 
         // check if value is number of given type
         // hexadecimal
-        if((token->type == T_NUM_HEX && is_hex(token->data.value[position]))
+        if((token->type == T_NUM_HEX  && is_hex(tmp))
            // octal
-           || (token->type == T_NUM_OCTA && is_oct(token->data.value[position]))
+        || (token->type == T_NUM_OCTA && is_oct(tmp))
            // binary
-           || (token->type == T_NUM_BIN && is_bin(token->data.value[position]))
+        || (token->type == T_NUM_BIN  && is_bin(tmp))
            // int of float
-           || ((token->type == T_NUM_INT || token->type == T_NUM_FLOAT)
-               && is_dec(token->data.value[position])))
+        ||((token->type == T_NUM_INT || token->type == T_NUM_FLOAT)
+                                      && is_dec(tmp)))
         {
-            position++;
+            dynStrAppendChar(token->data.value, tmp);
         }
             // float detection
-        else if(token->data.value[position] == '.'
-                || token->data.value[position] == 'e'
-                || token->data.value[position] == 'E')
+        else if(tmp == '.'
+             || tmp == 'e'
+             || tmp == 'E')
         {
             // set type float and continue
             // after floating point / exponent
             token->type = T_NUM_FLOAT;
-            position++;
+            dynStrAppendChar(token->data.value, tmp);
         }
             // not a number
         else {
@@ -342,24 +346,142 @@ int process_number(FILE* file, token_t* token ,char first_number){
             // it later
             fseek(file, -1, SEEK_CUR);
             // add end of string
-            token->data.value[position] = '\0';
-            // if type haven't been set yet
-            // means there are no signs of
-            // different type than int
-            if (token->type == T_NONE) {
-                token->type = T_NUM_INT;
-            }
-            return 0;
-        }
+            dynStrAppendChar(token->data.value, '\0');
 
-        // reallocate memory if position have reached the last field
-        if ((position%10) == 0){
-            char* temp_ptr = realloc(token->data.value, position + 10);
-            // exit if reallocation fails
-            if(temp_ptr == NULL) {
-                return -2;
-            }
-            token->data.value = temp_ptr;
+            return 0;
         }
     } // while(TRUE)
 } // process_number()
+
+
+/*
+ * Scans keyword to a token
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @param first_number  first char of the keyword
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
+int process_keyword(FILE* file, token_t* token, char first_char) {
+    // check file
+    if (!file) {
+        return -1;
+    }
+    // check if token is initialized and empty
+    if (!token || token->data.value) {
+        return -2;
+    }
+
+    // allocate output string
+    token->data.value = dynStrInit();
+    // append first character
+    dynStrAppendChar(token->data.value, first_char);
+    // temporary variable for currently processed char
+    char tmp;
+
+    while (fread(&tmp, 1, 1, file) == 1) {
+        // char is part of keyword
+        if(is_letter(tmp) || is_dec(tmp)) {
+            dynStrAppendChar(token->data.value, tmp);
+        }
+        else {
+            fseek(file, -1, SEEK_CUR);
+            dynStrAppendChar(token->data.value, '\0');
+            return 0;
+        }
+    }
+
+    return -1; // read failure
+}
+
+/*
+ * Checks if given string is lowercase of uppercase letter
+ * @param c  string to check
+ * @returns TRUE if c is letter in given range, FALSE otherwise
+ */
+int is_letter(char c) {
+    return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
+}
+
+// TODO
+// - check if there can be unescaped quotation marks at the middle
+// of the string
+
+int process_string(FILE* file, token_t* token, char qmark) {
+    if(!file) {
+        return -1;
+    }
+    // token must be initialized and empty
+    if(!token || token->data.value) {
+        return -2;
+    }
+
+    token->data.value = dynStrInit();
+
+    // is set to true if character is escaped
+    int esc = FALSE;
+    // if set to false after beginning of the string is processed
+    int beginning = TRUE;
+
+    // counter of quotation marks of the string / comment
+    int qmark_beginning = 1;
+    int qmark_end = 0;
+
+    // stores currently processed char
+    char tmp;
+
+    // read to the end of string
+    while(fread(&tmp, 1, 1, file) == 1) {
+        if(qmark_end == qmark_beginning) {
+            if(qmark_beginning == qmark_end == 1) {
+                token->type = T_STRING;
+            }
+            else {
+                token->type = T_COMMENT;
+            }
+        }
+        else if(esc) { // process escaped char
+            dynStrAppendChar(token->data.value, tmp);
+            esc = FALSE;
+        }
+        // is same as opening quotation mark
+        else if(tmp == qmark) {
+            if(beginning && qmark_beginning < 3) {
+                qmark_beginning++;
+            }
+            else {
+                beginning = FALSE;
+                qmark_end++;
+            }
+        }
+        else { // char inside the string
+            beginning = FALSE;
+            // unescaped quotation mark that doesn't close
+            // the string / comment
+            if(qmark_end) {
+                token->type = T_NONE;
+                return -3;
+            }
+            // empty string, this char is behind it
+            if(qmark_beginning == 2) {
+                // seek back char after the string
+                fseek(file, -1, SEEK_CUR);
+                // return empty string token
+                token->type = T_STRING;
+                return 0; // success
+            }
+            else {
+                // add char to string data
+                dynStrAppendChar(token->data.value, tmp);
+                if(tmp == '\\') { // escaped char
+                    esc = TRUE;
+                }
+            }
+        }
+    }// while()
+
+    return -1; // read failure
+
+}

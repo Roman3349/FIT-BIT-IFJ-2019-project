@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "dynamic_string.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -35,12 +36,13 @@ enum token_type {
     T_NUM_OCTA,
     T_NUM_FLOAT,
     T_STRING,
-    T_CONTROLWORD,
+    T_KEYWORD,
     T_NEWBLOCK,
     T_LPAR,
     T_RPAR,
     T_COMMENT,
     T_OFFSET,
+    T_UNKNOWN,
     T_NONE
 };
 
@@ -48,7 +50,7 @@ enum token_type {
 typedef struct {
     enum token_type type;
     union {
-        char* value;
+        dynStr_t* value;
         int size;
     } data;
 } token_t;
@@ -107,5 +109,24 @@ int is_bin(char num);
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
 int process_number(FILE* file, token_t* token ,char first_number);
+
+/*
+ * Scans keyword to a token
+ * @param file          source file
+ * @param token         pointer to a token where data will be stored
+ * @param first_number  first char of the keyword
+ * @returns status: 0 = success
+ *                 -1 = file error
+ *                 -2 = token error / memory allocation
+ * @pre token must be empty - initialized to type T_NONE and value NULL
+ */
+int process_keyword(FILE* file, token_t* token, char first_char);
+
+/*
+ * Checks if given string is lowercase of uppercase letter
+ * @param c  string to check
+ * @returns TRUE if c is letter in given range, FALSE otherwise
+ */
+int is_letter(char c);
 
 #endif //FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
