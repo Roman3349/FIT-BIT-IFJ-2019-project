@@ -30,24 +30,45 @@ dynStr_t *dynStrInit() {
 		return NULL;
 	}
 	string->alloc_size = DYN_STR_LENGTH;
+	dynStrClear(string);
 	return string;
 }
 
 void dynStrClear(dynStr_t *string) {
-	string->string = 0;
+	assert(string != NULL);
+	string->string[0] = 0;
 	string->size = 0;
 }
 
 void dynStrFree(dynStr_t *string) {
-	free(string->string);
-	free(string);
+	if (string != NULL) {
+		free(string->string);
+		free(string);
+	}
 }
 
 void dynStrAppendChar(dynStr_t *string, char c) {
-	if (string->size + 1 == string->alloc_size) {
+	assert(string != NULL);
+	if (string->size + 1 >= string->alloc_size) {
 		// TODO: Add NULL check
 		string->string = realloc(string->string, string->alloc_size + DYN_STR_LENGTH);
 	}
-	string->string[string->size] = c;
+	string->string[string->size++] = c;
 	string->string[string->size] = 0;
+}
+
+void dynStrAppendString(dynStr_t *string, const char* str) {
+	assert(string != NULL);
+	size_t strLen = strlen(str);
+	if (string->size + strLen + 1 >= string->alloc_size) {
+		string->string = realloc(string->string, string->alloc_size + strLen + DYN_STR_LENGTH);
+	}
+	strcat(string->string, str);
+	string->size += strLen;
+	string->string[string->size] = 0;
+}
+
+bool dynStrEqualString(dynStr_t* string, const char* str) {
+	assert(string != NULL);
+	return strcmp(string->string, str) == 0;
 }

@@ -27,5 +27,5 @@ else (NOT GTest_FOUND)
 endif (NOT GTest_FOUND)
 
 
-add_executable(tests example.cpp)
-target_link_libraries(tests ${GTEST_BOTH_LIBRARIES})
+add_executable(tests example.cpp dynamic_string.cpp)
+target_link_libraries(tests ${GTEST_BOTH_LIBRARIES} dynamic_string)
