@@ -51,16 +51,21 @@ namespace Tests {
 
 	TEST_F(DynamicStringTest, AppendChar) {
 		dynStrAppendChar(string, 'A');
-		ASSERT_STREQ(string->string, "A");
-		ASSERT_EQ(string->size, 1);
-		ASSERT_EQ(string->alloc_size, DYN_STR_LENGTH);
+		for (char i = 0; i < 10; ++i) {
+			dynStrAppendChar(string, '0' + i);
+		}
+		ASSERT_STREQ(string->string, "A0123456789");
+		ASSERT_EQ(string->size, 11);
+		ASSERT_EQ(string->alloc_size, 2 * DYN_STR_LENGTH);
 	}
 
 	TEST_F(DynamicStringTest, AppendString) {
-		dynStrAppendString(string, "ABCD");
-		ASSERT_STREQ(string->string, "ABCD");
-		ASSERT_EQ(string->size, 4);
-		ASSERT_EQ(string->alloc_size, DYN_STR_LENGTH);
+		bool retVal = dynStrAppendString(string, "ABCD0123456789");
+		unsigned size = 14;
+		ASSERT_TRUE(retVal);
+		ASSERT_STREQ(string->string, "ABCD0123456789");
+		ASSERT_EQ(string->size, size);
+		ASSERT_EQ(string->alloc_size, 2 * DYN_STR_LENGTH + size);
 	}
 
 	TEST_F(DynamicStringTest, EqualString) {

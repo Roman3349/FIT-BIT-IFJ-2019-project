@@ -21,12 +21,10 @@
 dynStr_t *dynStrInit() {
 	dynStr_t *string = malloc(sizeof(dynStr_t));
 	if (string == NULL) {
-		// TODO: Add error message
 		return NULL;
 	}
 	string->string = malloc(DYN_STR_LENGTH);
 	if (string->string == NULL) {
-		// TODO: Add error message
 		return NULL;
 	}
 	string->alloc_size = DYN_STR_LENGTH;
@@ -47,25 +45,38 @@ void dynStrFree(dynStr_t *string) {
 	}
 }
 
-void dynStrAppendChar(dynStr_t *string, char c) {
+bool dynStrAppendChar(dynStr_t *string, char c) {
 	assert(string != NULL);
 	if (string->size + 1 >= string->alloc_size) {
-		// TODO: Add NULL check
-		string->string = realloc(string->string, string->alloc_size + DYN_STR_LENGTH);
+		unsigned long newSize = string->alloc_size + DYN_STR_LENGTH;
+		char *tmp = realloc(string->string, newSize);
+		if (tmp == NULL) {
+			return false;
+		}
+		string->string = tmp;
+		string->alloc_size = newSize;
 	}
 	string->string[string->size++] = c;
 	string->string[string->size] = 0;
+	return true;
 }
 
-void dynStrAppendString(dynStr_t *string, const char* str) {
+bool dynStrAppendString(dynStr_t *string, const char* str) {
 	assert(string != NULL);
 	size_t strLen = strlen(str);
 	if (string->size + strLen + 1 >= string->alloc_size) {
-		string->string = realloc(string->string, string->alloc_size + strLen + DYN_STR_LENGTH);
+		unsigned long newSize = string->alloc_size + strLen + DYN_STR_LENGTH;
+		char* tmp = realloc(string->string, newSize);
+		if (tmp == NULL) {
+			return false;
+		}
+		string->string = tmp;
+		string->alloc_size = newSize;
 	}
 	strcat(string->string, str);
 	string->size += strLen;
 	string->string[string->size] = 0;
+	return true;
 }
 
 bool dynStrEqualString(dynStr_t* string, const char* str) {
