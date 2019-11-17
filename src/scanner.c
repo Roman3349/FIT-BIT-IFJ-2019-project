@@ -17,13 +17,24 @@
  */
 #include "scanner.h"
 
+const char* KEYWORDS[] = {
+        "def",
+        "if",
+        "else",
+        "while",
+        "pass",
+        "return"
+};
+
+static int eof_reached = FALSE;
 /*
  * Scans source code in file and creates token representation
  * @param file    source file
+ * @param stack   stack for offset checking
  * @returns token that represents current keyword
  * @pre file is opened in read mode
  */
-token_t scan(FILE* file){
+token_t scan(FILE* file, intStack_t* stack){
 
     // create output token and set it to no value
     token_t output_token;
@@ -34,31 +45,34 @@ token_t scan(FILE* file){
     if(!file){
         return output_token;
     }
+    // return error if stack is not initialized
+    if(!stack){
+        return output_token;
+    }
 
     // first char of the new token
     int tmp = 0;
     // beginning of the line
     static int line_beginning = TRUE;
-    static intStack_t* stack = NULL;
-    if(!stack) {
-        stack = stackInit();
-    }
-    // read first char, check for eof
-    if((tmp = getc(file)) == -1){
+
+    // checks if end of file was reached during previous
+    // call of this function
+    if(eof_reached) {
         line_beginning = TRUE;
+        eof_reached = FALSE;
         output_token.type = T_EOF;
         return output_token;
     }
 
     // process code offset (number of spaces)
     // at the beginning of the line
-    else if(line_beginning) {
-        line_beginning = FALSE;
+    if(line_beginning) {
         int offset;
         if((offset = getCodeOffset(file)) == -1){
-            // read failed
+            output_token.type = T_EOF;
             return output_token;
         }
+        line_beginning = FALSE;
         int lastOffset; // offset of current block
         if(stackIsEmpty(stack)) {
             lastOffset = 0; // main body
@@ -97,6 +111,13 @@ token_t scan(FILE* file){
             return output_token;
         }
         // if its still the same block, continue with content
+    }
+
+    // read first char, check for eof
+    if((tmp = getc(file)) == -1){
+        line_beginning = TRUE;
+        output_token.type = T_EOF;
+        return output_token;
     }
 
     switch ((char)tmp){
@@ -177,7 +198,7 @@ token_t scan(FILE* file){
 /*
  * Counts spaces in offset at the beginning of the line
  * @param file    source file
- * @returns number of whitespaces in padding or -1 if error
+ * @returns number of whitespaces in padding or -1 if eof
  */
 int getCodeOffset(FILE* file){
 
@@ -194,12 +215,12 @@ int getCodeOffset(FILE* file){
             counter++;
         }
         else {
-            // return char if doesnt match the reference
+            // put char back if its not space
             ungetc((char)tmp, file);
             return counter;
         }
     }
-    return -1; // read failure
+    return -1; // eof
 }
 
 /*
@@ -276,8 +297,14 @@ int process_number(FILE* file, token_t* token ,char first_number){
     // temporary char buffer
     int tmp;
 
+    // read next char, check for eof
     if((tmp = fgetc(file)) == -1){
-        return -1; // read fails
+        eof_reached = TRUE;
+        token->data.intval = strtol(str_number->string,
+                                    NULL, 10);
+        token->type = T_NUM_INT;
+        dynStrFree(str_number);
+        return 0;
     }
 
     // if first number is 0 value can be binary, octal or hexadecimal
@@ -332,7 +359,7 @@ int process_number(FILE* file, token_t* token ,char first_number){
         }
         else {
             if ((tmp = fgetc(file)) == -1) {
-                return -1; // read fails
+                eof_reached = TRUE;
             }
         }
 
@@ -362,7 +389,9 @@ int process_number(FILE* file, token_t* token ,char first_number){
         // not a number
         else {
             // return the char
-            ungetc((char)tmp, file);
+            if(!eof_reached) {
+                ungetc((char) tmp, file);
+            }
             // add end of string
             dynStrAppendChar(str_number, '\0');
             // convert string to number
@@ -449,7 +478,8 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
         }
     }
 
-    return -1; // read failure
+    eof_reached = TRUE;
+    return -1;
 }
 
 /*
@@ -574,8 +604,8 @@ int process_string(FILE* file, token_t* token, char qmark) {
             }
         }
     }// while()
-
-    return -1; // read failure
+    eof_reached = TRUE;
+    return -1;
 
 }
 
@@ -617,6 +647,6 @@ int process_comment(FILE* file, token_t* token){
             dynStrAppendChar(token->data.strval, (char)tmp);
         }
     } // while ()
-
-    return -1; // read failure
+    eof_reached = TRUE;
+    return 0;
 }

@@ -59,15 +59,6 @@ enum token_type {
     T_NONE
 };
 
-const char* KEYWORDS[] = {
-        "def",
-        "if",
-        "else",
-        "while",
-        "pass",
-        "return"
-};
-
 // token data
 typedef union tokenValue {
     dynStr_t* strval;
@@ -84,15 +75,16 @@ typedef struct token {
 /*
  * Scans source code in file and creates token representation
  * @param file    source file
+ * @param stack   stack for offset checking
  * @returns token that represents current keyword
  * @pre file is opened in read mode
  */
-token_t scan(FILE* file);
+token_t scan(FILE* file, intStack_t* stack);
 
 /*
  * Counts tabs or spaces in offset at the beginning of the line
  * @param file    source file
- * @returns number of whitespaces in padding or -1 if error
+ * @returns number of whitespaces in padding or -1 if eof
  */
 int getCodeOffset(FILE* file);
 

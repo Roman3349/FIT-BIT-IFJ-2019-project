@@ -41,13 +41,16 @@ namespace Tests {
 	};
 
 	TEST_F(ScannerTest, tokenEOF) {
+	    intStack_t* stack = stackInit();
 		FILE* file = openFile("eof.ifj19");
 		ASSERT_NE(file, nullptr);
-		token_t token = scan(file);
+		token_t token = scan(file, stack);
 		ASSERT_EQ(token.type, T_EOF);
+		stackFree(stack);
 	}
 
 	TEST_F(ScannerTest, tokenEOL) {;
+        intStack_t* stack = stackInit();
 		FILE* file = openFile("eol.ifj19");
 		ASSERT_NE(file, nullptr);
 		std::vector<int> tokens = {
@@ -55,12 +58,14 @@ namespace Tests {
 			T_EOF
 		};
 		for (int tokenVal: tokens) {
-			token_t token = scan(file);
+			token_t token = scan(file, stack);
 			ASSERT_EQ(token.type, tokenVal);
 		}
+		stackFree(stack);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
+        intStack_t* stack = stackInit();
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
 		std::unordered_map<int, const char*> tokens = {
@@ -68,15 +73,17 @@ namespace Tests {
 			{T_EOF, nullptr}
 		};
 		for (auto t: tokens) {
-			token_t token = scan(file);
+			token_t token = scan(file, stack);
 			ASSERT_EQ(token.type, t.first);
 			if (t.second != nullptr) {
 				EXPECT_STREQ(token.data.strval->string, t.second);
 			}
 		}
+		stackFree(stack);
 	}
 
 	TEST_F(ScannerTest, tokenBinInt) {
+        intStack_t* stack = stackInit();
 		FILE* file = openFile("binInt.ifj19");
 		ASSERT_NE(file, nullptr);
 		std::unordered_map<int, const char*> tokens = {
@@ -84,12 +91,13 @@ namespace Tests {
 			{T_EOF, nullptr}
 		};
 		for (auto t: tokens) {
-			token_t token = scan(file);
+			token_t token = scan(file, stack);
 			ASSERT_EQ(token.type, t.first);
 			if (t.second != nullptr) {
 				EXPECT_STREQ(token.data.strval->string, t.second);
 			}
 		}
+		stackFree(stack);
 	}
 
 }

@@ -61,7 +61,6 @@ namespace Tests {
 		stackPush(stack, 0);
 		intStack_item_t* item = stack->head;
 		stackPush(stack, 1);
-		intStack_item_t *i;
 		int value;
 		ASSERT_TRUE(stackPop(stack, &value));
 		ASSERT_EQ(value, 1);
