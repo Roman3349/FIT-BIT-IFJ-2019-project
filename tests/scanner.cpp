@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019 Roman Ondráček <xondra58@stud.fit.vutbr.cz>
+ * Copyright (C) 2019 Pavel Raur     <xraurp00@stud.fit.vutbr.cz>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -70,7 +71,7 @@ namespace Tests {
 			token_t token = scan(file);
 			ASSERT_EQ(token.type, t.first);
 			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.value->string, t.second);
+				EXPECT_STREQ(token.data.strval->string, t.second);
 			}
 		}
 	}
@@ -86,7 +87,7 @@ namespace Tests {
 			token_t token = scan(file);
 			ASSERT_EQ(token.type, t.first);
 			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.value->string, t.second);
+				EXPECT_STREQ(token.data.strval->string, t.second);
 			}
 		}
 	}

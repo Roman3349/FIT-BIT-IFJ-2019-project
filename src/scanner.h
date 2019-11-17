@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "dynamic_string.h"
+#include "stack.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -36,24 +37,48 @@ enum token_type {
     T_NUM_OCTA,
     T_NUM_FLOAT,
     T_STRING,
-    T_STRING_ML, // multiline string, can be also multiline comment
-    T_KEYWORD, // var name, if, while, ...
-    T_NEWBLOCK, // :
-    T_LPAR,
-    T_RPAR,
-    T_COMMENT, // #
-    T_OFFSET,
+    T_STRING_ML,  // multiline string, can be also multiline comment
+    T_ID,         // id of var/function (var name)
+    T_ID_DEF,
+    T_ID_IF,
+    T_ID_ELSE,
+    T_ID_WHILE,
+    T_ID_PASS,
+    T_ID_RETURN,
+    T_COLON,      // :
+    T_LPAR,       // (
+    T_RPAR,       // )
+    T_BRACKET,    // [
+    T_RBRACKET,   // ]
+    T_LBRACE,     // {
+    T_RBRACE,     // }
+    T_COMMENT,    // #
+    T_INDENT,
+    T_DEDENT,
     T_UNKNOWN,
     T_NONE
 };
 
+const char* KEYWORDS[] = {
+        "def",
+        "if",
+        "else",
+        "while",
+        "pass",
+        "return"
+};
+
+// token data
+typedef union tokenValue {
+    dynStr_t* strval;
+    long intval;
+    double floatval;
+} tokenValue_t;
+
 // output token
-typedef struct {
+typedef struct token {
     enum token_type type;
-    union {
-        dynStr_t* value;
-        int size;
-    } data;
+    tokenValue_t data;
 } token_t;
 
 /*
@@ -122,6 +147,12 @@ int process_number(FILE* file, token_t* token ,char first_number);
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
 int process_keyword(FILE* file, token_t* token, char first_char);
+
+/*
+ * @param keyword scanned to string
+ * @returns token type
+ */
+enum token_type getKeywordType(char* string);
 
 /*
  * Checks if given string is lowercase of uppercase letter
