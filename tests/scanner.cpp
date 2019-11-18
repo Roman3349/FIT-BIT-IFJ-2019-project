@@ -69,7 +69,7 @@ namespace Tests {
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
 		std::unordered_map<int, const char*> tokens = {
-			{T_NUM_INT, "1555"},
+			{T_NUMBER, "1555"},
 			{T_EOF, nullptr}
 		};
 		for (auto t: tokens) {
@@ -87,7 +87,7 @@ namespace Tests {
 		FILE* file = openFile("binInt.ifj19");
 		ASSERT_NE(file, nullptr);
 		std::unordered_map<int, const char*> tokens = {
-			{T_NUM_BIN, "0b100101"},
+			{T_NUMBER, "0b100101"},
 			{T_EOF, nullptr}
 		};
 		for (auto t: tokens) {

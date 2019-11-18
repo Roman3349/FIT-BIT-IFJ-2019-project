@@ -20,22 +20,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "dynamic_string.h"
 #include "stack.h"
-
-#define TRUE 1
-#define FALSE 0
 
 enum token_type {
     T_WHITESPACE,
     T_EOL,
     T_EOF,
     T_OPERATOR,
-    T_NUM_INT,
-    T_NUM_BIN,
-    T_NUM_HEX,
-    T_NUM_OCTA,
-    T_NUM_FLOAT,
+    T_NUMBER,
     T_STRING,
     T_STRING_ML,  // multiline string, can be also multiline comment
     T_ID,         // id of var/function (var name)
@@ -89,32 +83,32 @@ token_t scan(FILE* file, intStack_t* stack);
 int getCodeOffset(FILE* file);
 
 /*
- * Checks if number is decimal
- * @param num  number to check
- * @returns TRUE if number is decimal, FALSE if not
+ * Checks if digit is decimal
+ * @param num  digit to check
+ * @returns true if number is decimal, false if not
  */
-int is_dec(char num);
+bool is_dec(int num);
 
 /*
- * Checks if number is octal
- * @param num  number to check
- * @returns TRUE if number is octal, FALSE if not
+ * Checks if digit is octal
+ * @param num  digit to check
+ * @returns true if number is octal, false if not
  */
-int is_oct(char num);
+bool is_oct(int num);
 
 /*
- * Checks if number is hexadecimal
- * @param num  number to check
- * @returns TRUE if number is hexadecimal, FALSE if not
+ * Checks if digit is hexadecimal
+ * @param num  digit to check
+ * @returns true if number is hexadecimal, false if not
  */
-int is_hex(char num);
+bool is_hex(int num);
 
 /*
- * Checks if number is binary
- * @param num  number to check
+ * Checks if digit is binary
+ * @param num  digit to check
  * @returns TRUE if number is binary, FALSE otherwise
  */
-int is_bin(char num);
+bool is_bin(int num);
 
 /*
  * Scans number to a token
@@ -147,11 +141,11 @@ int process_keyword(FILE* file, token_t* token, char first_char);
 enum token_type getKeywordType(char* string);
 
 /*
- * Checks if given string is lowercase of uppercase letter
+ * Checks if given character is lowercase of uppercase letter
  * @param c  string to check
  * @returns TRUE if c is letter in given range, FALSE otherwise
  */
-int is_letter(char c);
+int is_letter(int c);
 
 /*
  * Scans string or multiline comment to a token

@@ -26,14 +26,18 @@ const char* KEYWORDS[] = {
         "return"
 };
 
-static int eof_reached = FALSE;
-/*
- * Scans source code in file and creates token representation
- * @param file    source file
- * @param stack   stack for offset checking
- * @returns token that represents current keyword
- * @pre file is opened in read mode
- */
+enum number_type {
+    N_INT,
+    N_HEX,
+    N_OCT,
+    N_BIN,
+    N_FLO,
+    N_UNDEF
+};
+
+// detect if function have found end of file
+static bool eof_reached = false;
+
 token_t scan(FILE* file, intStack_t* stack){
 
     // create output token and set it to no value
@@ -53,13 +57,13 @@ token_t scan(FILE* file, intStack_t* stack){
     // first char of the new token
     int tmp = 0;
     // beginning of the line
-    static int line_beginning = TRUE;
+    static bool line_beginning = true;
 
     // checks if end of file was reached during previous
     // call of this function
     if(eof_reached) {
-        line_beginning = TRUE;
-        eof_reached = FALSE;
+        line_beginning = true;
+        eof_reached = false;
         output_token.type = T_EOF;
         return output_token;
     }
@@ -72,7 +76,7 @@ token_t scan(FILE* file, intStack_t* stack){
             output_token.type = T_EOF;
             return output_token;
         }
-        line_beginning = FALSE;
+        line_beginning = false;
         int lastOffset; // offset of current block
         if(stackIsEmpty(stack)) {
             lastOffset = 0; // main body
@@ -113,9 +117,10 @@ token_t scan(FILE* file, intStack_t* stack){
         // if its still the same block, continue with content
     }
 
-    // read first char, check for eof
+    // if this is not the beginning of the line
+    // read first char and check for eof
     if((tmp = getc(file)) == -1){
-        line_beginning = TRUE;
+        line_beginning = true;
         output_token.type = T_EOF;
         return output_token;
     }
@@ -151,7 +156,7 @@ token_t scan(FILE* file, intStack_t* stack){
             output_token.type = T_OPERATOR;
             break;
         case '\n':
-            line_beginning = TRUE;
+            line_beginning = true;
             output_token.type = T_EOL;
             break;
         case '\t':
@@ -175,7 +180,7 @@ token_t scan(FILE* file, intStack_t* stack){
             }
             break;
         default: // keyword
-            if(is_letter((char)tmp) || (char)tmp == '_') {
+            if(is_letter(tmp) || (char)tmp == '_') {
                 if(process_keyword(file, &output_token, (char)tmp)){
                     //output_token.data.strval = NULL;
                     output_token.type = T_NONE;
@@ -185,7 +190,6 @@ token_t scan(FILE* file, intStack_t* stack){
                 output_token.type = T_UNKNOWN;
                 output_token.data.strval = dynStrInit();
                 dynStrAppendChar(output_token.data.strval, (char)tmp);
-                dynStrAppendChar(output_token.data.strval, '\0');
             }
             break;
     }
@@ -195,11 +199,7 @@ token_t scan(FILE* file, intStack_t* stack){
 
 }
 
-/*
- * Counts spaces in offset at the beginning of the line
- * @param file    source file
- * @returns number of whitespaces in padding or -1 if eof
- */
+
 int getCodeOffset(FILE* file){
 
     // currently processed character
@@ -223,57 +223,29 @@ int getCodeOffset(FILE* file){
     return -1; // eof
 }
 
-/*
- * Checks if number is decimal
- * @param num  number to check
- * @returns TRUE if number is decimal, FALSE if not
- */
-int is_dec(char num){
+
+bool is_dec(int num){
     return ((num >= '0') && (num <= '9'));
 }
 
-/*
- * Checks if number is octal
- * @param num  number to check
- * @returns TRUE if number is octal, FALSE if not
- */
-int is_oct(char num){
+
+bool is_oct(int num){
     return ((num >= '0') && (num <= '7'));
 }
 
-/*
- * Checks if number is hexadecimal
- * @param num  number to check
- * @returns TRUE if number is hexadecimal, FALSE if not
- */
-int is_hex(char num){
+
+bool is_hex(int num){
     return (((num >= '0') && (num <= '7'))
          || ((num >= 'a') && (num <= 'f'))
          || ((num >= 'A') && (num <= 'F')));
 }
 
-/*
- * Checks if number is binary
- * @param num  number to check
- * @returns TRUE if number is binary, FALSE otherwise
- */
-int is_bin(char num) {
+
+bool is_bin(int num) {
     return ((num == '0') || (num == '1'));
 }
 
-/*
- * Scans number to a token
- * @param file          source file
- * @param token         pointer to a token where data will be stored
- * @param first_number  first digit of the number
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
- * @pre token must be empty - initialized to type T_NONE and value NULL
- *
- * @TODO
- * check if number starting with zero and isn't octa is an error
- */
+
 int process_number(FILE* file, token_t* token ,char first_number){
 
     // check file
@@ -289,6 +261,12 @@ int process_number(FILE* file, token_t* token ,char first_number){
         return -2;
     }
 
+    // set token type to number
+    token->type = T_NUMBER;
+
+    // number type
+    enum number_type type = N_UNDEF;
+
     // temporary number string buffer
     dynStr_t* str_number;
     str_number = dynStrInit();
@@ -299,10 +277,9 @@ int process_number(FILE* file, token_t* token ,char first_number){
 
     // read next char, check for eof
     if((tmp = fgetc(file)) == -1){
-        eof_reached = TRUE;
+        eof_reached = true;
         token->data.intval = strtol(str_number->string,
                                     NULL, 10);
-        token->type = T_NUM_INT;
         dynStrFree(str_number);
         return 0;
     }
@@ -311,8 +288,8 @@ int process_number(FILE* file, token_t* token ,char first_number){
     if(first_number == '0') {
         // check second value
         // is number between <0,7> = octal
-        if(is_oct((char)tmp)) {
-            token->type = T_NUM_OCTA;
+        if(is_oct(tmp)) {
+            type = N_OCT;
             dynStrAppendChar(str_number, (char)tmp);
         }
         else { // is code
@@ -320,25 +297,25 @@ int process_number(FILE* file, token_t* token ,char first_number){
                 // binary
                 case 'B' :
                 case 'b' :
-                    token->type = T_NUM_BIN;
+                    type = N_BIN;
                     dynStrAppendChar(str_number, (char)tmp);
                     break;
                     // hexadecimal
                 case 'X' :
                 case 'x' :
-                    token->type = T_NUM_HEX;
+                    type = N_HEX;
                     dynStrAppendChar(str_number, (char)tmp);
                     break;
                     // octal
                 case 'O' :
                 case 'o' :
-                    token->type = T_NUM_OCTA;
+                    type = N_OCT;
                     dynStrAppendChar(str_number, (char)tmp);
                     break;
                 case 'e' :
                 case 'E' :
                 case '.' :
-                    token->type = T_NUM_FLOAT;
+                    type = N_FLO;
                     dynStrAppendChar(str_number, (char)tmp);
                     break;
                     // none of these
@@ -351,39 +328,40 @@ int process_number(FILE* file, token_t* token ,char first_number){
     } // if(first_number == '0')
 
     // read rest of the number
-    while(TRUE) {
+    while(true) {
 
         // if value was not set, set it to int
-        if (token->type == T_NONE) {
-            token->type = T_NUM_INT;
+        if (type == N_UNDEF) {
+            type = N_INT;
         }
         else {
             if ((tmp = fgetc(file)) == -1) {
-                eof_reached = TRUE;
+                eof_reached = true;
             }
         }
 
         // check if value is number of given type
         // hexadecimal
-        if((token->type == T_NUM_HEX  && is_hex((char)tmp))
+        if((type == N_HEX  && is_hex(tmp))
            // octal
-        || (token->type == T_NUM_OCTA && is_oct((char)tmp))
+        || (type == N_OCT && is_oct(tmp))
            // binary
-        || (token->type == T_NUM_BIN  && is_bin((char)tmp))
+        || (type == N_BIN  && is_bin(tmp))
            // int of float
-        ||((token->type == T_NUM_INT || token->type == T_NUM_FLOAT)
-                                      && is_dec((char)tmp)))
+        ||((type == N_INT || type == N_FLO)
+                                      && is_dec(tmp)))
         {
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
-        else if((char)tmp == '.'
+        else if((type == N_INT) && (
+                (char)tmp == '.'
              || (char)tmp == 'e'
-             || (char)tmp == 'E')
+             || (char)tmp == 'E'))
         {
             // set type float and continue
             // after floating point / exponent
-            token->type = T_NUM_FLOAT;
+            type = N_FLO;
             dynStrAppendChar(str_number, (char)tmp);
         }
         // not a number
@@ -392,33 +370,32 @@ int process_number(FILE* file, token_t* token ,char first_number){
             if(!eof_reached) {
                 ungetc((char) tmp, file);
             }
-            // add end of string
-            dynStrAppendChar(str_number, '\0');
             // convert string to number
-            switch (token->type) {
-                case T_NUM_INT:
+            switch (type) {
+                case N_INT:
                     token->data.intval = strtol(str_number->string,
                                                 NULL, 10);
                     break;
-                case T_NUM_BIN:
+                case N_BIN:
                     token->data.intval = strtol(str_number->string,
                                                 NULL, 2);
                     break;
-                case T_NUM_OCTA:
+                case N_OCT:
                     token->data.intval = strtol(str_number->string,
                                                 NULL, 8);
                     break;
-                case T_NUM_HEX:
+                case N_HEX:
                     token->data.intval = strtol(str_number->string,
                                                 NULL, 16);
                     break;
-                case T_NUM_FLOAT:
+                case N_FLO:
                     token->data.floatval = strtod(str_number->string,
                                                   NULL);
                     break;
                 default:
                     token->type = T_NONE;
                     token->data.strval = NULL;
+                    break;
             }
             // deallocate the memory
             dynStrFree(str_number);
@@ -428,18 +405,6 @@ int process_number(FILE* file, token_t* token ,char first_number){
 } // process_number()
 
 
-/*
- * Scans keyword to a token
- * @param file          source file
- * @param token         pointer to a token where data will be stored
- * @param first_number  first char of the keyword
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
- * @pre token must be empty - initialized to type T_NONE and value NULL
- */
-// TODO
-// add all keywords to detection - (keyword or id)
 int process_keyword(FILE* file, token_t* token, char first_char) {
     // check file
     if (!file) {
@@ -458,14 +423,13 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
 
     while ((tmp = fgetc(file)) != -1) {
         // char is part of keyword
-        if(is_letter((char)tmp)
-        || is_dec((char)tmp)
+        if(is_letter(tmp)
+        || is_dec(tmp)
         || (char)tmp == '_') {
             dynStrAppendChar(tmp_string, (char)tmp);
         }
         else {
             ungetc((char)tmp, file);
-            dynStrAppendChar(tmp_string, '\0');
             token->type = getKeywordType(tmp_string->string);
 
             if(token->type == T_ID) {
@@ -478,16 +442,13 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
         }
     }
 
-    eof_reached = TRUE;
+    eof_reached = true;
     return -1;
 }
 
-/*
- * @param keyword scanned to string
- * @returns token type
- */
+
 enum token_type getKeywordType(char *string) {
-    int i; //
+    int i;
     for(i = 0; i < 7; i++) { // 7 number of types
         if(strcmp(string, KEYWORDS[i]) == 0){
             break;
@@ -516,21 +477,11 @@ enum token_type getKeywordType(char *string) {
  * @param c  string to check
  * @returns TRUE if c is letter in given range, FALSE otherwise
  */
-int is_letter(char c) {
+int is_letter(int c) {
     return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
 }
 
 
-/*
- * Scans string or multiline comment to a token
- * @param file          source file
- * @param token         pointer to a token where data will be stored
- * @param qmark         first quotation mark, to determine string end
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
- * @pre token must be empty - initialized to type T_NONE and value NULL
- */
 // TODO
 // - check if there can be unescaped quotation marks at the middle
 // of the string
@@ -546,9 +497,9 @@ int process_string(FILE* file, token_t* token, char qmark) {
     token->data.strval = dynStrInit();
 
     // is set to true if character is escaped
-    int esc = FALSE;
+    int esc = false;
     // if set to false after beginning of the string is processed
-    int beginning = TRUE;
+    int beginning = true;
 
     // counter of quotation marks of the string / comment
     int qmark_beginning = 1;
@@ -569,7 +520,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
         }
         else if(esc) { // process escaped char
             dynStrAppendChar(token->data.strval, (char)tmp);
-            esc = FALSE;
+            esc = false;
         }
         // is same as opening quotation mark
         else if((char)tmp == qmark) {
@@ -577,12 +528,12 @@ int process_string(FILE* file, token_t* token, char qmark) {
                 qmark_beginning++;
             }
             else {
-                beginning = FALSE;
+                beginning = false;
                 qmark_end++;
             }
         }
         else { // char inside the string
-            beginning = FALSE;
+            beginning = false;
             // unescaped quotation mark that doesn't close
             // the string / comment
             qmark_end = 0;
@@ -599,27 +550,18 @@ int process_string(FILE* file, token_t* token, char qmark) {
                 // add char to string data
                 dynStrAppendChar(token->data.strval, (char)tmp);
                 if((char)tmp == '\\') { // escaped char
-                    esc = TRUE;
+                    esc = true;
                 }
             }
         }
     }// while()
-    eof_reached = TRUE;
+    eof_reached = true;
     return -1;
 
 }
 
-/*
- * Scans line comment to a token (everything to the end of the line)
- * @param file          source file
- * @param token         pointer to a token where data will be stored
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
- * @pre token must be empty - initialized to type T_NONE and value NULL
- */
 // TODO
-// check if eol can be escaped!
+// test escaped eol! Eol in python can't be escaped!
 int process_comment(FILE* file, token_t* token){
     if(!file) {
         return -1;
@@ -637,7 +579,6 @@ int process_comment(FILE* file, token_t* token){
     while((tmp = fgetc(file)) == 1) {
         // end of line/file = end of 1 line comment
         if((char)tmp == '\n' || (char)tmp == '\0') {
-            dynStrAppendChar(token->data.strval, '\0');
             // seek back 1 char
             ungetc((char)tmp, file);
             return 0; // success
@@ -647,6 +588,6 @@ int process_comment(FILE* file, token_t* token){
             dynStrAppendChar(token->data.strval, (char)tmp);
         }
     } // while ()
-    eof_reached = TRUE;
+    eof_reached = true;
     return 0;
 }
