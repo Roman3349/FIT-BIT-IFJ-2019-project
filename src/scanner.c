@@ -58,169 +58,154 @@ token_t scan(FILE* file, intStack_t* stack){
     int tmp = 0;
     // beginning of the line
     static bool line_beginning = true;
+    // code offset
+    int offset = 0;
 
-    // checks if end of file was reached during previous
-    // call of this function
-    if(eof_reached) {
-        line_beginning = true;
-        eof_reached = false;
-        output_token.type = T_EOF;
-        return output_token;
-    }
+    // read char
+    while ((!eof_reached) && (tmp = getc(file) != -1)) {
 
-    // process code offset (number of spaces)
-    // at the beginning of the line
-    if(line_beginning) {
-        int offset;
-        if((offset = getCodeOffset(file)) == -1){
-            output_token.type = T_EOF;
-            return output_token;
-        }
-        line_beginning = false;
-        int lastOffset; // offset of current block
-        if(stackIsEmpty(stack)) {
-            lastOffset = 0; // main body
-        }
-        else if(!stackTop(stack, &lastOffset)) {
-            return output_token; // failed to get value from stack
-        }
-        // return from block
-        if(lastOffset > offset) {
-            // pop current offset form stack
-            if(!stackPop(stack, &lastOffset)){
-                return output_token; // pop failed
+        // process code offset (number of spaces)
+        // at the beginning of the line
+        if (line_beginning) {
+            if((char)tmp == ' ') {
+                offset++;
+                continue;
             }
+            // remove empty line and continue with next one
+            else if((char)tmp == '\n') {
+                offset = 0;
+                continue;
+            }
+            // remove line with comment (without any code)
+            else if((char)tmp == '#') {
+                if(remove_line_comment(file)) {
+                    return output_token; // failed to read from file
+                }
+                continue;
+            }
+            else { // all chars of the offset were read
+                // put back last char to be processed later (its not offset char)
+                ungetc(tmp, file);
+                line_beginning = false;
+                int lastOffset; // offset of current block
+                if (stackIsEmpty(stack)) {
+                    lastOffset = 0; // main block
+                }
+                else if (!stackTop(stack, &lastOffset)) {
+                    return output_token; // failed to read from stack
+                }
+                // end of code block
+                if(lastOffset > offset) {
+                    // check offset of previous block:
 
-            int dedentOffset; // offset of previous block
-            if(stackIsEmpty(stack)) {
-                dedentOffset = 0; // main block
-            }
-            // get offset value if not in main
-            else if(!stackTop(stack, &dedentOffset)) {
-                return output_token; // top failed
-            }
+                    // pop current offset
+                    if (!stackPop(stack, &lastOffset)) {
+                        return output_token; // pop failed
+                    }
 
-            // offset doesn't match the previous block offset
-            if(offset != dedentOffset) {
-                return output_token;
-            }
-            // offset match
-            output_token.type = T_DEDENT;
-            return output_token; // success dedent
-        }
-        // jump into block
-        else if(lastOffset < offset) {
-            stackPush(stack, offset);
-            output_token.type = T_INDENT;
-            return output_token;
-        }
-        // if its still the same block, continue with content
-    }
+                    int previousBlockOffset;
+                    if (stackIsEmpty(stack)) {
+                        previousBlockOffset = 0; // main block
+                    }
+                    else if (!stackTop(stack, &previousBlockOffset)){
+                        return output_token; // top failed
+                    }
 
-    // if this is not the beginning of the line
-    // read first char and check for eof
-    if((tmp = getc(file)) == -1){
-        line_beginning = true;
-        output_token.type = T_EOF;
-        return output_token;
-    }
+                    // offset doesn't match the previous block offset
+                    if (offset != previousBlockOffset) {
+                        return output_token;
+                    }
 
-    switch ((char)tmp){
-        case ':' :
-            output_token.type = T_COLON;
-            break;
-        case ')' :
-            output_token.type = T_RPAR;
-            break;
-        case '(' :
-            output_token.type = T_LPAR;
-            break;
-        case '\'':
-        case '\"':
-            if(process_string(file, &output_token, (char)tmp)) {
-                //output_token.data.strval = NULL;
-                output_token.type = T_NONE;
+                    // offset match
+                    output_token.type = T_DEDENT;
+                    return output_token;
+                }
+                // start of new block
+                else if (lastOffset < offset) {
+                    stackPush(stack, offset);
+                    output_token.type = T_INDENT;
+                    return output_token;
+                }
+                else { // if(lastOffset == offset)
+                    continue; // still same block, continue with content
+                }
             }
-            break;
-        case '#' :
-            if(process_comment(file, &output_token)) {
-                //output_token.data.strval = NULL;
-                output_token.type = T_NONE;
-            }
-        case '=' :
-        case '+' :
-        case '-' :
-        case '*' :
-        case '/' :
-        case '%' : // mod
-            output_token.type = T_OPERATOR;
-            break;
-        case '\n':
-            line_beginning = true;
-            output_token.type = T_EOL;
-            break;
-        case '\t':
-        case ' ' :
-            output_token.type = T_WHITESPACE;
-            break;
-        case '1' :
-        case '2' :
-        case '3' :
-        case '4' :
-        case '5' :
-        case '6' :
-        case '7' :
-        case '8' :
-        case '9' :
-        case '0' :
-            // if operation fails return empty token
-            if(process_number(file, &output_token, (char)tmp)) {
-                //output_token.data.strval = NULL;
-                output_token.type = T_NONE;
-            }
-            break;
-        default: // keyword
-            if(is_letter(tmp) || (char)tmp == '_') {
-                if(process_keyword(file, &output_token, (char)tmp)){
+        } // if (line_beginning)
+
+        switch ((char) tmp) {
+            case ':' :
+                output_token.type = T_COLON;
+                break;
+            case ')' :
+                output_token.type = T_RPAR;
+                break;
+            case '(' :
+                output_token.type = T_LPAR;
+                break;
+            case '\'':
+            case '\"':
+                if (process_string(file, &output_token, (char) tmp)) {
                     //output_token.data.strval = NULL;
                     output_token.type = T_NONE;
                 }
-            }
-            else { // unknown value
-                output_token.type = T_UNKNOWN;
-                output_token.data.strval = dynStrInit();
-                dynStrAppendChar(output_token.data.strval, (char)tmp);
-            }
-            break;
-    }
+                break;
+            case '#' :
+                if (remove_line_comment(file)) {
+                    output_token.type = T_NONE;
+                }
+            case '=' :
+            case '+' :
+            case '-' :
+            case '*' :
+            case '/' :
+                output_token.type = T_OPERATOR;
+                break;
+            case '\n':
+                line_beginning = true;
+                output_token.type = T_EOL;
+                break;
+            case ' ' :
+            case '\t':
+                continue; // continue with next char
+            case '1' :
+            case '2' :
+            case '3' :
+            case '4' :
+            case '5' :
+            case '6' :
+            case '7' :
+            case '8' :
+            case '9' :
+            case '0' :
+                // if operation fails return empty token
+                if (process_number(file, &output_token, (char) tmp)) {
+                    output_token.type = T_NONE;
+                }
+                break;
+            default: // keyword
+                if (is_letter(tmp) || (char) tmp == '_') {
+                    if (process_keyword(file, &output_token, (char) tmp)) {
+                        //output_token.data.strval = NULL;
+                        output_token.type = T_NONE;
+                    }
+                } else { // unknown value
+                    output_token.type = T_UNKNOWN;
+                    output_token.data.strval = dynStrInit();
+                    dynStrAppendChar(output_token.data.strval, (char) tmp);
+                }
+                break;
+        }// switch ((char) tmp)
 
 
+        return output_token;
+    } // while(...)
+
+    // eof reached
+    line_beginning = true;
+    eof_reached = false;
+    output_token.type = T_EOF;
     return output_token;
 
-}
-
-
-int getCodeOffset(FILE* file){
-
-    // currently processed character
-    int tmp = 0;
-    // counts whitespaces
-    int counter = 0;
-
-    // read offset
-    while ((tmp = fgetc(file)) != -1){
-
-        // check if character is still offset
-        if((char)tmp == ' '){
-            counter++;
-        }
-        else {
-            // put char back if its not space
-            ungetc((char)tmp, file);
-            return counter;
-        }
-    }
-    return -1; // eof
 }
 
 
@@ -368,7 +353,7 @@ int process_number(FILE* file, token_t* token ,char first_number){
         else {
             // return the char
             if(!eof_reached) {
-                ungetc((char) tmp, file);
+                ungetc(tmp, file);
             }
             // convert string to number
             switch (type) {
@@ -429,7 +414,7 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
             dynStrAppendChar(tmp_string, (char)tmp);
         }
         else {
-            ungetc((char)tmp, file);
+            ungetc(tmp, file);
             token->type = getKeywordType(tmp_string->string);
 
             if(token->type == T_ID) {
@@ -541,7 +526,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
             // empty string
             if(qmark_beginning == 2) {
                 // return char
-                ungetc((char)tmp, file);
+                ungetc(tmp, file);
                 // return empty string token
                 token->type = T_STRING;
                 return 0; // success
@@ -562,30 +547,18 @@ int process_string(FILE* file, token_t* token, char qmark) {
 
 // TODO
 // test escaped eol! Eol in python can't be escaped!
-int process_comment(FILE* file, token_t* token){
+int remove_line_comment(FILE* file){
     if(!file) {
         return -1;
     }
-    // token must be initialized and empty
-    if(!token || token->data.strval) {
-        return -2;
-    }
 
-    token->type = T_COMMENT;
-    token->data.strval = dynStrInit();
     // stores currently processed char
     int tmp;
 
-    while((tmp = fgetc(file)) == 1) {
-        // end of line/file = end of 1 line comment
-        if((char)tmp == '\n' || (char)tmp == '\0') {
-            // seek back 1 char
-            ungetc((char)tmp, file);
+    while((tmp = fgetc(file)) != -1) {
+        if((char)tmp == '\n') {
+            ungetc(tmp, file);
             return 0; // success
-        }
-        else {
-            // add char to the token data
-            dynStrAppendChar(token->data.strval, (char)tmp);
         }
     } // while ()
     eof_reached = true;

@@ -76,13 +76,6 @@ typedef struct token {
 token_t scan(FILE* file, intStack_t* stack);
 
 /*
- * Counts tabs or spaces in offset at the beginning of the line
- * @param file    source file
- * @returns number of whitespaces in padding or -1 if eof
- */
-int getCodeOffset(FILE* file);
-
-/*
  * Checks if digit is decimal
  * @param num  digit to check
  * @returns true if number is decimal, false if not
@@ -162,12 +155,9 @@ int process_string(FILE* file, token_t* token, char qmark);
 /*
  * Scans line comment to a token (everything to the end of the line)
  * @param file          source file
- * @param token         pointer to a token where data will be stored
  * @returns status: 0 = success
  *                 -1 = file error
- *                 -2 = token error / memory allocation
- * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_comment(FILE* file, token_t* token);
+int remove_line_comment(FILE* file);
 
 #endif //FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
