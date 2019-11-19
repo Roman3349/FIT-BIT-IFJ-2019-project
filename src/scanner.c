@@ -142,10 +142,21 @@ token_t scan(FILE* file, intStack_t* stack){
             case '(' :
                 output_token.type = T_LPAR;
                 break;
+            case '[' :
+                output_token.type = T_LBRACKET;
+                break;
+            case ']' :
+                output_token.type = T_RBRACKET;
+                break;
+            case '{' :
+                output_token.type = T_LBRACE;
+                break;
+            case '}' :
+                output_token.type = T_RBRACE;
+                break;
             case '\'':
             case '\"':
                 if (process_string(file, &output_token, tmp)) {
-                    //output_token.data.strval = NULL;
                     output_token.type = T_NONE;
                 }
                 break;
@@ -153,12 +164,66 @@ token_t scan(FILE* file, intStack_t* stack){
                 if (remove_line_comment(file)) {
                     output_token.type = T_NONE;
                 }
+                break;
             case '=' :
+                output_token.type = T_ASSIGN;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
             case '+' :
+                output_token.type = T_OP_ADD;
+                break;
             case '-' :
+                output_token.type = T_OP_SUB;
+                break;
             case '*' :
+                output_token.type = T_OP_MUL;
+                break;
             case '/' :
-                output_token.type = T_OPERATOR;
+                output_token.type = T_OP_DIV;
+                break;
+            case '>' :
+                output_token.type = T_OP_GREATER;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_GREATER_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
+            case '<' :
+                output_token.type = T_OP_LESS;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_LESS_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
+            case '!' :
+                output_token.type = T_OP_NEG;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_NOT_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
                 break;
             case '\n':
                 line_beginning = true;
@@ -166,7 +231,7 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case ' ' :
             case '\t':
-                continue; // continue with next char
+                continue; // skip whitespace
             case '1' :
             case '2' :
             case '3' :
@@ -406,28 +471,27 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
 
 
 enum token_type getKeywordType(char *string) {
-    int i;
-    for(i = 0; i < 7; i++) { // 7 number of types
+    for(int i = 0; i < 6; i++) { // 7 number of types and default is 7
         if(strcmp(string, KEYWORDS[i]) == 0){
-            break;
+            switch (i) {
+                case 0:
+                    return T_ID_DEF;
+                case 1:
+                    return T_ID_IF;
+                case 2:
+                    return T_ID_ELSE;
+                case 3:
+                    return T_ID_WHILE;
+                case 4:
+                    return T_ID_PASS;
+                case 5:
+                    return T_ID_RETURN;
+                default:
+                    return T_ID;
+            }
         }
     }
-    switch (i) {
-        case 0:
-            return T_ID_DEF;
-        case 1:
-            return T_ID_IF;
-        case 2:
-            return T_ID_ELSE;
-        case 3:
-            return T_ID_WHILE;
-        case 4:
-            return T_ID_PASS;
-        case 5:
-            return T_ID_RETURN;
-        default:
-            return T_ID;
-    }
+    return T_ID; // none of these
 }
 
 /*
@@ -469,12 +533,14 @@ int process_string(FILE* file, token_t* token, int qmark) {
     // read to the end of string
     while((tmp = fgetc(file)) != EOF) {
         if(qmark_end == qmark_beginning) {
-            if((qmark_beginning == qmark_end) == 1) {
+            ungetc(tmp, file);
+            if((qmark_beginning == 1) && (qmark_end == 1)) {
                 token->type = T_STRING;
             }
             else {
                 token->type = T_STRING_ML;
             }
+            return 0; // string processed
         }
         else if(esc) { // process escaped char
             dynStrAppendChar(token->data.strval, (char)tmp);

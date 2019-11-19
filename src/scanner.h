@@ -26,33 +26,46 @@
 #include "stack.h"
 
 enum token_type {
-    T_WHITESPACE,
     T_EOL,
     T_EOF,
-    T_OPERATOR,
+    T_OP_NEG,       // !
+    T_OP_ADD,       // +
+    T_OP_SUB,       // -
+    T_OP_MUL,       // *
+    T_OP_DIV,       // /
+    T_OP_EQ,        // ==
+    T_OP_GREATER,   // >
+    T_OP_LESS,      // <
+    T_OP_GREATER_EQ,// >=
+    T_OP_LESS_EQ,   // <=
+    T_OP_NOT_EQ,    // !=
+    T_BOOL_AND,     // and
+    T_BOOL_OR,      // or
+    T_BOOL_NEG,     // not
     T_NUMBER,
     T_FLOAT,
     T_STRING,
-    T_STRING_ML,  // multiline string, can be also multiline comment
-    T_ID,         // id of var/function (var name)
+    T_STRING_ML,    // multiline string, can be also multiline comment
+    T_ID,           // id of var/function (var name)
     T_ID_DEF,
     T_ID_IF,
     T_ID_ELSE,
     T_ID_WHILE,
     T_ID_PASS,
     T_ID_RETURN,
-    T_COLON,      // :
-    T_LPAR,       // (
-    T_RPAR,       // )
-    T_BRACKET,    // [
-    T_RBRACKET,   // ]
-    T_LBRACE,     // {
-    T_RBRACE,     // }
-    T_COMMENT,    // #
+    T_ASSIGN,       // =
+    T_COLON,        // :
+    T_LPAR,         // (
+    T_RPAR,         // )
+    T_LBRACKET,     // [
+    T_RBRACKET,     // ]
+    T_LBRACE,       // {
+    T_RBRACE,       // }
     T_INDENT,
     T_DEDENT,
     T_UNKNOWN,
-    T_NONE
+    T_NONE,
+    T_ERROR         // scanner can't continue in execution
 };
 
 // token data
