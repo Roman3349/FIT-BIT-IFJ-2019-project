@@ -43,7 +43,7 @@ token_t scan(FILE* file, intStack_t* stack){
     // create output token and set it to no value
     token_t output_token;
     output_token.data.strval = NULL;
-    output_token.type = T_NONE;
+    output_token.type = T_ERROR;
 
     // return error if no file is no file is supplied
     if(!file){
@@ -132,6 +132,9 @@ token_t scan(FILE* file, intStack_t* stack){
             }
         } // if (line_beginning)
 
+        // return status of auxiliary functions
+        int return_status;
+
         switch (tmp) {
             case ':' :
                 output_token.type = T_COLON;
@@ -156,15 +159,20 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case '\'':
             case '\"':
-                if (process_string(file, &output_token, tmp)) {
-                    output_token.type = T_NONE;
+                return_status = process_string(file, &output_token, tmp);
+                if (return_status == ANALYSIS_FAILED) {
+                    output_token.type = T_UNKNOWN;
+                }
+                else if (return_status) {
+                    output_token.type = T_ERROR;
                 }
                 break;
             case '#' :
                 if (remove_line_comment(file)) {
-                    output_token.type = T_NONE;
+                    output_token.type = T_ERROR;
+                    break;
                 }
-                break;
+                continue; // process eol after comment removal
             case '=' :
                 output_token.type = T_ASSIGN;
                 if((tmp = fgetc(file)) == EOF) {
@@ -225,6 +233,9 @@ token_t scan(FILE* file, intStack_t* stack){
                     ungetc(tmp, file);
                 }
                 break;
+            case ',' :
+                output_token.type = T_COMMA;
+                break;
             case '\n':
                 line_beginning = true;
                 output_token.type = T_EOL;
@@ -244,14 +255,13 @@ token_t scan(FILE* file, intStack_t* stack){
             case '0' :
                 // if operation fails return empty token
                 if (process_number(file, &output_token, tmp)) {
-                    output_token.type = T_NONE;
+                    output_token.type = T_ERROR;
                 }
                 break;
             default: // keyword
                 if (is_letter(tmp) || tmp == '_') {
                     if (process_keyword(file, &output_token, tmp)) {
-                        //output_token.data.strval = NULL;
-                        output_token.type = T_NONE;
+                        output_token.type = T_ERROR;
                     }
                 } else { // unknown value
                     output_token.type = T_UNKNOWN;
@@ -260,7 +270,6 @@ token_t scan(FILE* file, intStack_t* stack){
                 }
                 break;
         }// switch (tmp)
-
 
         return output_token;
     } // while(...)
@@ -286,15 +295,15 @@ int process_number(FILE* file, token_t* token, int first_number) {
 
     // check file
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // if no token is supplied
     if(!token){
-        return -2;
+        return EXECUTION_ERROR;
     }
     // if token already have some value - exit
     if(token->data.strval){
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     // set token type to number
@@ -317,7 +326,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
         token->data.intval = strtol(str_number->string,
                                     NULL, 10);
         dynStrFree(str_number);
-        return 0;
+        return SUCCESS;
     }
 
     // if first number is 0 value can be binary, octal or hexadecimal
@@ -419,13 +428,13 @@ int process_number(FILE* file, token_t* token, int first_number) {
                                                   NULL);
                     break;
                 default:
-                    token->type = T_NONE;
+                    token->type = T_UNKNOWN;
                     token->data.strval = NULL;
                     break;
             }
             // deallocate the memory
             dynStrFree(str_number);
-            return 0;
+            return SUCCESS;
         }
     } // while(TRUE)
 } // process_number()
@@ -434,11 +443,11 @@ int process_number(FILE* file, token_t* token, int first_number) {
 int process_keyword(FILE* file, token_t* token, int first_char) {
     // check file
     if (!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // check if token is initialized and empty
     if (!token || token->data.strval) {
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     dynStr_t* tmp_string = dynStrInit();
@@ -461,31 +470,31 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
             } else {
                 dynStrFree(tmp_string);
             }
-            return 0;
+            return SUCCESS;
         }
     }
 
     eof_reached = true;
-    return -1;
+    return SUCCESS;
 }
 
 
 enum token_type getKeywordType(char *string) {
-    for(int i = 0; i < 6; i++) { // 7 number of types and default is 7
+    for(int i = 0; i < 6; i++) { // 6 types
         if(strcmp(string, KEYWORDS[i]) == 0){
             switch (i) {
                 case 0:
-                    return T_ID_DEF;
+                    return T_KW_DEF;
                 case 1:
-                    return T_ID_IF;
+                    return T_KW_IF;
                 case 2:
-                    return T_ID_ELSE;
+                    return T_KW_ELSE;
                 case 3:
-                    return T_ID_WHILE;
+                    return T_KW_WHILE;
                 case 4:
-                    return T_ID_PASS;
+                    return T_KW_PASS;
                 case 5:
-                    return T_ID_RETURN;
+                    return T_KW_RETURN;
                 default:
                     return T_ID;
             }
@@ -509,11 +518,11 @@ int is_letter(int c) {
 // of the string
 int process_string(FILE* file, token_t* token, int qmark) {
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // token must be initialized and empty
     if(!token || token->data.strval) {
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     token->data.strval = dynStrInit();
@@ -540,7 +549,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
             else {
                 token->type = T_STRING_ML;
             }
-            return 0; // string processed
+            return SUCCESS;
         }
         else if(esc) { // process escaped char
             dynStrAppendChar(token->data.strval, (char)tmp);
@@ -568,7 +577,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
                 ungetc(tmp, file);
                 // return empty string token
                 token->type = T_STRING;
-                return 0; // success
+                return SUCCESS;
             }
             else {
                 // add char to string data
@@ -580,7 +589,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
         }
     }// while()
     eof_reached = true;
-    return -1;
+    return ANALYSIS_FAILED; // unexpected eof
 
 }
 
@@ -588,7 +597,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
 // test escaped eol! Eol in python can't be escaped!
 int remove_line_comment(FILE* file){
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
 
     // stores currently processed char
@@ -597,9 +606,9 @@ int remove_line_comment(FILE* file){
     while((tmp = fgetc(file)) != EOF) {
         if(tmp == '\n') {
             ungetc(tmp, file);
-            return 0; // success
+            return SUCCESS;
         }
     } // while ()
     eof_reached = true;
-    return 0;
+    return SUCCESS;
 }
