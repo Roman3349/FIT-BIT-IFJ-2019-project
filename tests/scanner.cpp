@@ -131,7 +131,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 
-		ASSERT_TOKEN(file, T_ID_IF);
+		ASSERT_TOKEN(file, T_KW_IF);
 		ASSERT_TOKEN_STRING(file, T_ID, "a");
 		ASSERT_TOKEN(file, T_OP_LESS);
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 0);
@@ -142,11 +142,11 @@ namespace Tests {
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
 		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN_STRING(file, T_STRING, "Faktorial nelze spocitat ");
-		ASSERT_TOKEN(file, L_RPAR);
+		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_DEDENT);
 
-		ASSERT_TOKEN(file, T_ID_ELSE);
+		ASSERT_TOKEN(file, T_KW_ELSE);
 		ASSERT_TOKEN(file, T_COLON);
 		ASSERT_TOKEN(file, T_EOL);
 
@@ -156,7 +156,7 @@ namespace Tests {
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
 		ASSERT_TOKEN(file, T_EOL);
 
-		ASSERT_TOKEN(file, T_ID_WHILE);
+		ASSERT_TOKEN(file, T_KW_WHILE);
 		ASSERT_TOKEN_STRING(file, T_ID, "a");
 		ASSERT_TOKEN(file, T_OP_GREATER);
 		ASSERT_TOKEN(file, T_EOL);
