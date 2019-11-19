@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include "parser.c"
 
 /**
  * Main function
@@ -25,6 +26,7 @@
  * @return Execution status
  */
 int main(int argc, char *argv[]) {
-	puts("Hello World!");
+	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
+    syntax_parse(file);
 	return 0;
 }
