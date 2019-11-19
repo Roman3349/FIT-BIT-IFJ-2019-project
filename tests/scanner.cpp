@@ -25,17 +25,24 @@ extern "C" {
 #include "../src/scanner.h"
 }
 
-#define ASSERT_TOKEN(file, tokenType, value) \
+#define ASSERT_TOKEN_INTEGER(file, tokenType, value) \
 	do {\
 		token_t token = scan(file, stack);\
 		ASSERT_EQ(token.type, tokenType);\
-		switch (tokenType) {\
-			case T_NUMBER:\
-				EXPECT_EQ(token.data.intval, value);\
-				break;\
-			default:\
-				;\
-		}\
+		EXPECT_EQ(token.data.intval, value);\
+	} while (false);
+
+#define ASSERT_TOKEN_STRING(file, tokenType, value) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+		EXPECT_STREQ(token.data.strval->string, value);\
+	} while (false);
+
+#define ASSERT_TOKEN(file, tokenType) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
 	} while (false);
 
 namespace Tests {
@@ -71,29 +78,52 @@ namespace Tests {
 	TEST_F(ScannerTest, tokenEOF) {
 		FILE* file = openFile("eof.ifj19");
 		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_EOF, NULL);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenEOL) {;
 		FILE* file = openFile("eol.ifj19");
 		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_EOF, NULL);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_NUMBER, 1555);
-		ASSERT_TOKEN(file, T_EOL, NULL);
-		ASSERT_TOKEN(file, T_EOF, NULL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1555);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenBinInt) {
 		FILE* file = openFile("binInt.ifj19");
 		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_NUMBER, 37);
-		ASSERT_TOKEN(file, T_EOL, NULL);
-		ASSERT_TOKEN(file, T_EOF, NULL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenHexInt) {
+		FILE* file = openFile("hexInt.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokensExample1) {
+		FILE* file = openFile("example1.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Zadejte cislo pro vypocet faktorialu: ");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
 	}
 
 }
