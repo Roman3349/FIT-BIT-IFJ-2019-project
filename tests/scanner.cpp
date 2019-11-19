@@ -123,7 +123,68 @@ namespace Tests {
 		ASSERT_TOKEN_STRING(file, T_STRING, "Zadejte cislo pro vypocet faktorialu: ");
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
+
 		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "inputi");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_ID_IF);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_LESS);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 0);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Faktorial nelze spocitat ");
+		ASSERT_TOKEN(file, L_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+
+		ASSERT_TOKEN(file, T_ID_ELSE);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_ID_WHILE);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_GREATER);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN(file, T_OP_MUL);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_SUB);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Vysledek je:");
+		//ASSERT_TOKEN(file, T_COMMA);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		//ASSERT_TOKEN(file, T_COMMA);
+		ASSERT_TOKEN_STRING(file, T_STRING, "\n");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 }
