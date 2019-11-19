@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2019 Roman Ondráček <xondra58@stud.fit.vutbr.cz>
- * Copyright (C) 2019 Pavel Raur     <xraurp00@stud.fit.vutbr.cz>
+ * Copyright (C) 2019 Pavel Raur	 <xraurp00@stud.fit.vutbr.cz>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +25,19 @@ extern "C" {
 #include "../src/scanner.h"
 }
 
+#define ASSERT_TOKEN(file, tokenType, value) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+		switch (tokenType) {\
+			case T_NUMBER:\
+				EXPECT_EQ(token.data.intval, value);\
+				break;\
+			default:\
+				;\
+		}\
+	} while (false);
+
 namespace Tests {
 
 	class ScannerTest : public ::testing::Test {
@@ -37,67 +50,50 @@ namespace Tests {
 		FILE* openFile(const std::string& fileName) {
 			return std::fopen(dataPath.append(fileName).c_str(), "r");
 		}
+
+		/**
+		 * Sets up the test environment
+		 */
+		void SetUp() override {
+			stack = stackInit();
+		}
+
+		/**
+		 * Tear down the test environment
+		 */
+		void TearDown() override {
+			stackFree(stack);
+		}
 		std::string dataPath = "../../tests/data/";
+		intStack_t* stack;
 	};
 
 	TEST_F(ScannerTest, tokenEOF) {
-	    intStack_t* stack = stackInit();
 		FILE* file = openFile("eof.ifj19");
 		ASSERT_NE(file, nullptr);
-		token_t token = scan(file, stack);
-		ASSERT_EQ(token.type, T_EOF);
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_EOF, NULL);
 	}
 
 	TEST_F(ScannerTest, tokenEOL) {;
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("eol.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::vector<int> tokens = {
-			T_EOL,
-			T_EOF
-		};
-		for (int tokenVal: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, tokenVal);
-		}
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_EOF, NULL);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::unordered_map<int, const char*> tokens = {
-			{T_NUMBER, "1555"},
-			{T_EOF, nullptr}
-		};
-		for (auto t: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, t.first);
-			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.strval->string, t.second);
-			}
-		}
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_NUMBER, 1555);
+		ASSERT_TOKEN(file, T_EOL, NULL);
+		ASSERT_TOKEN(file, T_EOF, NULL);
 	}
 
 	TEST_F(ScannerTest, tokenBinInt) {
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("binInt.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::unordered_map<int, const char*> tokens = {
-			{T_NUMBER, "0b100101"},
-			{T_EOF, nullptr}
-		};
-		for (auto t: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, t.first);
-			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.strval->string, t.second);
-			}
-		}
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL, NULL);
+		ASSERT_TOKEN(file, T_EOF, NULL);
 	}
 
 }

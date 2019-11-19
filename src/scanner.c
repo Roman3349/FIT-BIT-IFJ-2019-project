@@ -62,22 +62,22 @@ token_t scan(FILE* file, intStack_t* stack){
     int offset = 0;
 
     // read char
-    while ((!eof_reached) && (tmp = getc(file) != -1)) {
+    while ((!eof_reached) && ((tmp = fgetc(file)) != EOF)) {
 
         // process code offset (number of spaces)
         // at the beginning of the line
         if (line_beginning) {
-            if((char)tmp == ' ') {
+            if(tmp == ' ') {
                 offset++;
                 continue;
             }
             // remove empty line and continue with next one
-            else if((char)tmp == '\n') {
+            else if(tmp == '\n') {
                 offset = 0;
                 continue;
             }
             // remove line with comment (without any code)
-            else if((char)tmp == '#') {
+            else if(tmp == '#') {
                 if(remove_line_comment(file)) {
                     return output_token; // failed to read from file
                 }
@@ -132,7 +132,7 @@ token_t scan(FILE* file, intStack_t* stack){
             }
         } // if (line_beginning)
 
-        switch ((char) tmp) {
+        switch (tmp) {
             case ':' :
                 output_token.type = T_COLON;
                 break;
@@ -144,7 +144,7 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case '\'':
             case '\"':
-                if (process_string(file, &output_token, (char) tmp)) {
+                if (process_string(file, &output_token, tmp)) {
                     //output_token.data.strval = NULL;
                     output_token.type = T_NONE;
                 }
@@ -178,13 +178,13 @@ token_t scan(FILE* file, intStack_t* stack){
             case '9' :
             case '0' :
                 // if operation fails return empty token
-                if (process_number(file, &output_token, (char) tmp)) {
+                if (process_number(file, &output_token, tmp)) {
                     output_token.type = T_NONE;
                 }
                 break;
             default: // keyword
-                if (is_letter(tmp) || (char) tmp == '_') {
-                    if (process_keyword(file, &output_token, (char) tmp)) {
+                if (is_letter(tmp) || tmp == '_') {
+                    if (process_keyword(file, &output_token, tmp)) {
                         //output_token.data.strval = NULL;
                         output_token.type = T_NONE;
                     }
@@ -194,7 +194,7 @@ token_t scan(FILE* file, intStack_t* stack){
                     dynStrAppendChar(output_token.data.strval, (char) tmp);
                 }
                 break;
-        }// switch ((char) tmp)
+        }// switch (tmp)
 
 
         return output_token;
@@ -208,21 +208,8 @@ token_t scan(FILE* file, intStack_t* stack){
 
 }
 
-
-bool is_dec(int num){
-    return ((num >= '0') && (num <= '9'));
-}
-
-
 bool is_oct(int num){
     return ((num >= '0') && (num <= '7'));
-}
-
-
-bool is_hex(int num){
-    return (((num >= '0') && (num <= '7'))
-         || ((num >= 'a') && (num <= 'f'))
-         || ((num >= 'A') && (num <= 'F')));
 }
 
 
@@ -230,8 +217,7 @@ bool is_bin(int num) {
     return ((num == '0') || (num == '1'));
 }
 
-
-int process_number(FILE* file, token_t* token ,char first_number){
+int process_number(FILE* file, token_t* token, int first_number) {
 
     // check file
     if(!file) {
@@ -256,12 +242,12 @@ int process_number(FILE* file, token_t* token ,char first_number){
     dynStr_t* str_number;
     str_number = dynStrInit();
 
-    dynStrAppendChar(str_number, first_number);
+    dynStrAppendChar(str_number, (char) first_number);
     // temporary char buffer
     int tmp;
 
     // read next char, check for eof
-    if((tmp = fgetc(file)) == -1){
+    if((tmp = fgetc(file)) == EOF){
         eof_reached = true;
         token->data.intval = strtol(str_number->string,
                                     NULL, 10);
@@ -272,44 +258,35 @@ int process_number(FILE* file, token_t* token ,char first_number){
     // if first number is 0 value can be binary, octal or hexadecimal
     if(first_number == '0') {
         // check second value
-        // is number between <0,7> = octal
-        if(is_oct(tmp)) {
-            type = N_OCT;
-            dynStrAppendChar(str_number, (char)tmp);
-        }
-        else { // is code
-            switch ((char)tmp) {
-                // binary
-                case 'B' :
-                case 'b' :
-                    type = N_BIN;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // hexadecimal
-                case 'X' :
-                case 'x' :
-                    type = N_HEX;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // octal
-                case 'O' :
-                case 'o' :
-                    type = N_OCT;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                case 'e' :
-                case 'E' :
-                case '.' :
-                    type = N_FLO;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // none of these
-                    // value will be checked in first iteration of
-                    // while cycle
-                default:
-                    break;
-            } // switch ((char)tmp)
-        }
+        switch (tmp) {
+            // binary
+            case 'B' :
+            case 'b' :
+                type = N_BIN;
+                break;
+            // hexadecimal
+            case 'X' :
+            case 'x' :
+                type = N_HEX;
+                break;
+            // octal
+            case 'O' :
+            case 'o' :
+                type = N_OCT;
+                break;
+            case 'e' :
+            case 'E' :
+            case '.' :
+                type = N_FLO;
+                dynStrAppendChar(str_number, (char)tmp);
+                break;
+            // none of these
+            // value will be checked in first iteration of while cycle
+            // TODO: send error token
+            default:
+                type = N_UNDEF;
+                break;
+            } // switch (tmp)
     } // if(first_number == '0')
 
     // read rest of the number
@@ -319,30 +296,28 @@ int process_number(FILE* file, token_t* token ,char first_number){
         if (type == N_UNDEF) {
             type = N_INT;
         }
-        else {
-            if ((tmp = fgetc(file)) == -1) {
-                eof_reached = true;
-            }
+        else if ((tmp = fgetc(file)) == EOF) {
+            eof_reached = true;
         }
 
         // check if value is number of given type
         // hexadecimal
-        if((type == N_HEX  && is_hex(tmp))
+        if((type == N_HEX  && isxdigit(tmp))
            // octal
         || (type == N_OCT && is_oct(tmp))
            // binary
         || (type == N_BIN  && is_bin(tmp))
            // int of float
         ||((type == N_INT || type == N_FLO)
-                                      && is_dec(tmp)))
+                                      && isdigit(tmp)))
         {
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
         else if((type == N_INT) && (
-                (char)tmp == '.'
-             || (char)tmp == 'e'
-             || (char)tmp == 'E'))
+                tmp == '.'
+             || tmp == 'e'
+             || tmp == 'E'))
         {
             // set type float and continue
             // after floating point / exponent
@@ -374,6 +349,7 @@ int process_number(FILE* file, token_t* token ,char first_number){
                                                 NULL, 16);
                     break;
                 case N_FLO:
+                    token->type = T_FLOAT;
                     token->data.floatval = strtod(str_number->string,
                                                   NULL);
                     break;
@@ -390,7 +366,7 @@ int process_number(FILE* file, token_t* token ,char first_number){
 } // process_number()
 
 
-int process_keyword(FILE* file, token_t* token, char first_char) {
+int process_keyword(FILE* file, token_t* token, int first_char) {
     // check file
     if (!file) {
         return -1;
@@ -402,15 +378,13 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
 
     dynStr_t* tmp_string = dynStrInit();
     // append first character
-    dynStrAppendChar(tmp_string, first_char);
+    dynStrAppendChar(tmp_string, (char) first_char);
     // temporary variable for currently processed char
     int tmp;
 
-    while ((tmp = fgetc(file)) != -1) {
+    while ((tmp = fgetc(file)) != EOF) {
         // char is part of keyword
-        if(is_letter(tmp)
-        || is_dec(tmp)
-        || (char)tmp == '_') {
+        if(isalnum(tmp) || tmp == '_') {
             dynStrAppendChar(tmp_string, (char)tmp);
         }
         else {
@@ -419,8 +393,7 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
 
             if(token->type == T_ID) {
                 token->data.strval = tmp_string;
-            }
-            else {
+            } else {
                 dynStrFree(tmp_string);
             }
             return 0;
@@ -470,7 +443,7 @@ int is_letter(int c) {
 // TODO
 // - check if there can be unescaped quotation marks at the middle
 // of the string
-int process_string(FILE* file, token_t* token, char qmark) {
+int process_string(FILE* file, token_t* token, int qmark) {
     if(!file) {
         return -1;
     }
@@ -494,7 +467,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
     int tmp;
 
     // read to the end of string
-    while((tmp = fgetc(file)) != -1) {
+    while((tmp = fgetc(file)) != EOF) {
         if(qmark_end == qmark_beginning) {
             if((qmark_beginning == qmark_end) == 1) {
                 token->type = T_STRING;
@@ -508,7 +481,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
             esc = false;
         }
         // is same as opening quotation mark
-        else if((char)tmp == qmark) {
+        else if(tmp == qmark) {
             if(beginning && qmark_beginning < 3) {
                 qmark_beginning++;
             }
@@ -534,7 +507,7 @@ int process_string(FILE* file, token_t* token, char qmark) {
             else {
                 // add char to string data
                 dynStrAppendChar(token->data.strval, (char)tmp);
-                if((char)tmp == '\\') { // escaped char
+                if(tmp == '\\') { // escaped char
                     esc = true;
                 }
             }
@@ -555,8 +528,8 @@ int remove_line_comment(FILE* file){
     // stores currently processed char
     int tmp;
 
-    while((tmp = fgetc(file)) != -1) {
-        if((char)tmp == '\n') {
+    while((tmp = fgetc(file)) != EOF) {
+        if(tmp == '\n') {
             ungetc(tmp, file);
             return 0; // success
         }

@@ -18,6 +18,7 @@
 #ifndef FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
 #define FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -30,6 +31,7 @@ enum token_type {
     T_EOF,
     T_OPERATOR,
     T_NUMBER,
+    T_FLOAT,
     T_STRING,
     T_STRING_ML,  // multiline string, can be also multiline comment
     T_ID,         // id of var/function (var name)
@@ -76,25 +78,11 @@ typedef struct token {
 token_t scan(FILE* file, intStack_t* stack);
 
 /*
- * Checks if digit is decimal
- * @param num  digit to check
- * @returns true if number is decimal, false if not
- */
-bool is_dec(int num);
-
-/*
  * Checks if digit is octal
  * @param num  digit to check
  * @returns true if number is octal, false if not
  */
 bool is_oct(int num);
-
-/*
- * Checks if digit is hexadecimal
- * @param num  digit to check
- * @returns true if number is hexadecimal, false if not
- */
-bool is_hex(int num);
 
 /*
  * Checks if digit is binary
@@ -113,7 +101,7 @@ bool is_bin(int num);
  *                 -2 = token error / memory allocation
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_number(FILE* file, token_t* token ,char first_number);
+int process_number(FILE* file, token_t* token ,int first_number);
 
 /*
  * Scans keyword to a token
@@ -125,7 +113,7 @@ int process_number(FILE* file, token_t* token ,char first_number);
  *                 -2 = token error / memory allocation
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_keyword(FILE* file, token_t* token, char first_char);
+int process_keyword(FILE* file, token_t* token, int first_char);
 
 /*
  * @param keyword scanned to string
@@ -150,7 +138,7 @@ int is_letter(int c);
  *                 -2 = token error / memory allocation
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_string(FILE* file, token_t* token, char qmark);
+int process_string(FILE* file, token_t* token, int qmark);
 
 /*
  * Scans line comment to a token (everything to the end of the line)
