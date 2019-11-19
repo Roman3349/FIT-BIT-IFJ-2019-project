@@ -23,6 +23,9 @@ insert_final_newline = true
 charset = utf-8
 indent_style = tab
 
+[*.ifj19]
+indent_style = space
+
 [*.yml]
 indent_style = space
 indent_size = 2
