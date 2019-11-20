@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include "parser.c"
+#include "token_stack.c"
 
 /**
  * Main function
@@ -27,6 +28,21 @@
  */
 int main(int argc, char *argv[]) {
 	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
-    syntax_parse(file);
+	intStack_t* lexStack = stackInit();
+    tokenStack_t* stack = tokenStackInit(file, lexStack);
+    token_t token;
+    tokenStackPop(stack, &token);
+    printf("TOKEN: %s\n", token_to_string(token));
+    tokenStackPop(stack, &token);
+    printf("TOKEN: %s\n", token_to_string(token));
+    tokenStackPush(stack, token);
+    printf("TOKEN: %s\n", token_to_string(token));
+    tokenStackPop(stack, &token);
+    printf("TOKEN: %s\n", token_to_string(token));
+    tokenStackPop(stack, &token);
+    printf("TOKEN: %s\n", token_to_string(token));
+
+    stackFree(lexStack);
+    tokenStackFree(stack);
 	return 0;
 }
