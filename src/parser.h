@@ -1,29 +1,41 @@
-//
-// Created by fjerabek on 12.11.19.
-//
+/*
+ * Copyright (C) 2019 František Jeřábek <xjerab25@stud.fit.vutbr.cz>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 
-#ifndef FIT_BIT_IFJ_2019_PROJECT_PARSER_H
-#define FIT_BIT_IFJ_2019_PROJECT_PARSER_H
+#pragma once
 
 #include "scanner.h"
 #include "stdbool.h"
+#include "token_stack.h"
 
 
 // Derivation tree element data
+typedef union treeElData treeElData_t;
 
-typedef union tree_el_data tree_el_data_t;
-
-enum State { FUNCTION_DEF, BLOCK, ROOT };
 // Derivation tree element
 typedef struct{
-    tree_el_data_t* data;
-} tree_element_t;
+    treeElData_t* data;
+} treeElement_t;
 
-union tree_el_data {
+union treeElData {
     char* s;
     double d;
     long l;
-    tree_element_t element;
+    treeElement_t element;
 };
 
 /**
@@ -32,7 +44,7 @@ union tree_el_data {
  * @returns derivation  tree representation of one line
  * @pre file is opened in read mode
  */
-tree_element_t syntax_parse(FILE * file);
+treeElement_t syntaxParse(FILE * file);
 
 
 /**
@@ -41,14 +53,14 @@ tree_element_t syntax_parse(FILE * file);
  * @param stack lexical analysis stack
  * @return parsing successful
  */
-bool parse_while(FILE* file, intStack_t* stack);
+bool parseWhile(FILE* file, tokenStack_t* stack);
 
 /**
  * Returns string representation of token
  * @param token token
  * @return string representation
  */
-char* token_to_string(token_t token);
+char* tokenToString(token_t token);
 
 /**
  * Parses code block
@@ -57,7 +69,7 @@ char* token_to_string(token_t token);
  * @param last_token pointer for writing first non-block token
  * @return parsing successful
  */
-bool parse_block(FILE* file, intStack_t* stack, token_t* last_token);
+bool parseBlock(FILE* file, tokenStack_t* stack);
 
 /**
  * Parses assignment expression
@@ -65,7 +77,13 @@ bool parse_block(FILE* file, intStack_t* stack, token_t* last_token);
  * @param stack lexical analysis stack
  * @return parsing successful
  */
-bool parse_assignment(FILE* file, intStack_t* stack);
+bool parseAssignment(FILE* file, tokenStack_t* stack);
 
 
-#endif //FIT_BIT_IFJ_2019_PROJECT_PARSER_H
+/**
+ * Parses function call
+ * @param file source file
+ * @param stack stack for lexical analysis
+ * @return parsing successful
+ */
+bool parseFunctionCall(FILE* file, tokenStack_t* stack);

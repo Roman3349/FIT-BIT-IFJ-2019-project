@@ -29,20 +29,7 @@
 int main(int argc, char *argv[]) {
 	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
 	intStack_t* lexStack = stackInit();
-    tokenStack_t* stack = tokenStackInit(file, lexStack);
-    token_t token;
-    tokenStackPop(stack, &token);
-    printf("TOKEN: %s\n", token_to_string(token));
-    tokenStackPop(stack, &token);
-    printf("TOKEN: %s\n", token_to_string(token));
-    tokenStackPush(stack, token);
-    printf("TOKEN: %s\n", token_to_string(token));
-    tokenStackPop(stack, &token);
-    printf("TOKEN: %s\n", token_to_string(token));
-    tokenStackPop(stack, &token);
-    printf("TOKEN: %s\n", token_to_string(token));
-
+    syntaxParse(file);
     stackFree(lexStack);
-    tokenStackFree(stack);
 	return 0;
 }
