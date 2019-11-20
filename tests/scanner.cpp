@@ -132,10 +132,36 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
+	TEST_F(ScannerTest, tokenFloatE2) {
+		FILE* file = openFile("float_e2.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0e3);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0e-3);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e0);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e-0);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e+0);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
 	TEST_F(ScannerTest, tokenFloatDot) {
 		FILE* file = openFile("float_dot.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 1555.37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenFloatDot2) {
+		FILE* file = openFile("float_dot2.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0.5);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 5.0);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
