@@ -25,11 +25,22 @@ treeElement_t syntaxParse(FILE* file) {
 
     intStack_t* intStack = stackInit();
     tokenStack_t* tokenStack = tokenStackInit(file, intStack);
+    while(tokenStackTop(tokenStack).type != T_EOF) {
+        if (!parseBlock(tokenStack)) {
+            fprintf(stderr, "!!!!!!!!!!!!! SYNTAX ERROR !!!!!!!!!!!!!\n");
+        }
 
-    if(!parseBlock(tokenStack)) {
-        fprintf(stdout, "!!!!!!!!!!!!! SYNTAX ERROR !!!!!!!!!!!!!\n");
+        if (tokenStackTop(tokenStack).type == T_KW_DEF) {
+            parseFunctionDef(tokenStack);
+        } else if(tokenStackTop(tokenStack).type == T_EOF) {
+            break;
+        } else {
+            fprintf(stderr, "Syntax error. Expected 'def', got %s \n", tokenToString(tokenStackTop(tokenStack).type));
+            break;
+        }
+
     }
-    printf("Last token: %s\n", tokenToString(tokenStackTop(tokenStack)));
+    printf("Last token: %s\n", tokenToString(tokenStackTop(tokenStack).type)); //TODO: REMOVE debug print
 
     treeElData_t data = { .d=1000 };
     treeElement_t tree = { .data = &data };
@@ -38,18 +49,105 @@ treeElement_t syntaxParse(FILE* file) {
     return tree;
 }
 
+bool processToken(tokenStack_t* stack, enum token_type type) {
+    token_t token = tokenStackPop(stack);
+    if(token.type != type){
+        switch (type){
+            case T_INDENT:
+            case T_DEDENT:
+                fprintf(stderr, "Syntax error. Invalid indentation near: %s \n", tokenToString(token.type));
+                break;
+
+            default:
+                fprintf(stderr, "Syntax error. Expected %s, got: %s \n", tokenToString(type), tokenToString(token.type));
+                break;
+        }
+
+        return false;
+    }
+    return true;
+}
+
+bool parseFunctionDef(tokenStack_t* stack) {
+    token_t token = tokenStackPop(stack);
+    if(token.type != T_KW_DEF) {
+        fprintf(stderr, "Parsing 'def' with %s token.\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_ID) {
+        fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_LPAR) {
+        fprintf(stderr, "Syntax error. Expected '(', got %s \n", tokenToString(token.type));
+        return false;
+    }
+
+    bool parameters = true;
+
+    while(parameters) {
+        token = tokenStackPop(stack);
+        switch (token.type) {
+            case T_ID: // new local variable as function parameter
+                printf("function parameter: %s\n", tokenToString(token.type));
+                if(tokenStackTop(stack).type == T_COMMA)
+                    tokenStackPop(stack); // multiple parameters pop comma
+                break;
+
+            case T_RPAR:
+                parameters = false;
+                break;
+
+            default:
+                fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(token.type));
+                return false;
+        }
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_COLON) {
+        fprintf(stderr, "Syntax error. Expected ':', got %s \n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_EOL) {
+        fprintf(stderr, "Syntax error. Expected EOL, got %s \n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_INDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near: %s \n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+
+    if(!parseBlock(stack))
+        return false;
+
+    token = tokenStackPop(stack);
+    if(token.type != T_DEDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near: %s \n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+    return true;
+}
 
 bool parseExpression(tokenStack_t* stack){
-    printf("expression: %s\n", tokenToString(tokenStackPop(stack)));
-    printf("expression: %s\n", tokenToString(tokenStackPop(stack)));
-    printf("expression: %s\n", tokenToString(tokenStackPop(stack)));
-    return true; //FIXME: Expression grammar parser (temporary scrap for 3 tokens)
+    printf("expression: %s\n", tokenToString(tokenStackPop(stack).type));
+    printf("expression: %s\n", tokenToString(tokenStackPop(stack).type));
+    printf("expression: %s\n", tokenToString(tokenStackPop(stack).type));
+    return true; //FIXME: Expression grammar parser (temporary scrap 3 tokens)
 }
 
 bool parseWhile(tokenStack_t* stack) {
     token_t token = tokenStackPop(stack);
     if(token.type != T_KW_WHILE) {
-        fprintf(stdout, "Parsing 'while' with %s token.\n", tokenToString(token));
+        fprintf(stderr, "Parsing 'while' with %s token.\n", tokenToString(token.type));
         return false;
     }
 
@@ -59,19 +157,19 @@ bool parseWhile(tokenStack_t* stack) {
 
     token = tokenStackPop(stack);
     if(token.type != T_COLON) {
-        fprintf(stdout, "Syntax error. Expected colon, got %s \n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Expected ':', got %s \n", tokenToString(token.type));
         return false;
     }
 
     token = tokenStackPop(stack);
     if(token.type != T_EOL) {
-        fprintf(stdout, "Syntax error. Expected EOL, got %s \n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Expected EOL, got %s \n", tokenToString(token.type));
         return false;
     }
 
     token = tokenStackPop(stack) ;
     if(token.type != T_INDENT) {
-        fprintf(stdout, "Syntax error. Expected indentation, got %s \n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Expected indentation, got %s \n", tokenToString(token.type));
         return false;
     }
 
@@ -82,7 +180,7 @@ bool parseWhile(tokenStack_t* stack) {
 
     token = tokenStackPop(stack);
     if(token.type != T_DEDENT) {
-        fprintf(stdout, "Syntax error. Invalid indentation near %s token.\n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Invalid indentation near %s\n", tokenToString(tokenStackTop(stack).type));
         return false;
     }
 
@@ -92,7 +190,7 @@ bool parseWhile(tokenStack_t* stack) {
 bool parseAssignment(tokenStack_t* stack) {
     token_t token = tokenStackPop(stack);
     if(token.type != T_ASSIGN) {
-        fprintf(stdout, "Parsing 'assignment' with  %s token.\n", tokenToString(token));
+        fprintf(stderr, "Parsing 'assignment' with  %s token.\n", tokenToString(token.type));
         return false;
     }
 
@@ -102,7 +200,7 @@ bool parseAssignment(tokenStack_t* stack) {
 
     token = tokenStackPop(stack);
     if(token.type != T_EOL) {
-        fprintf(stdout, "Syntax error. Expected EOL, got  %s token.\n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Expected EOL, got  %s token.\n", tokenToString(token.type));
         return false;
     }
 
@@ -121,13 +219,11 @@ bool parseBlock(tokenStack_t* stack) {
 
     while(tokenRecognized) {
         token = tokenStackTop(stack);
-        printf("block parsing: %s\n", tokenToString(token)); //TODO: REMOVE debug print
+        printf("block parsing: %s\n", tokenToString(token.type)); //TODO: REMOVE debug print
         switch (token.type) {
             case T_KW_IF:
-                break; //TODO: if parser
-
-            case T_KW_ELSE:
-                break; //TODO if parser
+                parseIf(stack);
+                break;
 
             case T_KW_WHILE:
                 if (!parseWhile(stack))
@@ -140,12 +236,15 @@ bool parseBlock(tokenStack_t* stack) {
                 break;
 
             case T_KW_RETURN:
-                break; //TODO return parser
+                if(!parseReturn(stack))
+                    return false;
+                break;
 
             case T_ID:
                 id = tokenStackPop(stack); // variable/function ID
-                printf("ID: %s\n", id.data.strval->string);
-                if(tokenStackTop(stack).type == T_ASSIGN) {
+                printf("ID: %s\n", id.data.strval->string);// TODO: REMOVE debug print
+
+                if(tokenStackTop(stack).type == T_ASSIGN) { // variable asignment
                     if (!parseAssignment(stack))
                         return false;
                 } else if(tokenStackTop(stack).type == T_LPAR){
@@ -156,17 +255,129 @@ bool parseBlock(tokenStack_t* stack) {
                     if(!parseExpression(stack))
                         return false;
                     if(tokenStackPop(stack).type != T_EOL) {// newline after expression
-                        fprintf(stdout, "Syntax error. Expected expression got: %s\n", tokenToString(token));
+                        fprintf(stderr, "Syntax error. Expected expression got: %s\n", tokenToString(token.type));
                         return false;
                     }
                 }
                 break;
 
+                case T_NUMBER:
+                case T_LPAR:
+                case T_STRING:
+                case T_STRING_ML:
+                case T_FLOAT: // ignore expressions if their result is not used
+                    while(tokenStackPop(stack).type != T_EOL){}
+                    break;
+
             default:
                 tokenRecognized = false;
-                printf("Block parser end. Last token: %s\n", tokenToString(token));
+                printf("Block parser end. Last token: %s\n", tokenToString(token.type));// TODO: REMOVE debug print
         }
     }
+    return true;
+}
+
+
+bool parseIf(tokenStack_t* stack) {
+    token_t token = tokenStackPop(stack);
+    if(token.type != T_KW_IF) {
+        fprintf(stderr, "Parsing 'if' with %s token.\n", tokenToString(token.type));
+        return false;
+    }
+
+    if(!parseExpression(stack)) {
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_COLON) {
+        fprintf(stderr, "Syntax error. Expected ':' got: %s\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_EOL) {
+        fprintf(stderr, "Syntax error. Expected EOL got: %s\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_INDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near: %s\n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+
+    if(!parseBlock(stack))
+        return false;
+
+    token = tokenStackPop(stack);
+    if(token.type != T_DEDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near: %s\n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+
+    if(tokenStackTop(stack).type == T_KW_ELSE) {
+        if(!parseElse(stack)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool parseElse(tokenStack_t* stack) {
+
+    token_t token = tokenStackPop(stack);
+    if(token.type != T_KW_ELSE) {
+        fprintf(stderr, "Parsing 'else' with %s token.\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_COLON) {
+        fprintf(stderr, "Syntax error. Expected ':' got: %s\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_EOL) {
+        fprintf(stderr, "Syntax error. Expected EOL got:  %s\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackPop(stack);
+    if(token.type != T_INDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near:  %s\n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+
+    if(!parseBlock(stack))
+        return false;
+
+    token = tokenStackPop(stack);
+    if(token.type != T_DEDENT) {
+        fprintf(stderr, "Syntax error. Invalid indentation near:  %s\n", tokenToString(tokenStackTop(stack).type));
+        return false;
+    }
+
+    return false;
+}
+
+bool parseReturn(tokenStack_t* stack) {
+    token_t token = tokenStackPop(stack);
+    if(token.type != T_KW_RETURN) {
+        fprintf(stderr, "Parsing 'return' with %s token.\n", tokenToString(token.type));
+        return false;
+    }
+
+    token = tokenStackTop(stack);
+    if(token.type != T_EOL) {
+        if(!parseExpression(stack)) {
+            return false;
+        }
+    }
+
+    tokenStackPop(stack); // pop EOL from stack
+
     return true;
 }
 
@@ -176,14 +387,18 @@ bool parseFunctionCall(tokenStack_t* stack) {
     token_t token = tokenStackPop(stack);
 
     if(token.type != T_LPAR) {
-        fprintf(stdout, "Parsing 'function call' with %s token.\n", tokenToString(token));
+        fprintf(stderr, "Parsing 'function call' with %s token.\n", tokenToString(token.type));
         return false;
     }
 
     while(parameters) {
         token = tokenStackPop(stack);
         switch (token.type) {
-            case T_NUMBER: case T_ID:
+            case T_NUMBER:
+            case T_ID:
+            case T_FLOAT:
+            case T_STRING:
+            case T_STRING_ML:
                 if (tokenStackTop(stack).type == T_COMMA || tokenStackTop(stack).type == T_RPAR) {
                     if(token.type == T_ID){ //TODO: DEBUG print of function parameter REMOVE
                         printf("parameter %s\n", token.data.strval->string);
@@ -208,12 +423,12 @@ bool parseFunctionCall(tokenStack_t* stack) {
             }
 
             default:
-                fprintf(stdout, "Syntax error. Expected expression got: %s\n", tokenToString(token));
+                fprintf(stderr, "Syntax error. Expected expression got: %s\n", tokenToString(token.type));
                 return false;
         }
     }
 
-    if(tokenStackTop(stack).type == T_EOL) {
+    if(tokenStackTop(stack).type == T_EOL) { //TODO: function call inside expression
         tokenStackPop(stack);
 
     }
@@ -225,22 +440,21 @@ bool parseFunctionCall(tokenStack_t* stack) {
 bool parsePass(tokenStack_t* stack) {
     token_t token = tokenStackPop(stack);
     if(token.type != T_KW_PASS) {
-        fprintf(stdout, "Parsing 'pass' with %s token.\n", tokenToString(token));
+        fprintf(stderr, "Parsing 'pass' with %s token.\n", tokenToString(token.type));
         return false;
     }
 
     token = tokenStackPop(stack);
 
     if(token.type != T_EOL) {
-        fprintf(stdout, "Syntax error. Expected EOL after pass got %s\n", tokenToString(token));
+        fprintf(stderr, "Syntax error. Expected EOL after pass got %s\n", tokenToString(token.type));
         return false;
     }
     return true;
 }
 
-char* tokenToString (token_t token) {
-    switch(token.type) {
-
+char* tokenToString (enum token_type type) {
+    switch(type) {
         case T_EOL:
             return "EOL";
         case T_EOF:
@@ -278,11 +492,11 @@ char* tokenToString (token_t token) {
         case T_FLOAT:
             return "FLOAT";
         case T_STRING:
-            return "string";
+            return "STRING";
         case T_STRING_ML:
-            return "multiline string";
+            return "STRING_MULTILINE";
         case T_ID:
-            return "identifier";
+            return "IDENTIFIER";
         case T_KW_DEF:
             return "'def'";
         case T_KW_IF:
@@ -314,15 +528,16 @@ char* tokenToString (token_t token) {
         case T_RBRACE:
             return "}";
         case T_INDENT:
-            return "indentation";
+            return "INDENTATION";
         case T_DEDENT:
-            return "dedentation";
+            return "DEDENTATION";
         case T_UNKNOWN:
-            return "unknown";
+            return "UNKNOWN";
         case T_NONE:
-            return "'none'";
+            return "NONE";
         case T_ERROR:
-            return "'error'";
+            return "ERROR";
+        default:
+            return "";
     }
-    return "";
 }

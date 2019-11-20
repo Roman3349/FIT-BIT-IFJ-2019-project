@@ -60,7 +60,7 @@ bool parseWhile(tokenStack_t* stack);
  * @param token token
  * @return string representation
  */
-char* tokenToString(token_t token);
+char* tokenToString(enum token_type type);
 
 /**
  * Parses code block
@@ -94,3 +94,40 @@ bool parseFunctionCall(tokenStack_t* stack);
  * @return parsing successful
  */
 bool parsePass(tokenStack_t* stack);
+
+/**
+ * Parses return keyword and value
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseReturn(tokenStack_t* stack);
+
+/**
+ * Parses if keyword
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseIf(tokenStack_t* stack);
+
+/**
+ * Parses else keyword
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseElse(tokenStack_t* stack);
+
+
+/**
+ * Parses function definition
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseFunctionDef(tokenStack_t* stack);
+
+/**
+ * Check if next token matches expected token eventually prints error message
+ * @param stack token stack
+ * @param expectedToken expected token
+ * @return got expected token
+ */
+bool processToken(tokenStack_t* stack, enum token_type expectedToken);

@@ -28,8 +28,6 @@
  */
 int main(int argc, char *argv[]) {
 	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
-	intStack_t* lexStack = stackInit();
     syntaxParse(file);
-    stackFree(lexStack);
 	return 0;
 }
