@@ -124,6 +124,21 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
+	TEST_F(ScannerTest, tokenFloatE) {
+		FILE* file = openFile("float_e.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 2e+7);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenFloatDot) {
+		FILE* file = openFile("float_dot.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 1555.37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
 
 	TEST_F(ScannerTest, tokensExample1) {
 		FILE* file = openFile("example1.ifj19");
