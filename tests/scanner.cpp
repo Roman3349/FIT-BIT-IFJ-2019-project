@@ -22,6 +22,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
+#include "../src/dynamic_string.h"
 #include "../src/scanner.h"
 }
 
@@ -44,6 +45,7 @@ extern "C" {
 		token_t token = scan(file, stack);\
 		ASSERT_EQ(token.type, tokenType);\
 		EXPECT_STREQ(token.data.strval->string, value);\
+		dynStrFree(token.data.strval);\
 	} while (false);
 
 #define ASSERT_TOKEN(file, tokenType) \
