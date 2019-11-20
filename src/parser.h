@@ -50,7 +50,7 @@ treeElement_t syntaxParse(FILE * file);
 /**
  * Parses while structure after while keyword
  * @param file source file
- * @param stack lexical analysis stack
+ * @param stack token stack
  * @return parsing successful
  */
 bool parseWhile(FILE* file, tokenStack_t* stack);
@@ -65,8 +65,7 @@ char* tokenToString(token_t token);
 /**
  * Parses code block
  * @param file source file
- * @param stack lexical analysis stack
- * @param last_token pointer for writing first non-block token
+ * @param stack token stack
  * @return parsing successful
  */
 bool parseBlock(FILE* file, tokenStack_t* stack);
@@ -74,7 +73,7 @@ bool parseBlock(FILE* file, tokenStack_t* stack);
 /**
  * Parses assignment expression
  * @param file source file
- * @param stack lexical analysis stack
+ * @param stack token stack
  * @return parsing successful
  */
 bool parseAssignment(FILE* file, tokenStack_t* stack);
@@ -83,7 +82,15 @@ bool parseAssignment(FILE* file, tokenStack_t* stack);
 /**
  * Parses function call
  * @param file source file
- * @param stack stack for lexical analysis
+ * @param stack token stack
  * @return parsing successful
  */
 bool parseFunctionCall(FILE* file, tokenStack_t* stack);
+
+/**
+ * Parses pass keyword
+ * @param file source file
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parsePass(FILE* file, tokenStack_t* stack);
