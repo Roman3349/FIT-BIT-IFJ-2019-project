@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2019 Roman Ondráček <xondra58@stud.fit.vutbr.cz>
- * Copyright (C) 2019 Pavel Raur     <xraurp00@stud.fit.vutbr.cz>
+ * Copyright (C) 2019 Pavel Raur	 <xraurp00@stud.fit.vutbr.cz>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +25,33 @@ extern "C" {
 #include "../src/scanner.h"
 }
 
+#define ASSERT_TOKEN_FLOAT(file, tokenType, value) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+		EXPECT_EQ(token.data.floatval, value);\
+	} while (false);
+
+#define ASSERT_TOKEN_INTEGER(file, tokenType, value) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+		EXPECT_EQ(token.data.intval, value);\
+	} while (false);
+
+#define ASSERT_TOKEN_STRING(file, tokenType, value) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+		EXPECT_STREQ(token.data.strval->string, value);\
+	} while (false);
+
+#define ASSERT_TOKEN(file, tokenType) \
+	do {\
+		token_t token = scan(file, stack);\
+		ASSERT_EQ(token.type, tokenType);\
+	} while (false);
+
 namespace Tests {
 
 	class ScannerTest : public ::testing::Test {
@@ -37,67 +64,236 @@ namespace Tests {
 		FILE* openFile(const std::string& fileName) {
 			return std::fopen(dataPath.append(fileName).c_str(), "r");
 		}
+
+		/**
+		 * Sets up the test environment
+		 */
+		void SetUp() override {
+			stack = stackInit();
+		}
+
+		/**
+		 * Tear down the test environment
+		 */
+		void TearDown() override {
+			stackFree(stack);
+		}
 		std::string dataPath = "../../tests/data/";
+		intStack_t* stack;
 	};
 
 	TEST_F(ScannerTest, tokenEOF) {
-	    intStack_t* stack = stackInit();
 		FILE* file = openFile("eof.ifj19");
 		ASSERT_NE(file, nullptr);
-		token_t token = scan(file, stack);
-		ASSERT_EQ(token.type, T_EOF);
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenEOL) {;
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("eol.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::vector<int> tokens = {
-			T_EOL,
-			T_EOF
-		};
-		for (int tokenVal: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, tokenVal);
-		}
-		stackFree(stack);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::unordered_map<int, const char*> tokens = {
-			{T_NUMBER, "1555"},
-			{T_EOF, nullptr}
-		};
-		for (auto t: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, t.first);
-			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.strval->string, t.second);
-			}
-		}
-		stackFree(stack);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1555);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenBinInt) {
-        intStack_t* stack = stackInit();
 		FILE* file = openFile("binInt.ifj19");
 		ASSERT_NE(file, nullptr);
-		std::unordered_map<int, const char*> tokens = {
-			{T_NUMBER, "0b100101"},
-			{T_EOF, nullptr}
-		};
-		for (auto t: tokens) {
-			token_t token = scan(file, stack);
-			ASSERT_EQ(token.type, t.first);
-			if (t.second != nullptr) {
-				EXPECT_STREQ(token.data.strval->string, t.second);
-			}
-		}
-		stackFree(stack);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenHexInt) {
+		FILE* file = openFile("hexInt.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokensExample1) {
+		FILE* file = openFile("example1.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Zadejte cislo pro vypocet faktorialu: ");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "inputi");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_KW_IF);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_LESS);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 0);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING_ML, "\nFaktorial nelze spocitat\n");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+
+		ASSERT_TOKEN(file, T_KW_ELSE);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_KW_WHILE);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_GREATER);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 0);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_OP_MUL);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_OP_SUB);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Vysledek je:");
+		ASSERT_TOKEN(file, T_COMMA);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_COMMA);
+		ASSERT_TOKEN_STRING(file, T_STRING, "\n");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenExample2) {;
+		FILE* file = openFile("example2.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_KW_DEF);
+		ASSERT_TOKEN_STRING(file, T_ID, "factorial");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_ID, "n");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN(file, T_KW_IF);
+		ASSERT_TOKEN_STRING(file, T_ID, "n");
+		ASSERT_TOKEN(file, T_OP_LESS);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 2);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "result");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_KW_ELSE);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "decremented_n");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "n");
+		ASSERT_TOKEN(file, T_OP_SUB);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "temp_result");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "factorial");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_ID, "decremented_n");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "result");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "n");
+		ASSERT_TOKEN(file, T_OP_MUL);
+		ASSERT_TOKEN_STRING(file, T_ID, "temp_result");
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_KW_RETURN);
+		ASSERT_TOKEN_STRING(file, T_ID, "result");
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Zadejte cislo pro vypocet faktorialu: ");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "inputi");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_KW_IF);
+		ASSERT_TOKEN_STRING(file, T_ID, "a")
+		ASSERT_TOKEN(file, T_OP_LESS);
+		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0.0);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Faktorial nelze spocitat");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_KW_ELSE);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_ID, "factorial");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "Vysledek je:");
+		ASSERT_TOKEN(file, T_COMMA);
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl")
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_EOF);
 	}
 
 }

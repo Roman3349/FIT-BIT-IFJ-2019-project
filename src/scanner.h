@@ -18,39 +18,60 @@
 #ifndef FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
 #define FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include "dynamic_string.h"
 #include "stack.h"
 
+#define SUCCESS 0
+#define EXECUTION_ERROR -1
+#define ANALYSIS_FAILED -2
+
+// TODO - add handling of bool operations, add handling of None
 enum token_type {
-    T_WHITESPACE,
     T_EOL,
     T_EOF,
-    T_OPERATOR,
+    T_OP_NEG,       // !
+    T_OP_ADD,       // +
+    T_OP_SUB,       // -
+    T_OP_MUL,       // *
+    T_OP_DIV,       // /
+    T_OP_EQ,        // ==
+    T_OP_GREATER,   // >
+    T_OP_LESS,      // <
+    T_OP_GREATER_EQ,// >=
+    T_OP_LESS_EQ,   // <=
+    T_OP_NOT_EQ,    // !=
+    T_BOOL_AND,     // and
+    T_BOOL_OR,      // or
+    T_BOOL_NEG,     // not
     T_NUMBER,
+    T_FLOAT,
     T_STRING,
-    T_STRING_ML,  // multiline string, can be also multiline comment
-    T_ID,         // id of var/function (var name)
-    T_ID_DEF,
-    T_ID_IF,
-    T_ID_ELSE,
-    T_ID_WHILE,
-    T_ID_PASS,
-    T_ID_RETURN,
-    T_COLON,      // :
-    T_LPAR,       // (
-    T_RPAR,       // )
-    T_BRACKET,    // [
-    T_RBRACKET,   // ]
-    T_LBRACE,     // {
-    T_RBRACE,     // }
-    T_COMMENT,    // #
+    T_STRING_ML,    // multiline string, can be also multiline comment
+    T_ID,           // id of var/function (var name)
+    T_KW_DEF,
+    T_KW_IF,
+    T_KW_ELSE,
+    T_KW_WHILE,
+    T_KW_PASS,
+    T_KW_RETURN,
+    T_ASSIGN,       // =
+    T_COLON,        // :
+    T_COMMA,        // ,
+    T_LPAR,         // (
+    T_RPAR,         // )
+    T_LBRACKET,     // [
+    T_RBRACKET,     // ]
+    T_LBRACE,       // {
+    T_RBRACE,       // }
     T_INDENT,
     T_DEDENT,
     T_UNKNOWN,
-    T_NONE
+    T_NONE,
+    T_ERROR         // scanner can't continue in execution
 };
 
 // token data
@@ -76,25 +97,11 @@ typedef struct token {
 token_t scan(FILE* file, intStack_t* stack);
 
 /*
- * Checks if digit is decimal
- * @param num  digit to check
- * @returns true if number is decimal, false if not
- */
-bool is_dec(int num);
-
-/*
  * Checks if digit is octal
  * @param num  digit to check
  * @returns true if number is octal, false if not
  */
 bool is_oct(int num);
-
-/*
- * Checks if digit is hexadecimal
- * @param num  digit to check
- * @returns true if number is hexadecimal, false if not
- */
-bool is_hex(int num);
 
 /*
  * Checks if digit is binary
@@ -108,24 +115,20 @@ bool is_bin(int num);
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param first_number  first digit of the number
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
+ * @returns execution status
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_number(FILE* file, token_t* token ,char first_number);
+int process_number(FILE* file, token_t* token ,int first_number);
 
 /*
  * Scans keyword to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param first_number  first char of the keyword
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
+ * @returns status: SUCCESS on success, EXECUTION_ERROR if there was internal error
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_keyword(FILE* file, token_t* token, char first_char);
+int process_keyword(FILE* file, token_t* token, int first_char);
 
 /*
  * @param keyword scanned to string
@@ -145,18 +148,16 @@ int is_letter(int c);
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param qmark         first quotation mark, to determine string end
- * @returns status: 0 = success
- *                 -1 = file error
- *                 -2 = token error / memory allocation
+ * @returns status: SUCCESS on success, EXECUTION_ERROR on internal error
+ *      and ANALYSIS_FAILED if string is not complete
  * @pre token must be empty - initialized to type T_NONE and value NULL
  */
-int process_string(FILE* file, token_t* token, char qmark);
+int process_string(FILE* file, token_t* token, int qmark);
 
 /*
  * Scans line comment to a token (everything to the end of the line)
  * @param file          source file
- * @returns status: 0 = success
- *                 -1 = file error
+ * @returns status: SUCCESS or EXECUTION_ERROR
  */
 int remove_line_comment(FILE* file);
 

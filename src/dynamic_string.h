@@ -53,15 +53,17 @@ void dynStrFree(dynStr_t *string);
  * Appends a char to a dynamic string
  * @param string Dynamic string
  * @param c Char to append
+ * @return Has not any error occurred?
  */
-void dynStrAppendChar(dynStr_t *string, char c);
+bool dynStrAppendChar(dynStr_t *string, char c);
 
 /**
  * Appends a string to a dynamic string
  * @param string Dynamic string
  * @param str String to append
+ * @return Has not any error occurred?
  */
-void dynStrAppendString(dynStr_t *string, const char* str);
+bool dynStrAppendString(dynStr_t *string, const char* str);
 
 /**
  * Equals a dynamic string and a string

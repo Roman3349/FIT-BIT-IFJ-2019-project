@@ -43,7 +43,7 @@ token_t scan(FILE* file, intStack_t* stack){
     // create output token and set it to no value
     token_t output_token;
     output_token.data.strval = NULL;
-    output_token.type = T_NONE;
+    output_token.type = T_ERROR;
 
     // return error if no file is no file is supplied
     if(!file){
@@ -62,22 +62,22 @@ token_t scan(FILE* file, intStack_t* stack){
     int offset = 0;
 
     // read char
-    while ((!eof_reached) && (tmp = getc(file) != -1)) {
+    while ((!eof_reached) && ((tmp = fgetc(file)) != EOF)) {
 
         // process code offset (number of spaces)
         // at the beginning of the line
         if (line_beginning) {
-            if((char)tmp == ' ') {
+            if(tmp == ' ') {
                 offset++;
                 continue;
             }
             // remove empty line and continue with next one
-            else if((char)tmp == '\n') {
+            else if(tmp == '\n') {
                 offset = 0;
                 continue;
             }
             // remove line with comment (without any code)
-            else if((char)tmp == '#') {
+            else if(tmp == '#') {
                 if(remove_line_comment(file)) {
                     return output_token; // failed to read from file
                 }
@@ -132,7 +132,10 @@ token_t scan(FILE* file, intStack_t* stack){
             }
         } // if (line_beginning)
 
-        switch ((char) tmp) {
+        // return status of auxiliary functions
+        int return_status;
+
+        switch (tmp) {
             case ':' :
                 output_token.type = T_COLON;
                 break;
@@ -142,23 +145,96 @@ token_t scan(FILE* file, intStack_t* stack){
             case '(' :
                 output_token.type = T_LPAR;
                 break;
+            case '[' :
+                output_token.type = T_LBRACKET;
+                break;
+            case ']' :
+                output_token.type = T_RBRACKET;
+                break;
+            case '{' :
+                output_token.type = T_LBRACE;
+                break;
+            case '}' :
+                output_token.type = T_RBRACE;
+                break;
             case '\'':
             case '\"':
-                if (process_string(file, &output_token, (char) tmp)) {
-                    //output_token.data.strval = NULL;
-                    output_token.type = T_NONE;
+                return_status = process_string(file, &output_token, tmp);
+                if (return_status == ANALYSIS_FAILED) {
+                    output_token.type = T_UNKNOWN;
+                }
+                else if (return_status) {
+                    output_token.type = T_ERROR;
                 }
                 break;
             case '#' :
                 if (remove_line_comment(file)) {
-                    output_token.type = T_NONE;
+                    output_token.type = T_ERROR;
+                    break;
                 }
+                continue; // process eol after comment removal
             case '=' :
+                output_token.type = T_ASSIGN;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
             case '+' :
+                output_token.type = T_OP_ADD;
+                break;
             case '-' :
+                output_token.type = T_OP_SUB;
+                break;
             case '*' :
+                output_token.type = T_OP_MUL;
+                break;
             case '/' :
-                output_token.type = T_OPERATOR;
+                output_token.type = T_OP_DIV;
+                break;
+            case '>' :
+                output_token.type = T_OP_GREATER;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_GREATER_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
+            case '<' :
+                output_token.type = T_OP_LESS;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_LESS_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
+            case '!' :
+                output_token.type = T_OP_NEG;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '=') {
+                    output_token.type = T_OP_NOT_EQ;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
+                break;
+            case ',' :
+                output_token.type = T_COMMA;
                 break;
             case '\n':
                 line_beginning = true;
@@ -166,7 +242,7 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case ' ' :
             case '\t':
-                continue; // continue with next char
+                continue; // skip whitespace
             case '1' :
             case '2' :
             case '3' :
@@ -178,15 +254,14 @@ token_t scan(FILE* file, intStack_t* stack){
             case '9' :
             case '0' :
                 // if operation fails return empty token
-                if (process_number(file, &output_token, (char) tmp)) {
-                    output_token.type = T_NONE;
+                if (process_number(file, &output_token, tmp)) {
+                    output_token.type = T_ERROR;
                 }
                 break;
             default: // keyword
-                if (is_letter(tmp) || (char) tmp == '_') {
-                    if (process_keyword(file, &output_token, (char) tmp)) {
-                        //output_token.data.strval = NULL;
-                        output_token.type = T_NONE;
+                if (is_letter(tmp) || tmp == '_') {
+                    if (process_keyword(file, &output_token, tmp)) {
+                        output_token.type = T_ERROR;
                     }
                 } else { // unknown value
                     output_token.type = T_UNKNOWN;
@@ -194,8 +269,7 @@ token_t scan(FILE* file, intStack_t* stack){
                     dynStrAppendChar(output_token.data.strval, (char) tmp);
                 }
                 break;
-        }// switch ((char) tmp)
-
+        }// switch (tmp)
 
         return output_token;
     } // while(...)
@@ -208,21 +282,8 @@ token_t scan(FILE* file, intStack_t* stack){
 
 }
 
-
-bool is_dec(int num){
-    return ((num >= '0') && (num <= '9'));
-}
-
-
 bool is_oct(int num){
     return ((num >= '0') && (num <= '7'));
-}
-
-
-bool is_hex(int num){
-    return (((num >= '0') && (num <= '7'))
-         || ((num >= 'a') && (num <= 'f'))
-         || ((num >= 'A') && (num <= 'F')));
 }
 
 
@@ -230,20 +291,19 @@ bool is_bin(int num) {
     return ((num == '0') || (num == '1'));
 }
 
-
-int process_number(FILE* file, token_t* token ,char first_number){
+int process_number(FILE* file, token_t* token, int first_number) {
 
     // check file
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // if no token is supplied
     if(!token){
-        return -2;
+        return EXECUTION_ERROR;
     }
     // if token already have some value - exit
     if(token->data.strval){
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     // set token type to number
@@ -256,60 +316,51 @@ int process_number(FILE* file, token_t* token ,char first_number){
     dynStr_t* str_number;
     str_number = dynStrInit();
 
-    dynStrAppendChar(str_number, first_number);
+    dynStrAppendChar(str_number, (char) first_number);
     // temporary char buffer
     int tmp;
 
     // read next char, check for eof
-    if((tmp = fgetc(file)) == -1){
+    if((tmp = fgetc(file)) == EOF){
         eof_reached = true;
         token->data.intval = strtol(str_number->string,
                                     NULL, 10);
         dynStrFree(str_number);
-        return 0;
+        return SUCCESS;
     }
 
     // if first number is 0 value can be binary, octal or hexadecimal
     if(first_number == '0') {
         // check second value
-        // is number between <0,7> = octal
-        if(is_oct(tmp)) {
-            type = N_OCT;
-            dynStrAppendChar(str_number, (char)tmp);
-        }
-        else { // is code
-            switch ((char)tmp) {
-                // binary
-                case 'B' :
-                case 'b' :
-                    type = N_BIN;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // hexadecimal
-                case 'X' :
-                case 'x' :
-                    type = N_HEX;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // octal
-                case 'O' :
-                case 'o' :
-                    type = N_OCT;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                case 'e' :
-                case 'E' :
-                case '.' :
-                    type = N_FLO;
-                    dynStrAppendChar(str_number, (char)tmp);
-                    break;
-                    // none of these
-                    // value will be checked in first iteration of
-                    // while cycle
-                default:
-                    break;
-            } // switch ((char)tmp)
-        }
+        switch (tmp) {
+            // binary
+            case 'B' :
+            case 'b' :
+                type = N_BIN;
+                break;
+            // hexadecimal
+            case 'X' :
+            case 'x' :
+                type = N_HEX;
+                break;
+            // octal
+            case 'O' :
+            case 'o' :
+                type = N_OCT;
+                break;
+            case 'e' :
+            case 'E' :
+            case '.' :
+                type = N_FLO;
+                dynStrAppendChar(str_number, (char)tmp);
+                break;
+            // none of these
+            // value will be checked in first iteration of while cycle
+            // TODO: send error token
+            default:
+                type = N_UNDEF;
+                break;
+            } // switch (tmp)
     } // if(first_number == '0')
 
     // read rest of the number
@@ -319,30 +370,28 @@ int process_number(FILE* file, token_t* token ,char first_number){
         if (type == N_UNDEF) {
             type = N_INT;
         }
-        else {
-            if ((tmp = fgetc(file)) == -1) {
-                eof_reached = true;
-            }
+        else if ((tmp = fgetc(file)) == EOF) {
+            eof_reached = true;
         }
 
         // check if value is number of given type
         // hexadecimal
-        if((type == N_HEX  && is_hex(tmp))
+        if((type == N_HEX  && isxdigit(tmp))
            // octal
         || (type == N_OCT && is_oct(tmp))
            // binary
         || (type == N_BIN  && is_bin(tmp))
            // int of float
         ||((type == N_INT || type == N_FLO)
-                                      && is_dec(tmp)))
+                                      && isdigit(tmp)))
         {
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
         else if((type == N_INT) && (
-                (char)tmp == '.'
-             || (char)tmp == 'e'
-             || (char)tmp == 'E'))
+                tmp == '.'
+             || tmp == 'e'
+             || tmp == 'E'))
         {
             // set type float and continue
             // after floating point / exponent
@@ -374,43 +423,42 @@ int process_number(FILE* file, token_t* token ,char first_number){
                                                 NULL, 16);
                     break;
                 case N_FLO:
+                    token->type = T_FLOAT;
                     token->data.floatval = strtod(str_number->string,
                                                   NULL);
                     break;
                 default:
-                    token->type = T_NONE;
+                    token->type = T_UNKNOWN;
                     token->data.strval = NULL;
                     break;
             }
             // deallocate the memory
             dynStrFree(str_number);
-            return 0;
+            return SUCCESS;
         }
     } // while(TRUE)
 } // process_number()
 
 
-int process_keyword(FILE* file, token_t* token, char first_char) {
+int process_keyword(FILE* file, token_t* token, int first_char) {
     // check file
     if (!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // check if token is initialized and empty
     if (!token || token->data.strval) {
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     dynStr_t* tmp_string = dynStrInit();
     // append first character
-    dynStrAppendChar(tmp_string, first_char);
+    dynStrAppendChar(tmp_string, (char) first_char);
     // temporary variable for currently processed char
     int tmp;
 
-    while ((tmp = fgetc(file)) != -1) {
+    while ((tmp = fgetc(file)) != EOF) {
         // char is part of keyword
-        if(is_letter(tmp)
-        || is_dec(tmp)
-        || (char)tmp == '_') {
+        if(isalnum(tmp) || tmp == '_') {
             dynStrAppendChar(tmp_string, (char)tmp);
         }
         else {
@@ -419,42 +467,40 @@ int process_keyword(FILE* file, token_t* token, char first_char) {
 
             if(token->type == T_ID) {
                 token->data.strval = tmp_string;
-            }
-            else {
+            } else {
                 dynStrFree(tmp_string);
             }
-            return 0;
+            return SUCCESS;
         }
     }
 
     eof_reached = true;
-    return -1;
+    return SUCCESS;
 }
 
 
 enum token_type getKeywordType(char *string) {
-    int i;
-    for(i = 0; i < 7; i++) { // 7 number of types
+    for(int i = 0; i < 6; i++) { // 6 types
         if(strcmp(string, KEYWORDS[i]) == 0){
-            break;
+            switch (i) {
+                case 0:
+                    return T_KW_DEF;
+                case 1:
+                    return T_KW_IF;
+                case 2:
+                    return T_KW_ELSE;
+                case 3:
+                    return T_KW_WHILE;
+                case 4:
+                    return T_KW_PASS;
+                case 5:
+                    return T_KW_RETURN;
+                default:
+                    return T_ID;
+            }
         }
     }
-    switch (i) {
-        case 0:
-            return T_ID_DEF;
-        case 1:
-            return T_ID_IF;
-        case 2:
-            return T_ID_ELSE;
-        case 3:
-            return T_ID_WHILE;
-        case 4:
-            return T_ID_PASS;
-        case 5:
-            return T_ID_RETURN;
-        default:
-            return T_ID;
-    }
+    return T_ID; // none of these
 }
 
 /*
@@ -470,13 +516,13 @@ int is_letter(int c) {
 // TODO
 // - check if there can be unescaped quotation marks at the middle
 // of the string
-int process_string(FILE* file, token_t* token, char qmark) {
+int process_string(FILE* file, token_t* token, int qmark) {
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
     // token must be initialized and empty
     if(!token || token->data.strval) {
-        return -2;
+        return EXECUTION_ERROR;
     }
 
     token->data.strval = dynStrInit();
@@ -494,21 +540,23 @@ int process_string(FILE* file, token_t* token, char qmark) {
     int tmp;
 
     // read to the end of string
-    while((tmp = fgetc(file)) != -1) {
+    while((tmp = fgetc(file)) != EOF) {
         if(qmark_end == qmark_beginning) {
-            if((qmark_beginning == qmark_end) == 1) {
+            ungetc(tmp, file);
+            if((qmark_beginning == 1) && (qmark_end == 1)) {
                 token->type = T_STRING;
             }
             else {
                 token->type = T_STRING_ML;
             }
+            return SUCCESS;
         }
         else if(esc) { // process escaped char
             dynStrAppendChar(token->data.strval, (char)tmp);
             esc = false;
         }
         // is same as opening quotation mark
-        else if((char)tmp == qmark) {
+        else if(tmp == qmark) {
             if(beginning && qmark_beginning < 3) {
                 qmark_beginning++;
             }
@@ -529,19 +577,19 @@ int process_string(FILE* file, token_t* token, char qmark) {
                 ungetc(tmp, file);
                 // return empty string token
                 token->type = T_STRING;
-                return 0; // success
+                return SUCCESS;
             }
             else {
                 // add char to string data
                 dynStrAppendChar(token->data.strval, (char)tmp);
-                if((char)tmp == '\\') { // escaped char
+                if(tmp == '\\') { // escaped char
                     esc = true;
                 }
             }
         }
     }// while()
     eof_reached = true;
-    return -1;
+    return ANALYSIS_FAILED; // unexpected eof
 
 }
 
@@ -549,18 +597,18 @@ int process_string(FILE* file, token_t* token, char qmark) {
 // test escaped eol! Eol in python can't be escaped!
 int remove_line_comment(FILE* file){
     if(!file) {
-        return -1;
+        return EXECUTION_ERROR;
     }
 
     // stores currently processed char
     int tmp;
 
-    while((tmp = fgetc(file)) != -1) {
-        if((char)tmp == '\n') {
+    while((tmp = fgetc(file)) != EOF) {
+        if(tmp == '\n') {
             ungetc(tmp, file);
-            return 0; // success
+            return SUCCESS;
         }
     } // while ()
     eof_reached = true;
-    return 0;
+    return SUCCESS;
 }
