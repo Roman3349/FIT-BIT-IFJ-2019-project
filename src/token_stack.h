@@ -63,15 +63,13 @@ void tokenStackPush(tokenStack_t* stack, token_t value);
 /**
  * Pops item from stack. If stack is empty gets next token from lexical analysis
  * @param stack Stack
- * @param value Popped value
- * @return No error?
+ * @return popped value
  */
-bool tokenStackPop(tokenStack_t* stack, token_t* value);
+token_t tokenStackPop(tokenStack_t* stack);
 
 /**
  * Returns top item from stack. If stack is empty load next token from lexical analysis
  * @param stack Stack
- * @param value Top item
- * @return No error?
+ * @return top value
  */
-bool tokenStackTop(tokenStack_t* stack, token_t* value);
+token_t tokenStackTop(tokenStack_t* stack);

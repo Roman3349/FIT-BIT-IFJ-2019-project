@@ -48,21 +48,20 @@ void tokenStackPush(tokenStack_t* stack, token_t value) {
     stack->head = item;
 }
 
-bool tokenStackPop(tokenStack_t* stack, token_t* value) {
+token_t tokenStackPop(tokenStack_t* stack) {
     if (tokenStackIsEmpty(stack)) {
         tokenStackPush(stack, scan(stack->file, stack->lexStack));
     }
     tokenStackItem_t* item = stack->head;
     stack->head = item->next;
-    *value = item->value;
+    token_t token = item->value;
     free(item);
-    return true;
+    return token;
 }
 
-bool tokenStackTop(tokenStack_t* stack, token_t* value) {
+token_t tokenStackTop(tokenStack_t* stack) {
     if (tokenStackIsEmpty(stack)) {
         tokenStackPush(stack, scan(stack->file, stack->lexStack));
     }
-    *value = stack->head->value;
-    return true;
+    return stack->head->value;
 }
