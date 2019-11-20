@@ -53,7 +53,7 @@ treeElement_t syntaxParse(FILE * file);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseWhile(FILE* file, tokenStack_t* stack);
+bool parseWhile(tokenStack_t* stack);
 
 /**
  * Returns string representation of token
@@ -68,7 +68,7 @@ char* tokenToString(token_t token);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseBlock(FILE* file, tokenStack_t* stack);
+bool parseBlock(tokenStack_t* stack);
 
 /**
  * Parses assignment expression
@@ -76,7 +76,7 @@ bool parseBlock(FILE* file, tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseAssignment(FILE* file, tokenStack_t* stack);
+bool parseAssignment(tokenStack_t* stack);
 
 
 /**
@@ -85,7 +85,7 @@ bool parseAssignment(FILE* file, tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionCall(FILE* file, tokenStack_t* stack);
+bool parseFunctionCall(tokenStack_t* stack);
 
 /**
  * Parses pass keyword
@@ -93,4 +93,4 @@ bool parseFunctionCall(FILE* file, tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parsePass(FILE* file, tokenStack_t* stack);
+bool parsePass(tokenStack_t* stack);
