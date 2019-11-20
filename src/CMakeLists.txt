@@ -22,6 +22,8 @@ file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 add_library(dynamic_string dynamic_string.c dynamic_string.h)
 add_library(scanner scanner.c scanner.h)
 add_library(stack stack.c stack.h)
+target_link_libraries(scanner dynamic_string stack)
 
-add_executable(ic19int ${_HDRFILES} ${_SRCFILES})
+add_executable(ic19int main.c)
+target_link_libraries(ic19int scanner)
 
