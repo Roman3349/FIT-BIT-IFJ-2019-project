@@ -32,14 +32,14 @@ extern "C" {
 		token_t token = scan(file, stack);\
 		ASSERT_EQ(token.type, tokenType);\
 		EXPECT_EQ(token.data.floatval, value);\
-	} while (false);
+	} while (false)
 
 #define ASSERT_TOKEN_INTEGER(file, tokenType, value) \
 	do {\
 		token_t token = scan(file, stack);\
 		ASSERT_EQ(token.type, tokenType);\
 		EXPECT_EQ(token.data.intval, value);\
-	} while (false);
+	} while (false)
 
 #define ASSERT_TOKEN_STRING(file, tokenType, value) \
 	do {\
@@ -47,13 +47,13 @@ extern "C" {
 		ASSERT_EQ(token.type, tokenType);\
 		EXPECT_STREQ(token.data.strval->string, value);\
 		dynStrFree(token.data.strval);\
-	} while (false);
+	} while (false)
 
 #define ASSERT_TOKEN(file, tokenType) \
 	do {\
 		token_t token = scan(file, stack);\
 		ASSERT_EQ(token.type, tokenType);\
-	} while (false);
+	} while (false)
 
 namespace Tests {
 
@@ -97,7 +97,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tokenEOL) {
+	TEST_F(ScannerTest, tokenErrIndentation) {
 		FILE* file = openFile("errIndentation.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_KW_IF);
@@ -349,7 +349,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tokenExample2) {;
+	TEST_F(ScannerTest, tokenExample2) {
 		FILE* file = openFile("example2.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_KW_DEF);
@@ -413,7 +413,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_KW_IF);
-		ASSERT_TOKEN_STRING(file, T_ID, "a")
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
 		ASSERT_TOKEN(file, T_OP_LESS);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0.0);
 		ASSERT_TOKEN(file, T_COLON);
@@ -440,14 +440,14 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN_STRING(file, T_STRING, "Vysledek je:");
 		ASSERT_TOKEN(file, T_COMMA);
-		ASSERT_TOKEN_STRING(file, T_ID, "vysl")
+		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-		TEST_F(ScannerTest, tokenExample3) {;
+	TEST_F(ScannerTest, tokenExample3) {
 		FILE* file = openFile("example3.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_STRING_ML, " Program 3: Prace s retezci a vestavenymi funkcemi ");
@@ -532,7 +532,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
-​
+
 		ASSERT_TOKEN(file, T_KW_IF);
 		ASSERT_TOKEN_STRING(file, T_ID, "s1");
 		ASSERT_TOKEN(file, T_OP_NOT_EQ);
