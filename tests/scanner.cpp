@@ -128,7 +128,7 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, tokenOctInt) {
-		FILE* file = openFile("OctInt.ifj19");
+		FILE* file = openFile("octInt.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 100);
 		ASSERT_TOKEN(file, T_EOL);
@@ -224,6 +224,10 @@ namespace Tests {
 	TEST_F(ScannerTest, tokenError) {
 		FILE* file = openFile("errToken.ifj19");
 		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_ERROR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_ERROR);
