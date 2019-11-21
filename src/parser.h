@@ -22,6 +22,37 @@
 #include "stdbool.h"
 #include "token_stack.h"
 
+enum statementPart{
+    S_EOL = T_EOL,
+    S_INDENT = T_INDENT,
+    S_DEDENT = T_DEDENT,
+    S_COLON = T_COLON,
+    S_LPAR = T_LPAR,
+    S_RPAR = T_RPAR,
+    S_ID = T_ID,
+    S_KW_IF = T_KW_IF,
+    S_KW_PASS = T_KW_PASS,
+    S_KW_RETURN = T_KW_RETURN,
+    S_KW_ELSE = T_KW_ELSE,
+    S_KW_DEF = T_KW_DEF,
+    S_KW_WHILE = T_KW_WHILE,
+    S_BLOCK = 0xFFFF,
+    S_EXPRESSION,
+    S_DEF_PARAMS,
+    S_CALL_PARAMS
+    };
+
+typedef enum statementPart statementPart_t;
+
+//Statement definitions
+statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT };
+statementPart_t if_s[] = {S_KW_IF, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
+statementPart_t pass_s[] = {S_KW_PASS, S_EOL};
+statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION, S_EOL};
+statementPart_t else_s[] = {S_KW_ELSE, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
+statementPart_t functionDef_s[] = {S_KW_DEF, S_ID, S_LPAR, S_DEF_PARAMS, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
+statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS};
+
 
 // Derivation tree element data
 typedef union treeElData treeElData_t;
@@ -71,15 +102,6 @@ char* tokenToString(enum token_type type);
 bool parseBlock(tokenStack_t* stack);
 
 /**
- * Parses assignment expression
- * @param file source file
- * @param stack token stack
- * @return parsing successful
- */
-bool parseAssignment(tokenStack_t* stack);
-
-
-/**
  * Parses function call
  * @param file source file
  * @param stack token stack
@@ -125,9 +147,46 @@ bool parseElse(tokenStack_t* stack);
 bool parseFunctionDef(tokenStack_t* stack);
 
 /**
+ * Parses function definition parameters
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseFunctionDefParams(tokenStack_t* stack);
+
+/**
+ * Parses function call parameters
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseFunctionCallParams(tokenStack_t* stack);
+
+/**
  * Check if next token matches expected token eventually prints error message
  * @param stack token stack
  * @param expectedToken expected token
  * @return got expected token
  */
 bool processToken(tokenStack_t* stack, enum token_type expectedToken);
+
+/**
+ * Converts statementPart to token if possible
+ * @param statementPart statement part
+ * @param type pointer to token type function
+ * @return conversion successful
+ */
+bool statementPartToTokenType(statementPart_t statementPart, enum token_type* type);
+
+/**
+ * Parses expression
+ * @param stack token stack
+ * @return parsing successful
+ */
+bool parseExpression(tokenStack_t* stack);
+
+/**
+ * Processes statement part
+ * @param stack token stack
+ * @param part statement part
+ * @return processing successful
+ */
+bool processStatementPart(tokenStack_t* stack, statementPart_t part);

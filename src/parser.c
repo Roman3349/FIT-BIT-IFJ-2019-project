@@ -69,18 +69,51 @@ bool processToken(tokenStack_t* stack, enum token_type type) {
     return true;
 }
 
+bool processStatementPart(tokenStack_t* stack, statementPart_t part) {
+    enum token_type tokenType;
+    switch(part) {
+        case S_BLOCK:
+            if(!parseBlock(stack))
+                return false;
+            break;
+        case S_EXPRESSION:
+            if(!parseExpression(stack))
+                return false;
+            break;
+        case S_DEF_PARAMS:
+            if(!parseFunctionDefParams(stack))
+                return false;
+            break;
+        case S_CALL_PARAMS:
+            if(!parseFunctionCallParams(stack))
+                return false;
+            break;
+
+        default:
+            if(statementPartToTokenType(part, &tokenType)) {
+                if(!processToken(stack, tokenType))
+                    return false;
+            } else {
+                return false;
+            }
+    }
+
+    return true;
+}
+
 bool parseFunctionDef(tokenStack_t* stack) {
-    if(!processToken(stack, T_KW_DEF))
-        return false;
+    size_t partSize = sizeof(functionDef_s) / sizeof(functionDef_s[0]); //Get number of statement parts
 
-    if(!processToken(stack, T_ID))
-        return false;
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, functionDef_s[i]))
+            return false;
+    }
 
-    if(!processToken(stack, T_LPAR))
-        return false;
+    return true;
+}
 
+bool parseFunctionDefParams(tokenStack_t* stack) {
     bool parameters = true;
-
     while(parameters) {
         token_t token = tokenStackPop(stack);
         switch (token.type) {
@@ -99,31 +132,16 @@ bool parseFunctionDef(tokenStack_t* stack) {
                 return false;
         }
     }
-
-    if(!processToken(stack, T_COLON))
-        return false;
-
-    if(!processToken(stack, T_EOL))
-        return false;
-
-    if(!processToken(stack, T_INDENT))
-        return false;
-
-    if(!parseBlock(stack))
-        return false;
-
-    if(!processToken(stack, T_DEDENT))
-        return false;
-
     return true;
 }
 
 bool parseExpression(tokenStack_t* stack){
     bool expression = true;
     while(expression) {
-        token_t token = tokenStackPop(stack);
+        token_t token = tokenStackTop(stack);
         switch (token.type) {
             case T_LPAR:
+                tokenStackPop(stack); //Pop ( from the stack
                 if(!parseExpression(stack))
                     return false;
                 processToken(stack, T_RPAR);
@@ -135,8 +153,10 @@ bool parseExpression(tokenStack_t* stack){
             case T_STRING:
             case T_ID:
             case T_STRING_ML:
+                token = tokenStackPop(stack);
                 if(token.type == T_ID){
                     if(tokenStackTop(stack).type == T_LPAR) { // operator is function call
+                        tokenStackPush(stack, token); //Push back function ID
                         parseFunctionCall(stack);
                     }
                 }
@@ -176,29 +196,12 @@ bool parseExpression(tokenStack_t* stack){
 }
 
 bool parseWhile(tokenStack_t* stack) {
+    size_t partSize = sizeof(while_s) / sizeof(while_s[0]); //Get number of statement parts
 
-    if(!processToken(stack, T_KW_WHILE))
-        return false;
-
-    if(!parseExpression(stack)) {
-        return false;
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, while_s[i]))
+            return false;
     }
-
-    if(!processToken(stack, T_COLON))
-        return false;
-
-    if(!processToken(stack, T_EOL))
-        return false;
-
-    if(!processToken(stack, T_INDENT))
-        return false;
-
-    if(!parseBlock(stack)) {
-        return false;
-    }
-
-    if(!processToken(stack, T_DEDENT))
-        return false;
 
     return true;
 }
@@ -261,81 +264,55 @@ bool parseBlock(tokenStack_t* stack) {
 
 
 bool parseIf(tokenStack_t* stack) {
-    if(!processToken(stack, T_KW_IF))
-        return false;
+    size_t partSize = sizeof(if_s) / sizeof(if_s[0]); //Get number of statement parts
 
-    if(!parseExpression(stack)) {
-        return false;
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, if_s[i]))
+            return false;
     }
-
-    if(!processToken(stack, T_COLON))
-        return false;
-
-    if(!processToken(stack, T_EOL))
-        return false;
-
-    if(!processToken(stack, T_INDENT))
-        return false;
-
-    if(!parseBlock(stack))
-        return false;
-
-    if(!processToken(stack, T_DEDENT))
-        return false;
 
     if(tokenStackTop(stack).type == T_KW_ELSE) {
-        if(!parseElse(stack)) {
-            return false;
-        }
+        parseElse(stack);
     }
+
     return true;
 }
 
 bool parseElse(tokenStack_t* stack) {
+    size_t partSize = sizeof(else_s) / sizeof(else_s[0]); //Get number of statement parts
 
-    if(!processToken(stack, T_KW_ELSE))
-        return false;
-
-    if(!processToken(stack, T_COLON))
-        return false;
-
-    if(!processToken(stack, T_EOL))
-        return false;
-
-    if(!processToken(stack, T_INDENT))
-        return false;
-
-    if(!parseBlock(stack))
-        return false;
-
-    if(!processToken(stack, T_DEDENT))
-        return false;
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, else_s[i]))
+            return false;
+    }
 
     return true;
 }
 
 bool parseReturn(tokenStack_t* stack) {
-    if(!processToken(stack, T_KW_RETURN))
-        return false;
+    size_t partSize = sizeof(return_s) / sizeof(return_s[0]); //Get number of statement parts
 
-    token_t token = tokenStackTop(stack);
-    if(token.type != T_EOL) {
-        if(!parseExpression(stack)) {
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, return_s[i]))
             return false;
-        }
     }
-
-    tokenStackPop(stack); // pop EOL from stack
 
     return true;
 }
 
 bool parseFunctionCall(tokenStack_t* stack) {
+    size_t partSize = sizeof(functionCall_s) / sizeof(functionCall_s[0]); //Get number of statement parts
+
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, functionCall_s[i]))
+            return false;
+    }
+
+    return true;
+}
+
+bool parseFunctionCallParams(tokenStack_t* stack) {
     bool parameters = true;
-
-    if(!processToken(stack, T_LPAR))
-        return false;
-
     while(parameters) {
         if(!parseExpression(stack))
             return false;
@@ -345,24 +322,42 @@ bool parseFunctionCall(tokenStack_t* stack) {
         else if(tokenStackTop(stack).type == T_RPAR)
             parameters = false;
     }
-
-    if(tokenStackTop(stack).type == T_EOL) { //TODO: function call inside expression
-        tokenStackPop(stack);
-
-    }
-
     return true;
 }
 
 
 bool parsePass(tokenStack_t* stack) {
-    if(!processToken(stack, T_KW_PASS))
-        return false;
+    size_t partSize = sizeof(pass_s) / sizeof(pass_s[0]); //Get number of statement parts
 
-    if(!processToken(stack, T_EOL))
-        return false;
+    for(size_t i = 0; i < partSize; i++){
+        if(!processStatementPart(stack, pass_s[i]))
+            return false;
+    }
 
     return true;
+}
+
+bool statementPartToTokenType(statementPart_t part, enum token_type* type){
+    switch(part){
+        case S_EOL:
+        case S_INDENT:
+        case S_DEDENT:
+        case S_COLON:
+        case S_LPAR:
+        case S_RPAR:
+        case S_ID:
+        case S_KW_IF:
+        case S_KW_PASS:
+        case S_KW_RETURN:
+        case S_KW_ELSE:
+        case S_KW_DEF:
+        case S_KW_WHILE:
+            *type = (enum token_type)part;
+            return true;
+
+        default:
+            return false;
+    }
 }
 
 char* tokenToString (enum token_type type) {
