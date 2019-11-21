@@ -91,7 +91,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tokenEOL) {;
+	TEST_F(ScannerTest, tokenEOL) {
 		FILE* file = openFile("eol.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_EOF);
@@ -112,6 +112,40 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
 		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 37);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenOctInt) {
+		FILE* file = openFile("OctInt.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 100);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 100);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 100);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 100);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
@@ -122,19 +156,30 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
 		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 65534);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
+
 	TEST_F(ScannerTest, tokenFloatE) {
 		FILE* file = openFile("float_e.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 2e+7);
 		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_EOF);
-	}
-
-	TEST_F(ScannerTest, tokenFloatE2) {
-		FILE* file = openFile("float_e2.ifj19");
-		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0e3);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0e-3);
@@ -145,6 +190,18 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e+0);
 		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
@@ -153,15 +210,27 @@ namespace Tests {
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 1555.37);
 		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_EOF);
-	}
-
-	TEST_F(ScannerTest, tokenFloatDot2) {
-		FILE* file = openFile("float_dot2.ifj19");
-		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 0.5);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 5.0);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tokenError) {
+		FILE* file = openFile("errToken.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ERROR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
