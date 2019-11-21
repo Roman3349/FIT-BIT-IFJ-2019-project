@@ -425,7 +425,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
-​
+
 		ASSERT_TOKEN(file, T_KW_IF);
 		ASSERT_TOKEN_STRING(file, T_ID, "s1");
 		ASSERT_TOKEN(file, T_OP_NOT_EQ);

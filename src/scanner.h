@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include "dynamic_string.h"
 #include "stack.h"
 
@@ -29,7 +30,6 @@
 #define EXECUTION_ERROR -1
 #define ANALYSIS_FAILED -2
 
-// TODO - add handling of bool operations, add handling of None
 enum token_type {
     T_EOL,
     T_EOF,
@@ -38,6 +38,7 @@ enum token_type {
     T_OP_SUB,       // -
     T_OP_MUL,       // *
     T_OP_DIV,       // /
+    T_OP_IDIV,      // // (integer division)
     T_OP_EQ,        // ==
     T_OP_GREATER,   // >
     T_OP_LESS,      // <
@@ -58,6 +59,7 @@ enum token_type {
     T_KW_WHILE,
     T_KW_PASS,
     T_KW_RETURN,
+    T_KW_NONE,
     T_ASSIGN,       // =
     T_COLON,        // :
     T_COMMA,        // ,
@@ -70,7 +72,6 @@ enum token_type {
     T_INDENT,
     T_DEDENT,
     T_UNKNOWN,
-    T_NONE,
     T_ERROR         // scanner can't continue in execution
 };
 
@@ -116,7 +117,7 @@ bool is_bin(int num);
  * @param token         pointer to a token where data will be stored
  * @param first_number  first digit of the number
  * @returns execution status
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_number(FILE* file, token_t* token ,int first_number);
 
@@ -126,7 +127,7 @@ int process_number(FILE* file, token_t* token ,int first_number);
  * @param token         pointer to a token where data will be stored
  * @param first_number  first char of the keyword
  * @returns status: SUCCESS on success, EXECUTION_ERROR if there was internal error
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_keyword(FILE* file, token_t* token, int first_char);
 
@@ -150,7 +151,7 @@ int is_letter(int c);
  * @param qmark         first quotation mark, to determine string end
  * @returns status: SUCCESS on success, EXECUTION_ERROR on internal error
  *      and ANALYSIS_FAILED if string is not complete
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_string(FILE* file, token_t* token, int qmark);
 
