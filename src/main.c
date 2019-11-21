@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 #include "parser.c"
-#include "token_stack.c"
 
 /**
  * Main function

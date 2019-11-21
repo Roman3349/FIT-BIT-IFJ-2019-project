@@ -17,7 +17,7 @@
  */
 
 #include "parser.h"
-#include "token_stack.h"
+#include "token_stack.c"
 
 //#include "scanner.h"
 
@@ -150,6 +150,7 @@ bool parseExpression(tokenStack_t* stack){
                     case T_OP_MUL:
                     case T_OP_DIV:
                     case T_OP_EQ:
+                    case T_ASSIGN:
                     case T_OP_GREATER:
                     case T_OP_GREATER_EQ:
                     case T_OP_LESS:
@@ -171,7 +172,7 @@ bool parseExpression(tokenStack_t* stack){
         }
     }
 
-    return true; //FIXME: Expression grammar parser (temporary scrap 3 tokens)
+    return true;
 }
 
 bool parseWhile(tokenStack_t* stack) {
@@ -202,26 +203,6 @@ bool parseWhile(tokenStack_t* stack) {
     return true;
 }
 
-bool parseAssignment(tokenStack_t* stack) {
-    token_t token = tokenStackPop(stack);
-    if(token.type != T_ASSIGN) {
-        fprintf(stderr, "Parsing 'assignment' with  %s token.\n", tokenToString(token.type));
-        return false;
-    }
-
-    if(!parseExpression(stack)){
-        return false;
-    }
-
-    token = tokenStackPop(stack);
-    if(token.type != T_EOL) {
-        fprintf(stderr, "Syntax error. Expected EOL, got  %s token.\n", tokenToString(token.type));
-        return false;
-    }
-
-    return true;
-}
-
 bool parseBlock(tokenStack_t* stack) {
 
     /*
@@ -229,7 +210,6 @@ bool parseBlock(tokenStack_t* stack) {
      * unexpected block-tokens results in correct block parsing and returns unexpected token in last_token
     **/
     bool tokenRecognized = true;
-    token_t id;
     token_t token;
 
     while(tokenRecognized) {
@@ -257,22 +237,10 @@ bool parseBlock(tokenStack_t* stack) {
                 break;
 
             case T_ID:
-                id = tokenStackPop(stack); // variable/function ID
-                printf("ID: %s\n", id.data.strval->string);// TODO: REMOVE debug print
-
-                if(tokenStackTop(stack).type == T_ASSIGN) { // variable asignment
-                    if (!parseAssignment(stack))
+                if(!parseExpression(stack))
                         return false;
-                } else if(tokenStackTop(stack).type == T_LPAR){
-                    if(!parseFunctionCall(stack))
+                if(!processToken(stack, T_EOL)) // Newline after expression
                         return false;
-                } else {
-                    tokenStackPush(stack, id); // variable id is part of the expression;
-                    if(!parseExpression(stack))
-                        return false;
-                    if(!processToken(stack, T_EOL)) // Newline after expression
-                        return false;
-                }
                 break;
 
                 case T_NUMBER:
@@ -343,7 +311,7 @@ bool parseElse(tokenStack_t* stack) {
     if(!processToken(stack, T_DEDENT))
         return false;
 
-    return false;
+    return true;
 }
 
 bool parseReturn(tokenStack_t* stack) {
@@ -369,40 +337,13 @@ bool parseFunctionCall(tokenStack_t* stack) {
         return false;
 
     while(parameters) {
-        token_t token = tokenStackPop(stack);
-        switch (token.type) {
-            case T_NUMBER:
-            case T_ID:
-            case T_FLOAT:
-            case T_STRING:
-            case T_STRING_ML:
-                if (tokenStackTop(stack).type == T_COMMA || tokenStackTop(stack).type == T_RPAR) {
-                    if(token.type == T_ID){ //TODO: DEBUG print of function parameter REMOVE
-                        printf("parameter %s\n", token.data.strval->string);
-                    } else if (token.type == T_NUMBER) {
-                        printf("parameter %ld\n", token.data.intval);
-                    }
-                } else if (tokenStackTop(stack).type == T_LPAR) { // Nested function calls
-                    if (!parseFunctionCall(stack))
-                        return false;
-                } else {
-                    tokenStackPush(stack,token); // Parameter is expression push back id for expresion parser
-                    parseExpression(stack);
-                }
+        if(!parseExpression(stack))
+            return false;
 
-                if(tokenStackTop(stack).type == T_COMMA)
-                    tokenStackPop(stack);// pop comma token if multiple parameters
-                break;
-
-            case T_RPAR: {
-                parameters = false;
-                break;
-            }
-
-            default:
-                fprintf(stderr, "Syntax error. Expected expression got: %s\n", tokenToString(token.type));
-                return false;
-        }
+        if(tokenStackTop(stack).type == T_COMMA)
+            tokenStackPop(stack);// pop comma token if multiple parameters
+        else if(tokenStackTop(stack).type == T_RPAR)
+            parameters = false;
     }
 
     if(tokenStackTop(stack).type == T_EOL) { //TODO: function call inside expression
