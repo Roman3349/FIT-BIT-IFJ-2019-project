@@ -97,6 +97,40 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
+	TEST_F(ScannerTest, tokenEOL) {
+		FILE* file = openFile("errIndentation.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_KW_IF);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_OP_EQ);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_STRING, "jejda");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_KW_ELSE);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN(file, T_UNKNOWN);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, tabIndentation) {
+		FILE* file = openFile("tabIndentation.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
 	TEST_F(ScannerTest, tokenInt) {
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
