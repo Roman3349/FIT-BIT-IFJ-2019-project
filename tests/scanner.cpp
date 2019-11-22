@@ -231,12 +231,6 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
