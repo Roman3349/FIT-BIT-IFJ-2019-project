@@ -25,6 +25,7 @@ dynStr_t *dynStrInit() {
 	}
 	string->string = malloc(DYN_STR_LENGTH);
 	if (string->string == NULL) {
+		free(string);
 		return NULL;
 	}
 	string->alloc_size = DYN_STR_LENGTH;
