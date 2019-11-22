@@ -439,6 +439,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
         ||((type == N_INT || type == N_FLO)
                                       && isdigit(tmp)))
         {
+
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
@@ -474,7 +475,12 @@ int process_number(FILE* file, token_t* token, int first_number) {
         else if(sig && exponent && (tmp == '+' || tmp == '-')) {
             dynStrAppendChar(str_number, (char)tmp);
         }
-        // not a number
+        // not a number or not a number in given range (octal / binary)
+        else if(isalnum(tmp)) {
+            dynStrFree(str_number);
+            token->type = T_UNKNOWN;
+            return ANALYSIS_FAILED;
+        }
         else {
             // return the char
             if(!eof_reached) {

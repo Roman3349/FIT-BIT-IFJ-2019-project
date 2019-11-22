@@ -71,7 +71,7 @@ enum token_type {
     T_RBRACE,       // }
     T_INDENT,
     T_DEDENT,
-    T_UNKNOWN,
+    T_UNKNOWN,      // lexical analysis failed - bad syntax
     T_ERROR         // scanner can't continue in execution
 };
 
