@@ -20,12 +20,16 @@ file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 
 add_library(dynamic_string dynamic_string.c dynamic_string.h)
+add_library(parser parser.c parser.h)
 add_library(scanner scanner.c scanner.h)
 add_library(stack stack.c stack.h)
 add_library(symtable symtable.c symtable.h)
+add_library(token_stack token_stack.c token_stack.h)
 target_link_libraries(scanner dynamic_string stack)
+target_link_libraries(token_stack scanner)
+target_link_libraries(parser token_stack)
 target_link_libraries(symtable dynamic_string)
 
 add_executable(ic19int main.c)
-target_link_libraries(ic19int scanner)
+target_link_libraries(ic19int scanner parser)
 
