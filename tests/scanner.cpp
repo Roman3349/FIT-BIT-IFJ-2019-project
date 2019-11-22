@@ -116,9 +116,10 @@ namespace Tests {
 
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_KW_ELSE);
-		ASSERT_TOKEN(file, T_INDENT);
+        ASSERT_TOKEN(file, T_EOL);
+		//ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOF);
+		//ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tabIndentation) {

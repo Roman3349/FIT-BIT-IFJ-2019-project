@@ -284,8 +284,11 @@ token_t scan(FILE* file, intStack_t* stack){
             case '8' :
             case '9' :
             case '0' :
-                // if operation fails return empty token
-                if (process_number(file, &output_token, tmp)) {
+                return_status = process_number(file, &output_token, tmp);
+                if (return_status == ANALYSIS_FAILED) {
+                    output_token.type = T_UNKNOWN;
+                }
+                else if (return_status == EXECUTION_ERROR) {
                     output_token.type = T_ERROR;
                 }
                 break;
@@ -296,8 +299,6 @@ token_t scan(FILE* file, intStack_t* stack){
                     }
                 } else { // unknown value
                     output_token.type = T_UNKNOWN;
-                    output_token.data.strval = dynStrInit();
-                    dynStrAppendChar(output_token.data.strval, (char) tmp);
                 }
                 break;
         }// switch (tmp)
@@ -384,30 +385,19 @@ int process_number(FILE* file, token_t* token, int first_number) {
             case 'B' :
             case 'b' :
                 type = N_BIN;
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // hexadecimal
             case 'X' :
             case 'x' :
                 type = N_HEX;
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // octal
             case 'O' :
             case 'o' :
                 type = N_OCT;
-                break;
-            case 'e' :
-            case 'E' :
-                type = N_FLO;
-                base = strtod(str_number->string, NULL);
-                // clear number to store exponent
-                dynStrClear(str_number);
-                exponent = true;
-                // next char can be exponent signature (+ or -)
-                sig = true;
-                break;
-            case '.' :
-                type = N_FLO;
-                dynStrAppendChar(str_number, (char)tmp);
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // none of these
             // value will be checked in first iteration of while cycle
@@ -456,7 +446,6 @@ int process_number(FILE* file, token_t* token, int first_number) {
 
             if(exponent) { // exponent is parsed allready
                 dynStrFree(str_number);
-                token->type = T_UNKNOWN;
                 return ANALYSIS_FAILED;
             }
             type = N_FLO;
@@ -475,16 +464,36 @@ int process_number(FILE* file, token_t* token, int first_number) {
         else if(sig && exponent && (tmp == '+' || tmp == '-')) {
             dynStrAppendChar(str_number, (char)tmp);
         }
+        // underscore can be used for number separation, for better readability
+        else if(tmp == '_') {
+            if(!sig) { // cannot be on first position in exponent
+                continue; // skip the underscore and read the next number
+            }
+            else {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+        }
         // not a number or not a number in given range (octal / binary)
         else if(isalnum(tmp)) {
             dynStrFree(str_number);
-            token->type = T_UNKNOWN;
             return ANALYSIS_FAILED;
         }
         else {
-            // return the char
+            // put the char back
             if(!eof_reached) {
                 ungetc(tmp, file);
+            }
+            // empty string means there was only number code, not the value
+            if(strcmp(str_number->string, "") == 0) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            // only signature, but no exponent value
+            else if(strcmp(str_number->string, "+") == 0
+                 || strcmp(str_number->string, "-") == 0) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
             }
             // convert string to number
             switch (type) {
