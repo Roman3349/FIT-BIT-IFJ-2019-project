@@ -17,7 +17,7 @@
  */
 
 #include <stdio.h>
-#include "parser.c"
+#include "parser.h"
 
 /**
  * Main function

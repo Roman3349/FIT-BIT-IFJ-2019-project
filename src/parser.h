@@ -18,8 +18,10 @@
 
 #pragma once
 
+#include <stdbool.h>
+#include <stdio.h>
+
 #include "scanner.h"
-#include "stdbool.h"
 #include "token_stack.h"
 
 enum statementPart{
@@ -43,15 +45,6 @@ enum statementPart{
     };
 
 typedef enum statementPart statementPart_t;
-
-//Statement definitions
-statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT };
-statementPart_t if_s[] = {S_KW_IF, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
-statementPart_t pass_s[] = {S_KW_PASS, S_EOL};
-statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION, S_EOL};
-statementPart_t else_s[] = {S_KW_ELSE, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
-statementPart_t functionDef_s[] = {S_KW_DEF, S_ID, S_LPAR, S_DEF_PARAMS, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
-statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS};
 
 
 // Derivation tree element data
