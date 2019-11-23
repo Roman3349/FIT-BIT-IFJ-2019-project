@@ -53,7 +53,8 @@ bool treeAddToken(treeElement_t* tree, token_t token) {
     if(element == NULL)
         return false;
 
-    element->data = &token;
+    element->data = malloc(sizeof(token));
+    memcpy(element->data, &token, sizeof(token));
 
 
     return tree;
@@ -71,12 +72,13 @@ void treeFree(treeElement_t tree) {
             default:
                 break;
         }
+        free(tree.data);
         return;
     }
 
     if (tree.data != NULL) {
         for(size_t i = 0; i < tree.nodeSize; i++) {
-            treeFree(((treeElement_t *)(tree.data))[i]);
+            treeFree(((treeElement_t* )(tree.data))[i]);
         }
     }
     free(tree.data);
