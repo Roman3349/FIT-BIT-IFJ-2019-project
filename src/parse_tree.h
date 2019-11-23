@@ -75,3 +75,11 @@ void treeFree(treeElement_t tree);
  * @return insertion successful
  */
 bool treeAddToken(treeElement_t* tree, token_t token);
+
+
+/**
+ * Prints tree in readable form
+ * @param tree tree to print
+ * @param indentation initial indentation
+ */
+void printTree(treeElement_t tree, int indentation);

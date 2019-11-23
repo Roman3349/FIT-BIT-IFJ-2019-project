@@ -56,9 +56,7 @@ bool treeAddToken(treeElement_t* tree, token_t token) {
     element->data = malloc(sizeof(token));
     memcpy(element->data, &token, sizeof(token));
 
-
     return tree;
-
 }
 
 void treeFree(treeElement_t tree) {
@@ -82,5 +80,62 @@ void treeFree(treeElement_t tree) {
         }
     }
     free(tree.data);
+}
+
+void printTree(treeElement_t tree, int indent) {
+    for(int i = indent; i > 0; i--){
+        printf("\t");
+    }
+    switch(tree.type) {
+        case E_TOKEN:
+            printf("TOKEN: %s\n", tokenToString(((token_t*)tree.data)->type));
+            break;
+        case E_CODE:
+            printf("CODE ");
+            break;
+        case E_CODE_BLOCK:
+            printf("CODE_BLOCK ");
+            break;
+        case E_STATEMENTS:
+            printf("STATEMENTS ");
+            break;
+        case E_STATEMENT:
+            printf("STATEMENT ");
+            break;
+        case E_S_IF:
+            printf("IF ");
+            break;
+        case E_S_WHILE:
+            printf("WHILE ");
+            break;
+        case E_S_PASS:
+            printf("PASS ");
+            break;
+        case E_S_RETURN:
+            printf("RETURN ");
+            break;
+        case E_S_ELSE:
+            printf("ELSE ");
+            break;
+        case E_S_FUNCTION_DEF:
+            printf("FUNCTION DEF");
+            break;
+        case E_S_FUNCTION_CALL:
+            printf("FUNCTION CALL");
+            break;
+        case E_S_EXPRESSION:
+            printf("EXPRESSION");
+            break;
+    }
+    if(tree.type != E_TOKEN) {
+        printf("{\n");
+        for (size_t i = 0; i < tree.nodeSize; i++) {
+            printTree(((treeElement_t *) tree.data)[i], indent + 1);
+        }
+        for(int j = indent; j > 0; j--){
+            printf("\t");
+        }
+        printf("}\n");
+    }
 }
 
