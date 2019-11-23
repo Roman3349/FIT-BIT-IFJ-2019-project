@@ -24,10 +24,10 @@ const char* KEYWORDS[] = {
         "while",
         "pass",
         "return",
+        "None",
         "and",
         "or",
-        "not",
-        "none"
+        "not"
 };
 
 enum number_type {
