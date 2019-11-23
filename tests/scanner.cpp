@@ -255,18 +255,12 @@ namespace Tests {
 		FILE* file = openFile("errToken.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		//ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_ID);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		//ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
