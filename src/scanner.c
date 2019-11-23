@@ -167,18 +167,6 @@ token_t scan(FILE* file, intStack_t* stack){
             case '(' :
                 output_token.type = T_LPAR;
                 break;
-            case '[' :
-                output_token.type = T_LBRACKET;
-                break;
-            case ']' :
-                output_token.type = T_RBRACKET;
-                break;
-            case '{' :
-                output_token.type = T_LBRACE;
-                break;
-            case '}' :
-                output_token.type = T_RBRACE;
-                break;
             case '\'':
             case '\"':
                 return_status = process_string(file, &output_token, tmp);
@@ -436,7 +424,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
         else if((type == N_INT) && (tmp == '.'))
         {
             // set type float and continue
-            // after floating point / exponent
+            // after decimal point
             type = N_FLO;
             dynStrAppendChar(str_number, (char)tmp);
         }
@@ -456,8 +444,6 @@ int process_number(FILE* file, token_t* token, int first_number) {
             exponent = true;
             // next char can be exponent signature (+ or -)
             sig = true;
-            // sig is set to false at the end of the cycle
-            // this will keep it until next char evaluation is complete
             continue;
         }
         // process exponent signature
@@ -495,6 +481,12 @@ int process_number(FILE* file, token_t* token, int first_number) {
                 dynStrFree(str_number);
                 return ANALYSIS_FAILED;
             }
+            // TODO - maybe find diferet way how to check?
+            // number after decimal point is missing
+            else if(str_number->string[str_number->size - 1] == '.') {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
             // convert string to number
             switch (type) {
                 case N_INT:
@@ -515,7 +507,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
                     break;
                 case N_FLO:
                     token->type = T_FLOAT;
-                    if(!exponent) {
+                    if(!exponent) { // number with decimal point
                         token->data.floatval = strtod(str_number->string,
                                                       NULL);
                     }
@@ -692,13 +684,36 @@ int process_string(FILE* file, token_t* token, int qmark) {
                 if(tmp == '\\') {
                     esc = true;
                 }
+                else if (tmp == '\n' && qmark_beginning == 1) {
+                    // fail if there is newline, and string is not multiline
+                    dynStrFree(token->data.strval);
+                    token->data.strval = NULL;
+                    return ANALYSIS_FAILED;
+                }
                 // add char to string data
                 dynStrAppendChar(token->data.strval, (char) tmp);
             }
         }
     }// while()
+
     eof_reached = true;
-    return ANALYSIS_FAILED; // unexpected eof
+
+    // string is complete (was completed in last iteration)
+    if(qmark_end == qmark_beginning) {
+        ungetc(tmp, file);
+        if((qmark_beginning == 1) && (qmark_end == 1)) {
+            token->type = T_STRING;
+        }
+        else {
+            token->type = T_STRING_ML;
+        }
+        return SUCCESS;
+    }
+    else { // eof is in the middle of the string
+        dynStrFree(token->data.strval);
+        token->data.strval = NULL;
+        return ANALYSIS_FAILED;
+    }
 
 }
 

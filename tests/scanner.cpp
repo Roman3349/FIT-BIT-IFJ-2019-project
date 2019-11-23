@@ -244,6 +244,7 @@ namespace Tests {
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 5.0);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 0);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOL);
@@ -254,9 +255,10 @@ namespace Tests {
 		FILE* file = openFile("errToken.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
+		//ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_ID);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
+		//ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);

@@ -65,10 +65,6 @@ enum token_type {
     T_COMMA,        // ,
     T_LPAR,         // (
     T_RPAR,         // )
-    T_LBRACKET,     // [
-    T_RBRACKET,     // ]
-    T_LBRACE,       // {
-    T_RBRACE,       // }
     T_INDENT,
     T_DEDENT,
     T_UNKNOWN,      // lexical analysis failed - bad syntax
