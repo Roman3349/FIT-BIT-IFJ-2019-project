@@ -23,7 +23,11 @@ const char* KEYWORDS[] = {
         "else",
         "while",
         "pass",
-        "return"
+        "return",
+        "and",
+        "or",
+        "not",
+        "none"
 };
 
 enum number_type {
@@ -58,6 +62,8 @@ token_t scan(FILE* file, intStack_t* stack){
     int tmp = 0;
     // beginning of the line
     static bool line_beginning = true;
+    // char used for indentation
+    static int offset_char = '\0';
     // code offset
     int offset = 0;
 
@@ -66,10 +72,25 @@ token_t scan(FILE* file, intStack_t* stack){
 
         // process code offset (number of spaces)
         // at the beginning of the line
+        // TODO
+        // add handling for tabs!
         if (line_beginning) {
-            if(tmp == ' ') {
-                offset++;
-                continue;
+            if(tmp == ' ' || tmp == '\t') {
+                // set char used in indentation on first occurrence
+                if(offset_char == '\0'){
+                    offset_char = tmp;
+                    offset++;
+                    continue;
+                }
+                else if(tmp == offset_char) {
+                    offset++;
+                    continue;
+                }
+                else {
+                    // error - there are mixed tabs and spaces in indentation
+                    output_token.type = T_UNKNOWN;
+                    return output_token;
+                }
             }
             // remove empty line and continue with next one
             else if(tmp == '\n') {
@@ -113,6 +134,7 @@ token_t scan(FILE* file, intStack_t* stack){
 
                     // offset doesn't match the previous block offset
                     if (offset != previousBlockOffset) {
+                        output_token.type = T_UNKNOWN;
                         return output_token;
                     }
 
@@ -144,18 +166,6 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case '(' :
                 output_token.type = T_LPAR;
-                break;
-            case '[' :
-                output_token.type = T_LBRACKET;
-                break;
-            case ']' :
-                output_token.type = T_RBRACKET;
-                break;
-            case '{' :
-                output_token.type = T_LBRACE;
-                break;
-            case '}' :
-                output_token.type = T_RBRACE;
                 break;
             case '\'':
             case '\"':
@@ -196,6 +206,15 @@ token_t scan(FILE* file, intStack_t* stack){
                 break;
             case '/' :
                 output_token.type = T_OP_DIV;
+                if((tmp = fgetc(file)) == EOF) {
+                    eof_reached = true;
+                }
+                else if(tmp == '/') {
+                    output_token.type = T_OP_IDIV;
+                }
+                else {
+                    ungetc(tmp, file);
+                }
                 break;
             case '>' :
                 output_token.type = T_OP_GREATER;
@@ -253,8 +272,11 @@ token_t scan(FILE* file, intStack_t* stack){
             case '8' :
             case '9' :
             case '0' :
-                // if operation fails return empty token
-                if (process_number(file, &output_token, tmp)) {
+                return_status = process_number(file, &output_token, tmp);
+                if (return_status == ANALYSIS_FAILED) {
+                    output_token.type = T_UNKNOWN;
+                }
+                else if (return_status == EXECUTION_ERROR) {
                     output_token.type = T_ERROR;
                 }
                 break;
@@ -265,8 +287,6 @@ token_t scan(FILE* file, intStack_t* stack){
                     }
                 } else { // unknown value
                     output_token.type = T_UNKNOWN;
-                    output_token.data.strval = dynStrInit();
-                    dynStrAppendChar(output_token.data.strval, (char) tmp);
                 }
                 break;
         }// switch (tmp)
@@ -275,9 +295,18 @@ token_t scan(FILE* file, intStack_t* stack){
     } // while(...)
 
     // eof reached
-    line_beginning = true;
-    eof_reached = false;
-    output_token.type = T_EOF;
+
+    // return all indentation from stack
+    if(!stackIsEmpty(stack)) {
+        int tmpvar; // temporary stores offset
+        stackPop(stack, &tmpvar);
+        output_token.type = T_DEDENT;
+    }
+    else {
+        line_beginning = true;
+        eof_reached = false;
+        output_token.type = T_EOF;
+    }
     return output_token;
 
 }
@@ -312,6 +341,13 @@ int process_number(FILE* file, token_t* token, int first_number) {
     // number type
     enum number_type type = N_UNDEF;
 
+    // is set to true if exponent is found
+    int exponent = false;
+    // set to true if next char can be exponent signature
+    int sig = false;
+    // temporary variable for storing base if number have exponent
+    double base = 0;
+
     // temporary number string buffer
     dynStr_t* str_number;
     str_number = dynStrInit();
@@ -337,26 +373,22 @@ int process_number(FILE* file, token_t* token, int first_number) {
             case 'B' :
             case 'b' :
                 type = N_BIN;
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // hexadecimal
             case 'X' :
             case 'x' :
                 type = N_HEX;
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // octal
             case 'O' :
             case 'o' :
                 type = N_OCT;
-                break;
-            case 'e' :
-            case 'E' :
-            case '.' :
-                type = N_FLO;
-                dynStrAppendChar(str_number, (char)tmp);
+                dynStrClear(str_number); // remove number type code from string
                 break;
             // none of these
             // value will be checked in first iteration of while cycle
-            // TODO: send error token
             default:
                 type = N_UNDEF;
                 break;
@@ -385,24 +417,75 @@ int process_number(FILE* file, token_t* token, int first_number) {
         ||((type == N_INT || type == N_FLO)
                                       && isdigit(tmp)))
         {
+
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
-        else if((type == N_INT) && (
-                tmp == '.'
-             || tmp == 'e'
-             || tmp == 'E'))
+        else if((type == N_INT) && (tmp == '.'))
         {
             // set type float and continue
-            // after floating point / exponent
+            // after decimal point
             type = N_FLO;
             dynStrAppendChar(str_number, (char)tmp);
         }
-        // not a number
+        // float with exponent - base * 10 ^ exp
+        else if((type == N_INT || type == N_FLO)
+             && (tmp == 'e' || tmp == 'E')) {
+
+            if(exponent) { // exponent is parsed allready
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            type = N_FLO;
+            // base is complete
+            base = strtod(str_number->string, NULL);
+            // clear number to store exponent
+            dynStrClear(str_number);
+            exponent = true;
+            // next char can be exponent signature (+ or -)
+            sig = true;
+            continue;
+        }
+        // process exponent signature
+        else if(sig && exponent && (tmp == '+' || tmp == '-')) {
+            dynStrAppendChar(str_number, (char)tmp);
+        }
+        // underscore can be used for number separation, for better readability
+        else if(tmp == '_') {
+            if(!sig) { // cannot be on first position in exponent
+                continue; // skip the underscore and read the next number
+            }
+            else {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+        }
+        // not a number or not a number in given range (octal / binary)
+        else if(isalnum(tmp)) {
+            dynStrFree(str_number);
+            return ANALYSIS_FAILED;
+        }
         else {
-            // return the char
+            // put the char back
             if(!eof_reached) {
                 ungetc(tmp, file);
+            }
+            // empty string means there was only number code, not the value
+            if(strcmp(str_number->string, "") == 0) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            // only signature, but no exponent value
+            else if(strcmp(str_number->string, "+") == 0
+                 || strcmp(str_number->string, "-") == 0) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            // TODO - maybe find diferet way how to check?
+            // number after decimal point is missing
+            else if(str_number->string[str_number->size - 1] == '.') {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
             }
             // convert string to number
             switch (type) {
@@ -424,8 +507,14 @@ int process_number(FILE* file, token_t* token, int first_number) {
                     break;
                 case N_FLO:
                     token->type = T_FLOAT;
-                    token->data.floatval = strtod(str_number->string,
-                                                  NULL);
+                    if(!exponent) { // number with decimal point
+                        token->data.floatval = strtod(str_number->string,
+                                                      NULL);
+                    }
+                    else { // base * 10 ^ exp
+                        double exp = strtod(str_number->string, NULL);
+                        token->data.floatval = base * pow(10, exp);
+                    }
                     break;
                 default:
                     token->type = T_UNKNOWN;
@@ -436,6 +525,9 @@ int process_number(FILE* file, token_t* token, int first_number) {
             dynStrFree(str_number);
             return SUCCESS;
         }
+
+        sig = false;
+
     } // while(TRUE)
 } // process_number()
 
@@ -480,8 +572,8 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
 
 
 enum token_type getKeywordType(char *string) {
-    for(int i = 0; i < 6; i++) { // 6 types
-        if(strcmp(string, KEYWORDS[i]) == 0){
+    for(int i = 0; i < 10; i++) { // 10 types
+        if(strcmp(string, KEYWORDS[i]) == 0) {
             switch (i) {
                 case 0:
                     return T_KW_DEF;
@@ -495,6 +587,14 @@ enum token_type getKeywordType(char *string) {
                     return T_KW_PASS;
                 case 5:
                     return T_KW_RETURN;
+                case 6:
+                    return T_KW_NONE;
+                case 7:
+                    return T_BOOL_AND;
+                case 8:
+                    return T_BOOL_OR;
+                case 9:
+                    return T_BOOL_NEG;
                 default:
                     return T_ID;
             }
@@ -580,16 +680,40 @@ int process_string(FILE* file, token_t* token, int qmark) {
                 return SUCCESS;
             }
             else {
-                // add char to string data
-                dynStrAppendChar(token->data.strval, (char)tmp);
-                if(tmp == '\\') { // escaped char
+                // escaped char
+                if(tmp == '\\') {
                     esc = true;
                 }
+                else if (tmp == '\n' && qmark_beginning == 1) {
+                    // fail if there is newline, and string is not multiline
+                    dynStrFree(token->data.strval);
+                    token->data.strval = NULL;
+                    return ANALYSIS_FAILED;
+                }
+                // add char to string data
+                dynStrAppendChar(token->data.strval, (char) tmp);
             }
         }
     }// while()
+
     eof_reached = true;
-    return ANALYSIS_FAILED; // unexpected eof
+
+    // string is complete (was completed in last iteration)
+    if(qmark_end == qmark_beginning) {
+        ungetc(tmp, file);
+        if((qmark_beginning == 1) && (qmark_end == 1)) {
+            token->type = T_STRING;
+        }
+        else {
+            token->type = T_STRING_ML;
+        }
+        return SUCCESS;
+    }
+    else { // eof is in the middle of the string
+        dynStrFree(token->data.strval);
+        token->data.strval = NULL;
+        return ANALYSIS_FAILED;
+    }
 
 }
 
