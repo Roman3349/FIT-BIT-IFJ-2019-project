@@ -122,16 +122,6 @@ namespace Tests {
 		//ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tabIndentation) {
-		FILE* file = openFile("tabIndentation.ifj19");
-		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_INDENT);
-		ASSERT_TOKEN_STRING(file, T_ID, "a");
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_DEDENT);
-		ASSERT_TOKEN(file, T_EOF);
-	}
-
 	TEST_F(ScannerTest, tokenInt) {
 		FILE* file = openFile("int.ifj19");
 		ASSERT_NE(file, nullptr);
@@ -254,12 +244,6 @@ namespace Tests {
 	TEST_F(ScannerTest, tokenError) {
 		FILE* file = openFile("errToken.ifj19");
 		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_ID);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOF);
 	}
