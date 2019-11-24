@@ -27,7 +27,9 @@ const char* KEYWORDS[] = {
         "None",
         "and",
         "or",
-        "not"
+        "not",
+        "True",
+        "False"
 };
 
 enum number_type {
@@ -281,11 +283,12 @@ token_t scan(FILE* file, intStack_t* stack){
                 }
                 break;
             default: // keyword
-                if (is_letter(tmp) || tmp == '_') {
+                if (isalpha(tmp) || tmp == '_') {
                     if (process_keyword(file, &output_token, tmp)) {
                         output_token.type = T_ERROR;
                     }
-                } else { // unknown value
+                }
+                else { // unknown value
                     output_token.type = T_UNKNOWN;
                 }
                 break;
@@ -341,10 +344,12 @@ int process_number(FILE* file, token_t* token, int first_number) {
     // number type
     enum number_type type = N_UNDEF;
 
+    // tels if last processed char was a decimal point
+    bool decimalPoint = false;
     // is set to true if exponent is found
-    int exponent = false;
-    // set to true if next char can be exponent signature
-    int sig = false;
+    bool exponent = false;
+    // set to true if next char can be exponent sign
+    bool sig = false;
     // temporary variable for storing base if number have exponent
     double base = 0;
 
@@ -417,7 +422,6 @@ int process_number(FILE* file, token_t* token, int first_number) {
         ||((type == N_INT || type == N_FLO)
                                       && isdigit(tmp)))
         {
-
             dynStrAppendChar(str_number, (char)tmp);
         }
         // float detection
@@ -427,6 +431,8 @@ int process_number(FILE* file, token_t* token, int first_number) {
             // after decimal point
             type = N_FLO;
             dynStrAppendChar(str_number, (char)tmp);
+            decimalPoint = true;
+            continue;
         }
         // float with exponent - base * 10 ^ exp
         else if((type == N_INT || type == N_FLO)
@@ -442,11 +448,11 @@ int process_number(FILE* file, token_t* token, int first_number) {
             // clear number to store exponent
             dynStrClear(str_number);
             exponent = true;
-            // next char can be exponent signature (+ or -)
+            // next char can be exponent sign (+ or -)
             sig = true;
             continue;
         }
-        // process exponent signature
+        // process exponent sign
         else if(sig && exponent && (tmp == '+' || tmp == '-')) {
             dynStrAppendChar(str_number, (char)tmp);
         }
@@ -470,20 +476,20 @@ int process_number(FILE* file, token_t* token, int first_number) {
             if(!eof_reached) {
                 ungetc(tmp, file);
             }
-            // empty string means there was only number code, not the value
-            if(strcmp(str_number->string, "") == 0) {
-                dynStrFree(str_number);
-                return ANALYSIS_FAILED;
-            }
-            // only signature, but no exponent value
-            else if(strcmp(str_number->string, "+") == 0
-                 || strcmp(str_number->string, "-") == 0) {
-                dynStrFree(str_number);
-                return ANALYSIS_FAILED;
-            }
-            // TODO - maybe find diferet way how to check?
             // number after decimal point is missing
-            else if(str_number->string[str_number->size - 1] == '.') {
+            if(decimalPoint) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            // empty string means there was only number code, not the value
+            // or exponent number in baseEexp format is missing
+            if(dynStrEqualString(str_number, "")) {
+                dynStrFree(str_number);
+                return ANALYSIS_FAILED;
+            }
+            // only sign, but no exponent value
+            else if(dynStrEqualString(str_number, "+")
+                 || dynStrEqualString(str_number, "-")) {
                 dynStrFree(str_number);
                 return ANALYSIS_FAILED;
             }
@@ -526,7 +532,9 @@ int process_number(FILE* file, token_t* token, int first_number) {
             return SUCCESS;
         }
 
-        sig = false;
+        // resets state variables:
+        decimalPoint = false; // tels if last processed char was a decimal pint
+        sig = false; // tels if next char can be sign
 
     } // while(TRUE)
 } // process_number()
@@ -559,7 +567,8 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
 
             if(token->type == T_ID) {
                 token->data.strval = tmp_string;
-            } else {
+            }
+            else {
                 dynStrFree(tmp_string);
             }
             return SUCCESS;
@@ -572,7 +581,7 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
 
 
 enum token_type getKeywordType(char *string) {
-    for(int i = 0; i < 10; i++) { // 10 types
+    for(int i = 0; i < 12; i++) { // 12 types
         if(strcmp(string, KEYWORDS[i]) == 0) {
             switch (i) {
                 case 0:
@@ -595,6 +604,10 @@ enum token_type getKeywordType(char *string) {
                     return T_BOOL_OR;
                 case 9:
                     return T_BOOL_NEG;
+                case 10:
+                    return T_BOOL_TRUE;
+                case 11:
+                    return T_BOOL_FALSE;
                 default:
                     return T_ID;
             }
@@ -602,16 +615,6 @@ enum token_type getKeywordType(char *string) {
     }
     return T_ID; // none of these
 }
-
-/*
- * Checks if given string is lowercase of uppercase letter
- * @param c  string to check
- * @returns TRUE if c is letter in given range, FALSE otherwise
- */
-int is_letter(int c) {
-    return (((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')));
-}
-
 
 // TODO
 // - check if there can be unescaped quotation marks at the middle
@@ -628,9 +631,9 @@ int process_string(FILE* file, token_t* token, int qmark) {
     token->data.strval = dynStrInit();
 
     // is set to true if character is escaped
-    int esc = false;
+    bool esc = false;
     // if set to false after beginning of the string is processed
-    int beginning = true;
+    bool beginning = true;
 
     // counter of quotation marks of the string / comment
     int qmark_beginning = 1;
@@ -652,7 +655,75 @@ int process_string(FILE* file, token_t* token, int qmark) {
             return SUCCESS;
         }
         else if(esc) { // process escaped char
-            dynStrAppendChar(token->data.strval, (char)tmp);
+
+            switch (tmp) {
+                case '\\':
+                    dynStrAppendChar(token->data.strval, '\\');
+                    break;
+                case '\'':
+                    dynStrAppendChar(token->data.strval, '\'');
+                    break;
+                case '\"':
+                    dynStrAppendChar(token->data.strval, '\"');
+                    break;
+                case 'a' :
+                    dynStrAppendChar(token->data.strval, '\a');
+                    break;
+                case 'b' :
+                    dynStrAppendChar(token->data.strval, '\b');
+                    break;
+                case 'f' :
+                    dynStrAppendChar(token->data.strval, '\f');
+                    break;
+                case 'n' :
+                    dynStrAppendChar(token->data.strval, '\n');
+                    break;
+                case 'r' :
+                    dynStrAppendChar(token->data.strval, '\r');
+                    break;
+                case 't' :
+                    dynStrAppendChar(token->data.strval, '\t');
+                    break;
+                case 'v' :
+                    dynStrAppendChar(token->data.strval, '\v');
+                    break;
+                case '3' : // \ooo ASCII character with octal value ooo
+                case '2' :
+                case '1' :
+                case '0' :
+                    for (int i = 0; i < 3; i++) {
+                        if (is_oct(tmp)) {
+                            dynStrAppendChar(token->data.strval, (char) tmp);
+                            tmp = fgetc(file);
+                        }
+                        else { // bad octal value of character
+                            dynStrFree(token->data.strval);
+                            token->data.strval = NULL;
+                            return ANALYSIS_FAILED;
+                        }
+                    }
+                    ungetc(tmp, file);
+                    break;
+                case 'x' : // \xhh... ASCII character with hex value hh...
+                    dynStrAppendChar(token->data.strval, (char) tmp);
+                    tmp = fgetc(file);
+                    for (int i = 0; i < 2; i++) {
+                        if (isxdigit(tmp)) {
+                            dynStrAppendChar(token->data.strval, (char) tmp);
+                            tmp = fgetc(file);
+                        }
+                        else { // bad hexa value of character
+                            dynStrFree(token->data.strval);
+                            token->data.strval = NULL;
+                            return ANALYSIS_FAILED;
+                        }
+                    }
+                    break;
+                default :
+                    dynStrAppendChar(token->data.strval, '\\');
+                    dynStrAppendChar(token->data.strval, (char)tmp);
+                    break;
+            }
             esc = false;
         }
         // is same as opening quotation mark
@@ -690,8 +761,11 @@ int process_string(FILE* file, token_t* token, int qmark) {
                     token->data.strval = NULL;
                     return ANALYSIS_FAILED;
                 }
-                // add char to string data
-                dynStrAppendChar(token->data.strval, (char) tmp);
+                else {
+                    // add char to string data
+                    dynStrAppendChar(token->data.strval, (char) tmp);
+                }
+
             }
         }
     }// while()

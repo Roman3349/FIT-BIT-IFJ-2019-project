@@ -48,6 +48,8 @@ enum token_type {
     T_BOOL_AND,     // and
     T_BOOL_OR,      // or
     T_BOOL_NEG,     // not
+    T_BOOL_TRUE,
+    T_BOOL_FALSE,
     T_NUMBER,
     T_FLOAT,
     T_STRING,
@@ -103,7 +105,7 @@ bool is_oct(int num);
 /*
  * Checks if digit is binary
  * @param num  digit to check
- * @returns TRUE if number is binary, FALSE otherwise
+ * @returns true if number is binary, false otherwise
  */
 bool is_bin(int num);
 
@@ -132,13 +134,6 @@ int process_keyword(FILE* file, token_t* token, int first_char);
  * @returns token type
  */
 enum token_type getKeywordType(char* string);
-
-/*
- * Checks if given character is lowercase of uppercase letter
- * @param c  string to check
- * @returns TRUE if c is letter in given range, FALSE otherwise
- */
-int is_letter(int c);
 
 /*
  * Scans string or multiline comment to a token
