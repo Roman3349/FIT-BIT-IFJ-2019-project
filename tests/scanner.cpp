@@ -73,6 +73,7 @@ namespace Tests {
 		 */
 		void SetUp() override {
 			stack = stackInit();
+			stackPush(stack, 0);
 		}
 
 		/**

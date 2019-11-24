@@ -55,8 +55,12 @@ token_t scan(FILE* file, intStack_t* stack){
     if(!file){
         return output_token;
     }
-    // return error if stack is not initialized
+    // return error if stack is NULL
     if(!stack){
+        return output_token;
+    }
+    // stack is not initialized (doesn't have 0 on top)
+    if (stackIsEmpty(stack)) {
         return output_token;
     }
 
@@ -110,37 +114,39 @@ token_t scan(FILE* file, intStack_t* stack){
                 // put back last char to be processed later (its not offset char)
                 ungetc(tmp, file);
                 line_beginning = false;
-                int lastOffset; // offset of current block
-                if (stackIsEmpty(stack)) {
-                    lastOffset = 0; // main block
-                }
-                else if (!stackTop(stack, &lastOffset)) {
+                int lastOffset; // offset of current block (last on stack)
+                if (!stackTop(stack, &lastOffset)) {
                     return output_token; // failed to read from stack
                 }
                 // end of code block
                 if(lastOffset > offset) {
                     // check offset of previous block:
-
                     // pop current offset
                     if (!stackPop(stack, &lastOffset)) {
                         return output_token; // pop failed
                     }
-
+                    // read previous offset
                     int previousBlockOffset;
-                    if (stackIsEmpty(stack)) {
-                        previousBlockOffset = 0; // main block
-                    }
-                    else if (!stackTop(stack, &previousBlockOffset)){
+                    if (!stackTop(stack, &previousBlockOffset)){
                         return output_token; // top failed
                     }
 
-                    // offset doesn't match the previous block offset
-                    if (offset != previousBlockOffset) {
+                    // offset is higher than previous block offset
+                    // but lower than current block offset
+                    // error of indentation
+                    if (offset > previousBlockOffset) {
                         output_token.type = T_UNKNOWN;
                         return output_token;
                     }
-
-                    // offset match
+                    // offset is lower (return from multiple indent)
+                    else if (offset < previousBlockOffset) {
+                        // force evaluation of indentation next time
+                        line_beginning = true;
+                        // stack value is popped already
+                        for ( ; offset > 0; offset--) {
+                            ungetc(offset_char, file); // undo all offset chars
+                        } // return dedent token
+                    } // else - offset match
                     output_token.type = T_DEDENT;
                     return output_token;
                 }
@@ -300,9 +306,14 @@ token_t scan(FILE* file, intStack_t* stack){
     // eof reached
 
     // return all indentation from stack
-    if(!stackIsEmpty(stack)) {
-        int tmpvar; // temporary stores offset
-        stackPop(stack, &tmpvar);
+    int tmpvar; // temporary stores offset
+    if(!stackTop(stack, &tmpvar)) {
+        return output_token;
+    }
+    else if(tmpvar) {
+        if(!stackPop(stack, &tmpvar)) {
+            return output_token;
+        }
         output_token.type = T_DEDENT;
     }
     else {
@@ -575,6 +586,14 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
         }
     }
 
+    token->type = getKeywordType(tmp_string->string);
+
+    if(token->type == T_ID) {
+        token->data.strval = tmp_string;
+    }
+    else {
+        dynStrFree(tmp_string);
+    }
     eof_reached = true;
     return SUCCESS;
 }
@@ -656,6 +675,9 @@ int process_string(FILE* file, token_t* token, int qmark) {
         }
         else if(esc) { // process escaped char
 
+            char charCode[] = "\0\0\0";
+            long intCharVal;
+
             switch (tmp) {
                 case '\\':
                     dynStrAppendChar(token->data.strval, '\\');
@@ -693,7 +715,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
                 case '0' :
                     for (int i = 0; i < 3; i++) {
                         if (is_oct(tmp)) {
-                            dynStrAppendChar(token->data.strval, (char) tmp);
+                            charCode[i] = (char)tmp;
                             tmp = fgetc(file);
                         }
                         else { // bad octal value of character
@@ -702,14 +724,16 @@ int process_string(FILE* file, token_t* token, int qmark) {
                             return ANALYSIS_FAILED;
                         }
                     }
+                    intCharVal = strtol(charCode, NULL, 8);
+                    dynStrAppendChar(token->data.strval, (char)intCharVal);
                     ungetc(tmp, file);
                     break;
                 case 'x' : // \xhh... ASCII character with hex value hh...
-                    dynStrAppendChar(token->data.strval, (char) tmp);
+                    charCode[0] = '0';
                     tmp = fgetc(file);
-                    for (int i = 0; i < 2; i++) {
+                    for (int i = 1; i < 3; i++) {
                         if (isxdigit(tmp)) {
-                            dynStrAppendChar(token->data.strval, (char) tmp);
+                            charCode[i] = (char)tmp;
                             tmp = fgetc(file);
                         }
                         else { // bad hexa value of character
@@ -718,6 +742,9 @@ int process_string(FILE* file, token_t* token, int qmark) {
                             return ANALYSIS_FAILED;
                         }
                     }
+                    intCharVal = strtol(charCode, NULL, 16);
+                    dynStrAppendChar(token->data.strval, (char)intCharVal);
+                    ungetc(tmp, file);
                     break;
                 default :
                     dynStrAppendChar(token->data.strval, '\\');
