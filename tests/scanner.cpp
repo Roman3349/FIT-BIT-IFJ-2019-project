@@ -544,4 +544,19 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
+	TEST_F(ScannerTest, escapeSeq) {
+		FILE* file = openFile("escapeSeq.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_STRING, "\'\r\n\t1Nn\\\"");
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
 }
