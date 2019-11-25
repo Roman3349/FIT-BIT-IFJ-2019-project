@@ -15,21 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
-#define FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
+#pragma once
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include "dynamic_string.h"
 #include "stack.h"
 
-#define SUCCESS 0
-#define EXECUTION_ERROR -1
-#define ANALYSIS_FAILED -2
+enum execution_status {
+	SUCCESS = 0,
+	EXECUTION_ERROR = -1,
+	ANALYSIS_FAILED = -2
+};
 
-// TODO - add handling of bool operations, add handling of None
 enum token_type {
     T_EOL,
     T_EOF,
@@ -38,15 +39,13 @@ enum token_type {
     T_OP_SUB,       // -
     T_OP_MUL,       // *
     T_OP_DIV,       // /
+    T_OP_IDIV,      // // (integer division)
     T_OP_EQ,        // ==
     T_OP_GREATER,   // >
     T_OP_LESS,      // <
     T_OP_GREATER_EQ,// >=
     T_OP_LESS_EQ,   // <=
     T_OP_NOT_EQ,    // !=
-    T_BOOL_AND,     // and
-    T_BOOL_OR,      // or
-    T_BOOL_NEG,     // not
     T_NUMBER,
     T_FLOAT,
     T_STRING,
@@ -58,19 +57,20 @@ enum token_type {
     T_KW_WHILE,
     T_KW_PASS,
     T_KW_RETURN,
+    T_KW_NONE,
+    T_BOOL_AND,     // and
+    T_BOOL_OR,      // or
+    T_BOOL_NEG,     // not
+    T_BOOL_TRUE,
+    T_BOOL_FALSE,
     T_ASSIGN,       // =
     T_COLON,        // :
     T_COMMA,        // ,
     T_LPAR,         // (
     T_RPAR,         // )
-    T_LBRACKET,     // [
-    T_RBRACKET,     // ]
-    T_LBRACE,       // {
-    T_RBRACE,       // }
     T_INDENT,
     T_DEDENT,
-    T_UNKNOWN,
-    T_NONE,
+    T_UNKNOWN,      // lexical analysis failed - bad syntax
     T_ERROR         // scanner can't continue in execution
 };
 
@@ -87,7 +87,7 @@ typedef struct token {
     tokenValue_t data;
 } token_t;
 
-/*
+/**
  * Scans source code in file and creates token representation
  * @param file    source file
  * @param stack   stack for offset checking
@@ -96,69 +96,61 @@ typedef struct token {
  */
 token_t scan(FILE* file, intStack_t* stack);
 
-/*
+/**
  * Checks if digit is octal
  * @param num  digit to check
  * @returns true if number is octal, false if not
  */
 bool is_oct(int num);
 
-/*
+/**
  * Checks if digit is binary
  * @param num  digit to check
- * @returns TRUE if number is binary, FALSE otherwise
+ * @returns true if number is binary, false otherwise
  */
 bool is_bin(int num);
 
-/*
+/**
  * Scans number to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param first_number  first digit of the number
  * @returns execution status
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_number(FILE* file, token_t* token ,int first_number);
 
-/*
+/**
  * Scans keyword to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param first_number  first char of the keyword
  * @returns status: SUCCESS on success, EXECUTION_ERROR if there was internal error
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_keyword(FILE* file, token_t* token, int first_char);
 
-/*
+/**
  * @param keyword scanned to string
  * @returns token type
  */
 enum token_type getKeywordType(char* string);
 
-/*
- * Checks if given character is lowercase of uppercase letter
- * @param c  string to check
- * @returns TRUE if c is letter in given range, FALSE otherwise
- */
-int is_letter(int c);
-
-/*
+/**
  * Scans string or multiline comment to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
  * @param qmark         first quotation mark, to determine string end
  * @returns status: SUCCESS on success, EXECUTION_ERROR on internal error
  *      and ANALYSIS_FAILED if string is not complete
- * @pre token must be empty - initialized to type T_NONE and value NULL
+ * @pre token must be empty - token.data.strval must point to NULL
  */
 int process_string(FILE* file, token_t* token, int qmark);
 
-/*
+/**
  * Scans line comment to a token (everything to the end of the line)
  * @param file          source file
  * @returns status: SUCCESS or EXECUTION_ERROR
  */
 int remove_line_comment(FILE* file);
 
-#endif //FIT_BIT_IFJ_2019_PROJECT_SCANNER_H

@@ -72,3 +72,10 @@ bool dynStrAppendString(dynStr_t *string, const char* str);
  * @return String equality
  */
 bool dynStrEqualString(dynStr_t* string, const char* str);
+
+/**
+ * Checks if the dynamic string is empty
+ * @param string Dynamic string
+ * @return Is dynamic string empty?
+ */
+bool dynStrIsEmpty(dynStr_t *string);

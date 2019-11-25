@@ -25,6 +25,7 @@ dynStr_t *dynStrInit() {
 	}
 	string->string = malloc(DYN_STR_LENGTH);
 	if (string->string == NULL) {
+		free(string);
 		return NULL;
 	}
 	string->alloc_size = DYN_STR_LENGTH;
@@ -36,6 +37,11 @@ void dynStrClear(dynStr_t *string) {
 	assert(string != NULL);
 	string->string[0] = 0;
 	string->size = 0;
+	char *tmp = realloc(string->string, DYN_STR_LENGTH);
+	if (tmp == NULL) {
+		return;
+	}
+	string->string = tmp;
 }
 
 void dynStrFree(dynStr_t *string) {
@@ -82,4 +88,8 @@ bool dynStrAppendString(dynStr_t *string, const char* str) {
 bool dynStrEqualString(dynStr_t* string, const char* str) {
 	assert(string != NULL);
 	return strcmp(string->string, str) == 0;
+}
+
+bool dynStrIsEmpty(dynStr_t *string) {
+	return string->size == 0;
 }
