@@ -550,7 +550,7 @@ namespace Tests {
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_ID, "a");
 		ASSERT_TOKEN(file, T_ASSIGN);
-		ASSERT_TOKEN_STRING(file, T_STRING, "\'\r\n\t1Nn\\\"");
+		ASSERT_TOKEN_STRING(file, T_STRING, "\'\r\n\t12Nn\\\"\\Z");
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
 		ASSERT_TOKEN(file, T_LPAR);
