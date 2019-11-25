@@ -494,7 +494,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
             }
             // empty string means there was only number code, not the value
             // or exponent number in baseEexp format is missing
-            if(dynStrEqualString(str_number, "")) {
+            if(dynStrIsEmpty(str_number)) {
                 dynStrFree(str_number);
                 return ANALYSIS_FAILED;
             }
