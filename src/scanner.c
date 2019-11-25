@@ -365,8 +365,7 @@ int process_number(FILE* file, token_t* token, int first_number) {
     double base = 0;
 
     // temporary number string buffer
-    dynStr_t* str_number;
-    str_number = dynStrInit();
+    dynStr_t* str_number = dynStrInit();
 
     dynStrAppendChar(str_number, (char) first_number);
     // temporary char buffer
@@ -384,21 +383,18 @@ int process_number(FILE* file, token_t* token, int first_number) {
     // if first number is 0 value can be binary, octal or hexadecimal
     if(first_number == '0') {
         // check second value
-        switch (tmp) {
+        switch (tolower(tmp)) {
             // binary
-            case 'B' :
             case 'b' :
                 type = N_BIN;
                 dynStrClear(str_number); // remove number type code from string
                 break;
             // hexadecimal
-            case 'X' :
             case 'x' :
                 type = N_HEX;
                 dynStrClear(str_number); // remove number type code from string
                 break;
             // octal
-            case 'O' :
             case 'o' :
                 type = N_OCT;
                 dynStrClear(str_number); // remove number type code from string
@@ -602,34 +598,7 @@ int process_keyword(FILE* file, token_t* token, int first_char) {
 enum token_type getKeywordType(char *string) {
     for(int i = 0; i < 12; i++) { // 12 types
         if(strcmp(string, KEYWORDS[i]) == 0) {
-            switch (i) {
-                case 0:
-                    return T_KW_DEF;
-                case 1:
-                    return T_KW_IF;
-                case 2:
-                    return T_KW_ELSE;
-                case 3:
-                    return T_KW_WHILE;
-                case 4:
-                    return T_KW_PASS;
-                case 5:
-                    return T_KW_RETURN;
-                case 6:
-                    return T_KW_NONE;
-                case 7:
-                    return T_BOOL_AND;
-                case 8:
-                    return T_BOOL_OR;
-                case 9:
-                    return T_BOOL_NEG;
-                case 10:
-                    return T_BOOL_TRUE;
-                case 11:
-                    return T_BOOL_FALSE;
-                default:
-                    return T_ID;
-            }
+	        return  i + T_KW_DEF;
         }
     }
     return T_ID; // none of these
@@ -777,22 +746,18 @@ int process_string(FILE* file, token_t* token, int qmark) {
                 token->type = T_STRING;
                 return SUCCESS;
             }
+            else if(tmp == '\\') { // escaped char
+                esc = true;
+            }
+            else if (tmp == '\n' && qmark_beginning == 1) {
+                // fail if there is newline, and string is not multiline
+                dynStrFree(token->data.strval);
+                token->data.strval = NULL;
+                return ANALYSIS_FAILED;
+            }
             else {
-                // escaped char
-                if(tmp == '\\') {
-                    esc = true;
-                }
-                else if (tmp == '\n' && qmark_beginning == 1) {
-                    // fail if there is newline, and string is not multiline
-                    dynStrFree(token->data.strval);
-                    token->data.strval = NULL;
-                    return ANALYSIS_FAILED;
-                }
-                else {
-                    // add char to string data
-                    dynStrAppendChar(token->data.strval, (char) tmp);
-                }
-
+                // add char to string data
+                dynStrAppendChar(token->data.strval, (char) tmp);
             }
         }
     }// while()
@@ -802,7 +767,7 @@ int process_string(FILE* file, token_t* token, int qmark) {
     // string is complete (was completed in last iteration)
     if(qmark_end == qmark_beginning) {
         ungetc(tmp, file);
-        if((qmark_beginning == 1) && (qmark_end == 1)) {
+        if(qmark_beginning == 1) {
             token->type = T_STRING;
         }
         else {

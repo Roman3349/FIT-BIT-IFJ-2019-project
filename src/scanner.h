@@ -15,8 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
-#define FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
+#pragma once
 
 #include <ctype.h>
 #include <stdio.h>
@@ -26,9 +25,11 @@
 #include "dynamic_string.h"
 #include "stack.h"
 
-#define SUCCESS 0
-#define EXECUTION_ERROR -1
-#define ANALYSIS_FAILED -2
+enum execution_status {
+	SUCCESS = 0,
+	EXECUTION_ERROR = -1,
+	ANALYSIS_FAILED = -2
+};
 
 enum token_type {
     T_EOL,
@@ -45,11 +46,6 @@ enum token_type {
     T_OP_GREATER_EQ,// >=
     T_OP_LESS_EQ,   // <=
     T_OP_NOT_EQ,    // !=
-    T_BOOL_AND,     // and
-    T_BOOL_OR,      // or
-    T_BOOL_NEG,     // not
-    T_BOOL_TRUE,
-    T_BOOL_FALSE,
     T_NUMBER,
     T_FLOAT,
     T_STRING,
@@ -62,6 +58,11 @@ enum token_type {
     T_KW_PASS,
     T_KW_RETURN,
     T_KW_NONE,
+    T_BOOL_AND,     // and
+    T_BOOL_OR,      // or
+    T_BOOL_NEG,     // not
+    T_BOOL_TRUE,
+    T_BOOL_FALSE,
     T_ASSIGN,       // =
     T_COLON,        // :
     T_COMMA,        // ,
@@ -86,7 +87,7 @@ typedef struct token {
     tokenValue_t data;
 } token_t;
 
-/*
+/**
  * Scans source code in file and creates token representation
  * @param file    source file
  * @param stack   stack for offset checking
@@ -95,21 +96,21 @@ typedef struct token {
  */
 token_t scan(FILE* file, intStack_t* stack);
 
-/*
+/**
  * Checks if digit is octal
  * @param num  digit to check
  * @returns true if number is octal, false if not
  */
 bool is_oct(int num);
 
-/*
+/**
  * Checks if digit is binary
  * @param num  digit to check
  * @returns true if number is binary, false otherwise
  */
 bool is_bin(int num);
 
-/*
+/**
  * Scans number to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
@@ -119,7 +120,7 @@ bool is_bin(int num);
  */
 int process_number(FILE* file, token_t* token ,int first_number);
 
-/*
+/**
  * Scans keyword to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
@@ -129,13 +130,13 @@ int process_number(FILE* file, token_t* token ,int first_number);
  */
 int process_keyword(FILE* file, token_t* token, int first_char);
 
-/*
+/**
  * @param keyword scanned to string
  * @returns token type
  */
 enum token_type getKeywordType(char* string);
 
-/*
+/**
  * Scans string or multiline comment to a token
  * @param file          source file
  * @param token         pointer to a token where data will be stored
@@ -146,11 +147,10 @@ enum token_type getKeywordType(char* string);
  */
 int process_string(FILE* file, token_t* token, int qmark);
 
-/*
+/**
  * Scans line comment to a token (everything to the end of the line)
  * @param file          source file
  * @returns status: SUCCESS or EXECUTION_ERROR
  */
 int remove_line_comment(FILE* file);
 
-#endif //FIT_BIT_IFJ_2019_PROJECT_SCANNER_H
