@@ -14,7 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFLAGS=-std=c99 -g -Wall -Werror -pedantic
+CFLAGS=-std=c99 -g -Wall -Werror -pedantic -lm
 OBJECTS=$(SOURCES:.c=.o)
 SOURCES=$(wildcard src/*.c)
 TARGET=ic19int
