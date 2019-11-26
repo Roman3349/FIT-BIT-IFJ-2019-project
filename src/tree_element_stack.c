@@ -17,7 +17,7 @@
  */
 #include "tree_element_stack.h"
 
-treeStack_t* tokenStackInit() {
+treeStack_t* treeStackInit() {
     treeStack_t* stack = malloc(sizeof(treeStack_t));
     stack->head = NULL;
     return stack;
@@ -57,7 +57,7 @@ treeElement_t* treeStackPop(treeStack_t* stack) {
 }
 
 treeElement_t* treeStackTop(treeStack_t* stack) {
-    if (tokenStackIsEmpty(stack)) {
+    if (treeStackIsEmpty(stack)) {
         return NULL;
     }
     return stack->head->value;
