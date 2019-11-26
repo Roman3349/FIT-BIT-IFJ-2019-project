@@ -17,7 +17,7 @@
  */
 #include "tree_element_stack.h"
 
-treeStack_t* tokenStackInit() {
+treeStack_t* treeStackInit() {
     treeStack_t* stack = malloc(sizeof(treeStack_t));
     stack->head = NULL;
     return stack;
