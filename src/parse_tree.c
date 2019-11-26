@@ -17,6 +17,7 @@
  */
 
 #include "parse_tree.h"
+#include "parser.h"
 
 void treeInit(treeElement_t* tree, treeElementType_t elementType) {
     tree->type = elementType;
@@ -126,7 +127,52 @@ void printTree(treeElement_t tree, int indent) {
         case E_S_EXPRESSION:
             printf("EXPRESSION");
             break;
-    }
+		case E_ADD:
+			printf("+");
+			break;
+		case E_SUB:
+			printf("-");
+			break;
+		case E_ASSIGN:
+			printf("=");
+			break;
+		case E_MUL:
+			printf("*");
+			break;
+		case E_DIV:
+			printf("/");
+			break;
+		case E_EQ:
+			printf("==");
+			break;
+		case E_GT:
+			printf(">");
+			break;
+		case E_GTE:
+			printf(">=");
+			break;
+		case E_LT:
+			printf("<");
+			break;
+		case E_LTE:
+			printf("<=");
+			break;
+		case E_AND:
+			printf("&&");
+			break;
+		case E_OR:
+			printf("||");
+			break;
+		case E_NOT:
+			printf("!");
+			break;
+		case E_NEQ:
+			printf("!=");
+			break;
+		case E_DIV_INT:
+			printf("//");
+			break;
+	}
     if(tree.type != E_TOKEN) {
         printf("{\n");
         for (size_t i = 0; i < tree.nodeSize; i++) {
@@ -137,5 +183,38 @@ void printTree(treeElement_t tree, int indent) {
         }
         printf("}\n");
     }
+}
+
+
+bool tokenToTreeElement(enum token_type type, treeElementType_t* elementType) {
+	switch(type) {
+		case T_OP_NEG:
+		case T_OP_ADD:
+		case T_OP_SUB:
+		case T_OP_MUL:
+		case T_OP_DIV:
+		case T_OP_IDIV:
+		case T_OP_EQ:
+		case T_OP_GREATER:
+		case T_OP_LESS:
+		case T_OP_GREATER_EQ:
+		case T_OP_LESS_EQ:
+		case T_OP_NOT_EQ:
+		case T_BOOL_AND:
+		case T_BOOL_OR:
+		case T_BOOL_NEG:
+		case T_ASSIGN:
+		case T_KW_DEF:
+		case T_KW_IF:
+		case T_KW_ELSE:
+		case T_KW_WHILE:
+		case T_KW_PASS:
+		case T_KW_RETURN:
+			*elementType = (treeElementType_t) type;
+			return true;
+
+		default:
+			return false;
+	}
 }
 

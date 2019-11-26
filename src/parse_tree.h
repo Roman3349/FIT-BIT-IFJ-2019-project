@@ -21,19 +21,34 @@
 #include "scanner.h"
 
 enum treeElementType {
-    E_CODE,
+	E_ADD = T_OP_ADD,
+	E_SUB = T_OP_SUB,
+	E_MUL = T_OP_MUL,
+	E_DIV = T_OP_DIV,
+	E_EQ = T_OP_EQ,
+	E_GT = T_OP_GREATER,
+	E_GTE = T_OP_GREATER_EQ,
+	E_LT = T_OP_LESS,
+	E_LTE = T_OP_LESS_EQ,
+	E_AND = T_BOOL_AND,
+	E_OR = T_BOOL_OR,
+	E_NOT = T_BOOL_NEG,
+	E_ASSIGN = T_ASSIGN,
+	E_NEQ = T_OP_NOT_EQ,
+	E_DIV_INT = T_OP_IDIV,
+	E_TOKEN = 0xFFFF,
+	E_S_IF,
+	E_S_WHILE,
+	E_S_PASS,
+	E_S_RETURN,
+	E_S_ELSE,
+	E_CODE,
     E_CODE_BLOCK,
     E_STATEMENTS,
     E_STATEMENT,
-    E_S_IF,
-    E_S_WHILE,
-    E_S_PASS,
-    E_S_RETURN,
-    E_S_ELSE,
     E_S_FUNCTION_DEF,
     E_S_FUNCTION_CALL,
-    E_S_EXPRESSION,
-    E_TOKEN,
+    E_S_EXPRESSION
 };
 
 typedef enum treeElementType treeElementType_t;
@@ -83,3 +98,12 @@ bool treeAddToken(treeElement_t* tree, token_t token);
  * @param indentation initial indentation
  */
 void printTree(treeElement_t tree, int indentation);
+
+
+/**
+ * Converts token type to tree element type
+ * @param type tokenType
+ * @param elementType element type variable pointer
+ * @return conversion successful
+ */
+bool tokenToTreeElement(enum token_type type, treeElementType_t* elementType);

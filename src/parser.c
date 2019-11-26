@@ -19,26 +19,28 @@
 #include "parser.h"
 
 //Statement definitions
-statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT };
+statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t if_s[] = {S_KW_IF, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t pass_s[] = {S_KW_PASS, S_EOL};
 statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION, S_EOL};
 statementPart_t else_s[] = {S_KW_ELSE, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t functionDef_s[] = {S_KW_DEF, S_ID, S_LPAR, S_DEF_PARAMS, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
-statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS};
+statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS, S_RPAR};
 
 treeElement_t syntaxParse(FILE* file) {
 
     intStack_t* intStack = stackInit();
     tokenStack_t* tokenStack = tokenStackInit(file, intStack);
+    treeElement_t tree;
+    treeInit(&tree, E_CODE);
     while(tokenStackTop(tokenStack).type != T_EOF) {
-        if (!parseBlock(tokenStack)) {
+        if (!parseBlock(tokenStack, &tree)) {
             fprintf(stderr, "!!!!!!!!!!!!! SYNTAX ERROR !!!!!!!!!!!!!\n");
             break;
         }
 
         if (tokenStackTop(tokenStack).type == T_KW_DEF) {
-            parseFunctionDef(tokenStack);
+            parseFunctionDef(tokenStack, &tree);
         } else if(tokenStackTop(tokenStack).type == T_EOF) {
             break;
         } else {
@@ -49,14 +51,14 @@ treeElement_t syntaxParse(FILE* file) {
     }
     printf("Last token: %s\n", tokenToString(tokenStackTop(tokenStack).type)); //TODO: REMOVE debug print
 
-    treeElData_t data = { .d=1000 };
-    treeElement_t tree = { .data = &data };
+    printTree(tree, 0);
+    treeFree(tree);
     tokenStackFree(tokenStack);
     stackFree(intStack);
     return tree;
 }
 
-bool processToken(tokenStack_t* stack, enum token_type type) {
+bool processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree) {
     token_t token = tokenStackPop(stack);
     if(token.type != type){
         switch (type){
@@ -69,35 +71,45 @@ bool processToken(tokenStack_t* stack, enum token_type type) {
                 fprintf(stderr, "Syntax error. Expected %s, got: %s \n", tokenToString(type), tokenToString(token.type));
                 break;
         }
-
         return false;
+    }
+
+    switch (token.type) {
+    	case T_INDENT:
+    	case T_DEDENT:
+    	case T_EOL:
+    		break;
+
+		default:
+			treeAddToken(tree, token);
+			break;
     }
     return true;
 }
 
-bool processStatementPart(tokenStack_t* stack, statementPart_t part) {
+bool processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree) {
     enum token_type tokenType;
     switch(part) {
         case S_BLOCK:
-            if(!parseBlock(stack))
+            if(!parseBlock(stack, tree))
                 return false;
             break;
         case S_EXPRESSION:
-            if(!parseExpression(stack))
+            if(!parseExpression(stack, tree))
                 return false;
             break;
         case S_DEF_PARAMS:
-            if(!parseFunctionDefParams(stack))
+            if(!parseFunctionDefParams(stack, tree))
                 return false;
             break;
         case S_CALL_PARAMS:
-            if(!parseFunctionCallParams(stack))
+            if(!parseFunctionCallParams(stack, tree))
                 return false;
             break;
 
         default:
             if(statementPartToTokenType(part, &tokenType)) {
-                if(!processToken(stack, tokenType))
+                if(!processToken(stack, tokenType, tree))
                     return false;
             } else {
                 return false;
@@ -107,18 +119,19 @@ bool processStatementPart(tokenStack_t* stack, statementPart_t part) {
     return true;
 }
 
-bool parseFunctionDef(tokenStack_t* stack) {
+bool parseFunctionDef(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(functionDef_s) / sizeof(functionDef_s[0]); //Get number of statement parts
+    treeElement_t* defFunTree = treeAddElement(tree, E_S_FUNCTION_DEF);
 
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, functionDef_s[i]))
+        if(!processStatementPart(stack, functionDef_s[i], defFunTree))
             return false;
     }
 
     return true;
 }
 
-bool parseFunctionDefParams(tokenStack_t* stack) {
+bool parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
     bool parameters = true;
     while(parameters) {
         token_t token = tokenStackPop(stack);
@@ -141,16 +154,17 @@ bool parseFunctionDefParams(tokenStack_t* stack) {
     return true;
 }
 
-bool parseExpression(tokenStack_t* stack){
+bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
     bool expression = true;
+    treeElement_t* expressionTree = treeAddElement(tree, E_S_EXPRESSION);
     while(expression) {
         token_t token = tokenStackTop(stack);
         switch (token.type) {
             case T_LPAR:
                 tokenStackPop(stack); //Pop ( from the stack
-                if(!parseExpression(stack))
+                if(!parseExpression(stack, tree))
                     return false;
-                processToken(stack, T_RPAR);
+                processToken(stack, T_RPAR, tree);
                 break;
 
 
@@ -163,13 +177,14 @@ bool parseExpression(tokenStack_t* stack){
                 if(token.type == T_ID){
                     if(tokenStackTop(stack).type == T_LPAR) { // operator is function call
                         tokenStackPush(stack, token); //Push back function ID
-                        parseFunctionCall(stack);
+                        parseFunctionCall(stack, tree);
                     }
                 }
 
                 printf("EXPRESSION OPERAND: %s\n", tokenToString(token.type));
-                token_t test;
-
+                token_t operationToken;
+				treeElement_t* operationTree;
+				treeElementType_t treeElementType;
                 switch(tokenStackTop(stack).type){
                     case T_OP_ADD:
                     case T_OP_SUB:
@@ -183,15 +198,17 @@ bool parseExpression(tokenStack_t* stack){
                     case T_OP_LESS_EQ:
                     case T_OP_NEG:
                     case T_OP_NOT_EQ:
-                        test = tokenStackPop(stack);
-
-                        printf("EXPRESSION OPERATOR: %s\n", tokenToString(test.type));
+						operationToken = tokenStackPop(stack);
+                        operationTree = treeAddElement(expressionTree, tokenToTreeElement(operationToken.type, &treeElementType));
+						treeAddToken(operationTree, token);
+                        printf("EXPRESSION OPERATOR: %s\n", tokenToString(operationToken.type));
                         break;
 
                     default:
                         expression = false;
                 }
                 break;
+
 
             default:
                 expression = false;
@@ -201,54 +218,64 @@ bool parseExpression(tokenStack_t* stack){
     return true;
 }
 
-bool parseWhile(tokenStack_t* stack) {
+bool parseWhile(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(while_s) / sizeof(while_s[0]); //Get number of statement parts
 
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, while_s[i]))
+        if(!processStatementPart(stack, while_s[i], tree))
             return false;
     }
 
     return true;
 }
 
-bool parseBlock(tokenStack_t* stack) {
+bool parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 
     /*
      * If parsing of any block-statement fails block parsing fails.
-     * unexpected block-tokens results in correct block parsing and returns unexpected token in last_token
+     * unexpected block-tokens are not popped from stack
     **/
     bool tokenRecognized = true;
     token_t token;
-
+	treeElement_t* blockTree = NULL;
     while(tokenRecognized) {
         token = tokenStackTop(stack);
         printf("block parsing: %s\n", tokenToString(token.type)); //TODO: REMOVE debug print
         switch (token.type) {
             case T_KW_IF:
-                if(!parseIf(stack))
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+                if(!parseIf(stack, blockTree))
                     return false;
                 break;
 
             case T_KW_WHILE:
-                if (!parseWhile(stack))
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+                if (!parseWhile(stack, blockTree))
                     return false;
                 break;
 
             case T_KW_PASS:
-                if (!parsePass(stack))
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+                if (!parsePass(stack, blockTree))
                     return false;
                 break;
 
             case T_KW_RETURN:
-                if(!parseReturn(stack))
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+                if(!parseReturn(stack, blockTree))
                     return false;
                 break;
 
             case T_ID:
-                if(!parseExpression(stack))
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+                if(!parseExpression(stack, blockTree))
                         return false;
-                if(!processToken(stack, T_EOL)) // Newline after expression
+                if(!processToken(stack, T_EOL, blockTree)) // Newline after expression
                         return false;
                 break;
 
@@ -269,60 +296,66 @@ bool parseBlock(tokenStack_t* stack) {
 }
 
 
-bool parseIf(tokenStack_t* stack) {
+bool parseIf(tokenStack_t* stack, treeElement_t* tree) {
+	treeElement_t* ifTree = treeAddElement(tree, E_S_IF);
     size_t partSize = sizeof(if_s) / sizeof(if_s[0]); //Get number of statement parts
 
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, if_s[i]))
+        if(!processStatementPart(stack, if_s[i], ifTree))
             return false;
     }
 
     if(tokenStackTop(stack).type == T_KW_ELSE) {
-        parseElse(stack);
+        parseElse(stack, ifTree);
     }
 
     return true;
 }
 
-bool parseElse(tokenStack_t* stack) {
+bool parseElse(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(else_s) / sizeof(else_s[0]); //Get number of statement parts
 
+    treeElement_t* elseTree = treeAddElement(tree, E_S_ELSE);
+
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, else_s[i]))
+        if(!processStatementPart(stack, else_s[i], elseTree))
             return false;
     }
 
     return true;
 }
 
-bool parseReturn(tokenStack_t* stack) {
+bool parseReturn(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(return_s) / sizeof(return_s[0]); //Get number of statement parts
 
+    treeElement_t* returnTree = treeAddElement(tree, E_S_RETURN);
+
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, return_s[i]))
+        if(!processStatementPart(stack, return_s[i], returnTree))
             return false;
     }
 
     return true;
 }
 
-bool parseFunctionCall(tokenStack_t* stack) {
+bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(functionCall_s) / sizeof(functionCall_s[0]); //Get number of statement parts
 
+    treeElement_t* callTree = treeAddElement(tree, E_S_FUNCTION_CALL);
+
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, functionCall_s[i]))
+        if(!processStatementPart(stack, functionCall_s[i], callTree))
             return false;
     }
 
     return true;
 }
 
-bool parseFunctionCallParams(tokenStack_t* stack) {
+bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree) {
     bool parameters = true;
     while(parameters) {
-        if(!parseExpression(stack))
+        if(!parseExpression(stack, tree))
             return false;
-
         if(tokenStackTop(stack).type == T_COMMA)
             tokenStackPop(stack);// pop comma token if multiple parameters
         else if(tokenStackTop(stack).type == T_RPAR)
@@ -332,11 +365,13 @@ bool parseFunctionCallParams(tokenStack_t* stack) {
 }
 
 
-bool parsePass(tokenStack_t* stack) {
+bool parsePass(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(pass_s) / sizeof(pass_s[0]); //Get number of statement parts
 
+    treeElement_t* pass = treeAddElement(tree, E_S_PASS);
+
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, pass_s[i]))
+        if(!processStatementPart(stack, pass_s[i], pass))
             return false;
     }
 
@@ -432,22 +467,12 @@ char* tokenToString (enum token_type type) {
             return "'('";
         case T_RPAR:
             return "')'";
-        case T_LBRACKET:
-            return "[";
-        case T_RBRACKET:
-            return "]";
-        case T_LBRACE:
-            return "{";
-        case T_RBRACE:
-            return "}";
         case T_INDENT:
             return "INDENTATION";
         case T_DEDENT:
             return "DEDENTATION";
         case T_UNKNOWN:
             return "UNKNOWN";
-        case T_NONE:
-            return "NONE";
         case T_ERROR:
             return "ERROR";
         default:

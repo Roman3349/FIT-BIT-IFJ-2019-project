@@ -26,7 +26,8 @@
  * @return Execution status
  */
 int main(int argc, char *argv[]) {
-	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
+	FILE* file = fopen("/home/fjerabek/Downloads/example2.src", "r");
     syntaxParse(file);
+    fclose(file);
 	return 0;
 }
