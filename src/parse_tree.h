@@ -77,6 +77,15 @@ void treeInit(treeElement_t* tree, treeElementType_t type);
  */
 treeElement_t* treeAddElement(treeElement_t* treeNode, treeElementType_t treeElementType);
 
+
+/**
+ * Inserts element into tree node
+ * @param treeNode tree node
+ * @param element  inserted element
+ * @return pointer to inserted element in tree
+ */
+treeElement_t* treeInsertElement(treeElement_t* treeNode, treeElement_t element);
+
 /**
  * Recursively frees the tree
  * @param tree tree to free
