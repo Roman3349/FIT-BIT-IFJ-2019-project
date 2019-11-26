@@ -29,7 +29,7 @@ struct treeStackItem {
     treeElement_t* value;
 };
 
-typedef struct token_stack {
+typedef struct tree_stack {
     treeStackItem_t* head;
 } treeStack_t;
 
@@ -37,38 +37,38 @@ typedef struct token_stack {
  * Initializes a stack
  * @return Stack
  */
-treeStack_t* tokenStackInit();
+treeStack_t* treeStackInit();
 
 /**
  * Frees a stack
  * @param stack Stack to free
  */
-void tokenStackFree(treeStack_t* stack);
+void stackStackFree(treeStack_t* stack);
 
 /**
  * Check if a stack is empty
  * @param stack Stack to check
  * @return Is stack empty?
  */
-bool tokenStackIsEmpty(treeStack_t* stack);
+bool stackStackIsEmpty(treeStack_t* stack);
 
 /**
  * Push pointer into stack
  * @param stack Stack
  * @param value Value which will be pushed
  */
-void tokenStackPush(treeStack_t* stack, treeElement_t* value);
+void stackStackPush(treeStack_t* stack, treeElement_t* value);
 
 /**
- * Pops item from stack. If stack is empty gets next token from lexical analysis
+ * Pops item from stack.
  * @param stack Stack
  * @return popped value
  */
-treeElement_t* tokenStackPop(treeStack_t* stack);
+treeElement_t* stackStackPop(treeStack_t* stack);
 
 /**
- * Returns top item from stack. If stack is empty load next token from lexical analysis
+ * Returns top item from stack.
  * @param stack Stack
  * @return top value
  */
-treeElement_t* tokenStackTop(treeStack_t* stack);
+treeElement_t* stackStackTop(treeStack_t* stack);
