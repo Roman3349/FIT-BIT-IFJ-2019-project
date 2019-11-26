@@ -91,5 +91,47 @@ bool dynStrEqualString(dynStr_t* string, const char* str) {
 }
 
 bool dynStrIsEmpty(dynStr_t *string) {
+	assert(string != NULL);
 	return string->size == 0;
+}
+
+bool dynStrCopy(dynStr_t *dst, dynStr_t *src) {
+	assert(src != NULL);
+	assert(dst != NULL);
+	char* tmp = realloc(dst->string, src->alloc_size);
+	if (tmp == NULL) {
+		return false;
+	}
+	dst->string = tmp;
+	dst->alloc_size = src->alloc_size;
+	dst->size = src->size;
+	strncpy(dst->string, src->string, src->size);
+	return true;
+}
+
+bool dynStrEscape(dynStr_t *string) {
+	assert(string != NULL);
+	dynStr_t *tmp = dynStrInit();
+	if (tmp == NULL) {
+		return false;
+	}
+	for (size_t i = 0; i < strlen(string->string); i++) {
+		char c = string->string[i];
+		if (!isprint(c) || (c == ' ') || (c == '#') || (c == '\\')) {
+			char esc[5];
+			sprintf(esc, "\\%03d", c);
+			if (!dynStrAppendString(tmp, esc)) {
+				return false;
+			}
+		} else {
+			if (!dynStrAppendChar(tmp, c)) {
+				return false;
+			}
+		}
+	}
+	if (!dynStrCopy(string, tmp)) {
+		return false;
+	}
+	dynStrFree(tmp);
+	return true;
 }
