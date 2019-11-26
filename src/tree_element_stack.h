@@ -26,7 +26,7 @@ typedef struct treeStackItem treeStackItem_t;
 
 struct treeStackItem {
     treeStackItem_t* next;
-    treeElement_t* value;
+    treeElement_t value;
 };
 
 typedef struct tree_stack {
@@ -57,18 +57,18 @@ bool treeStackIsEmpty(treeStack_t* stack);
  * @param stack Stack
  * @param value Value which will be pushed
  */
-void treeStackPush(treeStack_t* stack, treeElement_t* value);
+void treeStackPush(treeStack_t* stack, treeElement_t value);
 
 /**
  * Pops item from stack.
  * @param stack Stack
  * @return popped value
  */
-treeElement_t* treeStackPop(treeStack_t* stack);
+treeElement_t treeStackPop(treeStack_t* stack);
 
 /**
  * Returns top item from stack.
  * @param stack Stack
  * @return top value
  */
-treeElement_t* treeStackTop(treeStack_t* stack);
+treeElement_t treeStackTop(treeStack_t* stack);

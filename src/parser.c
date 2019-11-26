@@ -17,6 +17,7 @@
  */
 
 #include "parser.h"
+#include "tree_element_stack.c"
 
 //Statement definitions
 statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
@@ -26,6 +27,30 @@ statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION, S_EOL};
 statementPart_t else_s[] = {S_KW_ELSE, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t functionDef_s[] = {S_KW_DEF, S_ID, S_LPAR, S_DEF_PARAMS, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS, S_RPAR};
+
+signed int precedenceTable[19][19] =
+	{
+	//    *  /  // +  -  =  <  > <= >= == && ||  ! !=  (  ) id  $
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// *
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// /
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// //
+		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// +
+		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// -
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// =
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// <
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// >
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// <=
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// >=
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// ==
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1,-1,-1, 1,-1, 1},// &&
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1,-1, 1,-1, 1},// ||
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1,-1, 1,-1, 1},// !
+		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// !=
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0},// (
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},// )
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},// id
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0} // $
+	};
 
 treeElement_t syntaxParse(FILE* file) {
 
@@ -154,68 +179,201 @@ bool parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
     return true;
 }
 
+int getTokenTableId(enum token_type type) {
+	switch (type){
+		case T_OP_NEG:
+			return 0;
+		case T_OP_ADD:
+			return 3;
+		case T_OP_SUB:
+			return 4;
+		case T_OP_MUL:
+			return 0;
+		case T_OP_DIV:
+			return 1;
+		case T_OP_IDIV:
+			return 2;
+		case T_OP_EQ:
+			return 10;
+		case T_OP_GREATER:
+			return 7;
+		case T_OP_LESS:
+			return 6;
+		case T_OP_GREATER_EQ:
+			return 9;
+		case T_OP_LESS_EQ:
+			return 8;
+		case T_OP_NOT_EQ:
+			return 14;
+		case T_BOOL_AND:
+			return 11;
+		case T_BOOL_OR:
+			return 12;
+		case T_BOOL_NEG:
+			return 13;
+		case T_NUMBER:
+			return 17;
+		case T_FLOAT:
+			return 17;
+		case T_STRING:
+			return 17;
+		case T_STRING_ML:
+			return 17;
+		case T_ID:
+			return 17;
+		case T_ASSIGN:
+			return 5;
+		case T_LPAR:
+			return 18;
+		case T_RPAR:
+			return 18;
+		default:
+			return 18;
+	}
+}
+
+bool isTokenGreater(enum token_type a, enum token_type b, bool* result) {
+	int tableResult = precedenceTable[getTokenTableId(a)][getTokenTableId(b)];
+	if(tableResult == 0)
+		return false;
+
+	*result = tableResult > 0;
+	return true;
+}
+
+enum token_type tokenTypeFromElement(treeElement_t element) {
+	switch(element.type) {
+		case E_ADD:
+			return T_OP_ADD;
+		case E_SUB:
+			return T_OP_SUB;
+		case E_MUL:
+			return T_OP_MUL;
+		case E_DIV:
+			return T_OP_DIV;
+		case E_EQ:
+			return T_OP_EQ;
+		case E_GT:
+			return T_OP_GREATER_EQ;
+		case E_GTE:
+			return T_OP_GREATER_EQ;
+		case E_LT:
+			return T_OP_LESS;
+		case E_LTE:
+			return T_OP_LESS_EQ;
+		case E_AND:
+			return T_BOOL_AND;
+		case E_OR:
+			return T_BOOL_OR;
+		case E_NOT:
+			return T_BOOL_NEG;
+		case E_ASSIGN:
+			return T_ASSIGN;
+		case E_NEQ:
+			return T_OP_NOT_EQ;
+		case E_DIV_INT:
+			return T_OP_IDIV;
+		case E_S_FUNCTION_CALL:
+			return T_ID;
+
+		case E_TOKEN:
+			return ((token_t*)element.data)->type;
+		default:
+			return T_EOL; //TODO: Return something meaningful on error
+	}
+}
+
 bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
-    bool expression = true;
+	if(getTokenTableId(tokenStackTop(stack).type) == 18) // If token is unrecognized by precedence analysis
+		return false;
     treeElement_t* expressionTree = treeAddElement(tree, E_S_EXPRESSION);
-    while(expression) {
-        token_t token = tokenStackTop(stack);
-        switch (token.type) {
-            case T_LPAR:
-                tokenStackPop(stack); //Pop ( from the stack
-                if(!parseExpression(stack, tree))
-                    return false;
-                processToken(stack, T_RPAR, tree);
-                break;
+
+    treeStack_t* resultStack = treeStackInit();// stack for result tree
+    treeStack_t* precedenceStack = treeStackInit();
+
+    token_t firstToken = {.type = T_EOL, .data = {.strval = NULL}}; // Initial token set to $
+    treeElement_t firstElement;
+    initTokenTreeElement(&firstElement, firstToken);
+    treeStackPush(precedenceStack, firstElement);
+
+    bool expressionRecognized = true;
 
 
-            case T_NUMBER:
-            case T_FLOAT:
-            case T_STRING:
-            case T_ID:
-            case T_STRING_ML:
-                token = tokenStackPop(stack);
-                if(token.type == T_ID){
-                    if(tokenStackTop(stack).type == T_LPAR) { // operator is function call
-                        tokenStackPush(stack, token); //Push back function ID
-                        parseFunctionCall(stack, tree);
-                    }
-                }
+    while(expressionRecognized) {
+		token_t token = tokenStackPop(stack);
+		treeElement_t element;
+		bool greater = false;
+		if (token.type == T_ID && tokenStackTop(stack).type == T_LPAR) {
+			tokenStackPush(stack, token);
+			parseFunctionCall(stack, &element);
+		}else {
+			treeElementType_t type;
+			tokenToTreeElement(token.type, &type);
+			if(type == E_TOKEN){
+				initTokenTreeElement(&element, token);
+			} else {
+				treeInit(&element, type);
+			}
+		}
 
-                printf("EXPRESSION OPERAND: %s\n", tokenToString(token.type));
-                token_t operationToken;
-				treeElement_t* operationTree;
-				treeElementType_t treeElementType;
-                switch(tokenStackTop(stack).type){
-                    case T_OP_ADD:
-                    case T_OP_SUB:
-                    case T_OP_MUL:
-                    case T_OP_DIV:
-                    case T_OP_EQ:
-                    case T_ASSIGN:
-                    case T_OP_GREATER:
-                    case T_OP_GREATER_EQ:
-                    case T_OP_LESS:
-                    case T_OP_LESS_EQ:
-                    case T_OP_NEG:
-                    case T_OP_NOT_EQ:
-						operationToken = tokenStackPop(stack);
-                        operationTree = treeAddElement(expressionTree, tokenToTreeElement(operationToken.type, &treeElementType));
-						treeAddToken(operationTree, token);
-                        printf("EXPRESSION OPERATOR: %s\n", tokenToString(operationToken.type));
-                        break;
+		if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
+			expressionRecognized = false;
+			printf("EXPRESSION: Token unrecognized");
+			return false;
+		}
 
-                    default:
-                        expression = false;
-                }
-                break;
+		if(!greater){
+			treeStackPush(precedenceStack, element);
+		} else {
+			while(greater) {
+				treeElement_t operation = treeStackPop(precedenceStack);
+				switch (operation.type) {
 
+					case E_ADD:
+					case E_SUB:
+					case E_MUL:
+					case E_DIV:
+					case E_EQ:
+					case E_GT:
+					case E_GTE:
+					case E_LT:
+					case E_LTE:
+					case E_AND:
+					case E_OR:
+					case E_NOT:
+					case E_ASSIGN:
+					case E_NEQ:
+					case E_DIV_INT: {
+						treeElement_t second = treeStackPop(resultStack);
+						treeElement_t first = treeStackPop(resultStack);
 
-            default:
-                expression = false;
-        }
+						treeInsertElement(&operation, first);
+						treeInsertElement(&operation, second);
+
+						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL) {
+							printf("EXPRESSION end");
+							treeInsertElement(expressionTree, operation);
+							tokenStackPush(stack, token); // Push back last token (Not part of expression)
+							return true;
+						} else {
+							treeStackPush(resultStack, operation);
+						}
+						break;
+					}
+
+					default:
+						treeStackPush(resultStack, operation);
+						break;
+				}
+
+				if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
+					greater = false;
+				}
+			}
+			treeStackPush(precedenceStack, element);
+		}
     }
-
-    return true;
+	return true;
 }
 
 bool parseWhile(tokenStack_t* stack, treeElement_t* tree) {
@@ -341,10 +499,10 @@ bool parseReturn(tokenStack_t* stack, treeElement_t* tree) {
 bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree) {
     size_t partSize = sizeof(functionCall_s) / sizeof(functionCall_s[0]); //Get number of statement parts
 
-    treeElement_t* callTree = treeAddElement(tree, E_S_FUNCTION_CALL);
+     treeInit(tree, E_S_FUNCTION_CALL);
 
     for(size_t i = 0; i < partSize; i++){
-        if(!processStatementPart(stack, functionCall_s[i], callTree))
+        if(!processStatementPart(stack, functionCall_s[i], tree))
             return false;
     }
 
@@ -354,8 +512,16 @@ bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree) {
 bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree) {
     bool parameters = true;
     while(parameters) {
-        if(!parseExpression(stack, tree))
-            return false;
+		if(tokenStackTop(stack).type == T_ID ||
+			tokenStackTop(stack).type == T_STRING_ML ||
+			tokenStackTop(stack).type == T_STRING ||
+			tokenStackTop(stack).type == T_NUMBER ||
+			tokenStackTop(stack).type == T_FLOAT) {
+			token_t param = tokenStackPop(stack);
+			treeAddToken(tree, param);
+		}
+//        if(!parseExpression(stack, tree)) //TODO: Probably should be expression but does not work for now
+//            return false;
         if(tokenStackTop(stack).type == T_COMMA)
             tokenStackPop(stack);// pop comma token if multiple parameters
         else if(tokenStackTop(stack).type == T_RPAR)

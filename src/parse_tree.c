@@ -49,6 +49,7 @@ treeElement_t* treeAddElement(treeElement_t* treeNode, treeElementType_t type) {
 treeElement_t* treeInsertElement(treeElement_t* treeNode, treeElement_t element) {
 	treeElement_t* treeElement = treeAddElement(treeNode, element.type);
 	memcpy(treeElement, &element, sizeof(element));
+	return treeElement;
 }
 
 bool treeAddToken(treeElement_t* tree, token_t token) {
@@ -86,6 +87,13 @@ void treeFree(treeElement_t tree) {
         }
     }
     free(tree.data);
+}
+
+void initTokenTreeElement(treeElement_t* element, token_t token) {
+	element->type = E_TOKEN;
+	element->nodeSize = 0;
+	element->data = malloc(sizeof(token));
+	memcpy(element->data, &token, sizeof(token));
 }
 
 void printTree(treeElement_t tree, int indent) {
@@ -219,6 +227,7 @@ bool tokenToTreeElement(enum token_type type, treeElementType_t* elementType) {
 			return true;
 
 		default:
+			*elementType = E_TOKEN;
 			return false;
 	}
 }

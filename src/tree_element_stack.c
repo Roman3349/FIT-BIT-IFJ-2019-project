@@ -38,27 +38,29 @@ bool treeStackIsEmpty(treeStack_t* stack) {
     return stack->head == NULL;
 }
 
-void treeStackPush(treeStack_t* stack, treeElement_t* value) {
+void treeStackPush(treeStack_t* stack, treeElement_t value) {
     treeStackItem_t* item = malloc(sizeof(treeStackItem_t));
     item->value = value;
     item->next = stack->head;
     stack->head = item;
 }
 
-treeElement_t* treeStackPop(treeStack_t* stack) {
+treeElement_t treeStackPop(treeStack_t* stack) {
     if (treeStackIsEmpty(stack)) {
-        return NULL;
+    	treeElement_t element = {.data = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: asi je potreba tot nejak spravit
+        return element;
     }
     treeStackItem_t* item = stack->head;
     stack->head = item->next;
-    treeElement_t* token = item->value;
+    treeElement_t token = item->value;
     free(item);
     return token;
 }
 
-treeElement_t* treeStackTop(treeStack_t* stack) {
-    if (treeStackIsEmpty(stack)) {
-        return NULL;
-    }
+treeElement_t treeStackTop(treeStack_t* stack) {
+	if (treeStackIsEmpty(stack)) {
+		treeElement_t element = {.data = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: asi je potreba tot nejak spravit
+		return element;
+	}
     return stack->head->value;
 }

@@ -24,6 +24,7 @@
 #include "scanner.h"
 #include "token_stack.h"
 #include "parse_tree.h"
+#include "tree_element_stack.h"
 
 enum statementPart{
     S_EOL = T_EOL,

@@ -116,3 +116,10 @@ void printTree(treeElement_t tree, int indentation);
  * @return conversion successful
  */
 bool tokenToTreeElement(enum token_type type, treeElementType_t* elementType);
+
+/**
+ * Initializes provided tree element as token element
+ * @param element element
+ * @param token token data for the element
+ */
+void initTokenTreeElement(treeElement_t* element, token_t token);
