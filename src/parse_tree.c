@@ -17,6 +17,7 @@
  */
 
 #include "parse_tree.h"
+#include "parser.h"
 
 void treeInit(treeElement_t* tree, treeElementType_t elementType) {
     tree->type = elementType;
@@ -43,6 +44,11 @@ treeElement_t* treeAddElement(treeElement_t* treeNode, treeElementType_t type) {
     treeInit(&((treeElement_t*)treeNode->data)[treeNode->nodeSize], type);
 
     return &((treeElement_t*)treeNode->data)[treeNode->nodeSize++];
+}
+
+treeElement_t* treeInsertElement(treeElement_t* treeNode, treeElement_t element) {
+	treeElement_t* treeElement = treeAddElement(treeNode, element.type);
+	memcpy(treeElement, &element, sizeof(element));
 }
 
 bool treeAddToken(treeElement_t* tree, token_t token) {
