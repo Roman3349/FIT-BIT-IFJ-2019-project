@@ -57,7 +57,7 @@ treeElement_t* treeStackPop(treeStack_t* stack) {
 }
 
 treeElement_t* treeStackTop(treeStack_t* stack) {
-    if (tokenStackIsEmpty(stack)) {
+    if (treeStackIsEmpty(stack)) {
         return NULL;
     }
     return stack->head->value;

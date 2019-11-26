@@ -43,32 +43,32 @@ treeStack_t* treeStackInit();
  * Frees a stack
  * @param stack Stack to free
  */
-void stackStackFree(treeStack_t* stack);
+void treeStackFree(treeStack_t* stack);
 
 /**
  * Check if a stack is empty
  * @param stack Stack to check
  * @return Is stack empty?
  */
-bool stackStackIsEmpty(treeStack_t* stack);
+bool treeStackIsEmpty(treeStack_t* stack);
 
 /**
  * Push pointer into stack
  * @param stack Stack
  * @param value Value which will be pushed
  */
-void stackStackPush(treeStack_t* stack, treeElement_t* value);
+void treeStackPush(treeStack_t* stack, treeElement_t* value);
 
 /**
  * Pops item from stack.
  * @param stack Stack
  * @return popped value
  */
-treeElement_t* stackStackPop(treeStack_t* stack);
+treeElement_t* treeStackPop(treeStack_t* stack);
 
 /**
  * Returns top item from stack.
  * @param stack Stack
  * @return top value
  */
-treeElement_t* stackStackTop(treeStack_t* stack);
+treeElement_t* treeStackTop(treeStack_t* stack);
