@@ -26,8 +26,10 @@
  * @return Execution status
  */
 int main(int argc, char *argv[]) {
-	FILE* file = fopen("/home/fjerabek/Downloads/example2.src", "r");
-    syntaxParse(file);
+	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
+    treeElement_t tree = syntaxParse(file);
+	printTree(tree, 0);
+	treeFree(tree);
     fclose(file);
 	return 0;
 }

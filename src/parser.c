@@ -55,6 +55,7 @@ signed int precedenceTable[19][19] =
 treeElement_t syntaxParse(FILE* file) {
 
     intStack_t* intStack = stackInit();
+    stackPush(intStack, 0);
     tokenStack_t* tokenStack = tokenStackInit(file, intStack);
     treeElement_t tree;
     treeInit(&tree, E_CODE);
@@ -75,9 +76,6 @@ treeElement_t syntaxParse(FILE* file) {
 
     }
     printf("Last token: %s\n", tokenToString(tokenStackTop(tokenStack).type)); //TODO: REMOVE debug print
-
-    printTree(tree, 0);
-    treeFree(tree);
     tokenStackFree(tokenStack);
     stackFree(intStack);
     return tree;
@@ -102,6 +100,8 @@ bool processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree
     switch (token.type) {
     	case T_INDENT:
     	case T_DEDENT:
+		case T_LPAR:
+		case T_RPAR:
     	case T_EOL:
     		break;
 
@@ -120,7 +120,7 @@ bool processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement
                 return false;
             break;
         case S_EXPRESSION:
-            if(!parseExpression(stack, tree))
+            if(!parseExpression(stack, tree, true))
                 return false;
             break;
         case S_DEF_PARAMS:
@@ -158,11 +158,15 @@ bool parseFunctionDef(tokenStack_t* stack, treeElement_t* tree) {
 
 bool parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
     bool parameters = true;
+    treeElement_t* defParamTree = NULL;
     while(parameters) {
         token_t token = tokenStackPop(stack);
         switch (token.type) {
             case T_ID: // new local variable as function parameter
-                printf("function parameter: %s\n", tokenToString(token.type));
+            	if(defParamTree == NULL) {
+					defParamTree = treeAddElement(tree, E_S_FUNCTION_DEF_PARAMS);
+            	}
+                treeAddToken(defParamTree, token);
                 if(tokenStackTop(stack).type == T_COMMA)
                     tokenStackPop(stack); // multiple parameters pop comma
                 break;
@@ -225,6 +229,8 @@ int getTokenTableId(enum token_type type) {
 			return 5;
 		case T_LPAR:
 			return 18;
+		case T_KW_NONE:
+			return 17;
 		case T_RPAR:
 			return 18;
 		default:
@@ -283,10 +289,14 @@ enum token_type tokenTypeFromElement(treeElement_t element) {
 	}
 }
 
-bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
+bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 	if(getTokenTableId(tokenStackTop(stack).type) == 18) // If token is unrecognized by precedence analysis
 		return false;
-    treeElement_t* expressionTree = treeAddElement(tree, E_S_EXPRESSION);
+	treeElement_t* expressionTree;
+    if(includeRoot)
+    	 expressionTree = treeAddElement(tree, E_S_EXPRESSION);
+    else
+    	expressionTree = tree;
 
     treeStack_t* resultStack = treeStackInit();// stack for result tree
     treeStack_t* precedenceStack = treeStackInit();
@@ -296,13 +306,11 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
     initTokenTreeElement(&firstElement, firstToken);
     treeStackPush(precedenceStack, firstElement);
 
-    bool expressionRecognized = true;
-
-
-    while(expressionRecognized) {
+    while(true) { // Probably not the best approach
 		token_t token = tokenStackPop(stack);
 		treeElement_t element;
 		bool greater = false;
+
 		if (token.type == T_ID && tokenStackTop(stack).type == T_LPAR) {
 			tokenStackPush(stack, token);
 			parseFunctionCall(stack, &element);
@@ -317,8 +325,7 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
 		}
 
 		if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
-			expressionRecognized = false;
-			printf("EXPRESSION: Token unrecognized");
+			fprintf(stderr, "EXPRESSION: Token unrecognized");
 			return false;
 		}
 
@@ -344,16 +351,18 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
 					case E_ASSIGN:
 					case E_NEQ:
 					case E_DIV_INT: {
-						treeElement_t second = treeStackPop(resultStack);
+						treeElement_t second = treeStackPop(resultStack); //If popped element is operator
 						treeElement_t first = treeStackPop(resultStack);
 
 						treeInsertElement(&operation, first);
 						treeInsertElement(&operation, second);
 
-						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL) {
-							printf("EXPRESSION end");
+						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL) { // Expression END
 							treeInsertElement(expressionTree, operation);
 							tokenStackPush(stack, token); // Push back last token (Not part of expression)
+							treeFree(element);
+							treeStackFree(resultStack);
+							treeStackFree(precedenceStack);
 							return true;
 						} else {
 							treeStackPush(resultStack, operation);
@@ -366,14 +375,19 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree){
 						break;
 				}
 
-				if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
+				if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) { // Expression END
 					greater = false;
+					treeFree(element);
+					treeInsertElement(expressionTree, operation);
+					tokenStackPush(stack, token); // Push back last token (Not part of expression)
+					treeStackFree(resultStack);
+					treeStackFree(precedenceStack);
+					return true;
 				}
 			}
 			treeStackPush(precedenceStack, element);
 		}
     }
-	return true;
 }
 
 bool parseWhile(tokenStack_t* stack, treeElement_t* tree) {
@@ -398,7 +412,6 @@ bool parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 	treeElement_t* blockTree = NULL;
     while(tokenRecognized) {
         token = tokenStackTop(stack);
-        printf("block parsing: %s\n", tokenToString(token.type)); //TODO: REMOVE debug print
         switch (token.type) {
             case T_KW_IF:
 				if(blockTree == NULL)
@@ -431,7 +444,7 @@ bool parseBlock(tokenStack_t* stack, treeElement_t* tree) {
             case T_ID:
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
-                if(!parseExpression(stack, blockTree))
+                if(!parseExpression(stack, blockTree, true))
                         return false;
                 if(!processToken(stack, T_EOL, blockTree)) // Newline after expression
                         return false;
@@ -447,7 +460,6 @@ bool parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 
             default:
                 tokenRecognized = false;
-                printf("Block parser end. Last token: %s\n", tokenToString(token.type));// TODO: REMOVE debug print
         }
     }
     return true;
@@ -511,17 +523,15 @@ bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree) {
 
 bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree) {
     bool parameters = true;
+    treeElement_t* paramsTree = NULL;
     while(parameters) {
-		if(tokenStackTop(stack).type == T_ID ||
-			tokenStackTop(stack).type == T_STRING_ML ||
-			tokenStackTop(stack).type == T_STRING ||
-			tokenStackTop(stack).type == T_NUMBER ||
-			tokenStackTop(stack).type == T_FLOAT) {
-			token_t param = tokenStackPop(stack);
-			treeAddToken(tree, param);
+		if(tokenStackTop(stack).type == T_RPAR) {
+			break;
 		}
-//        if(!parseExpression(stack, tree)) //TODO: Probably should be expression but does not work for now
-//            return false;
+		if(paramsTree == NULL)
+			paramsTree = treeAddElement(tree, E_S_FUNCTION_CALL_PARAMS);
+        if(!parseExpression(stack, paramsTree, false))
+            return false;
         if(tokenStackTop(stack).type == T_COMMA)
             tokenStackPop(stack);// pop comma token if multiple parameters
         else if(tokenStackTop(stack).type == T_RPAR)
@@ -623,6 +633,8 @@ char* tokenToString (enum token_type type) {
             return "'pass'";
         case T_KW_RETURN:
             return "'return'";
+    	case T_KW_NONE:
+			return "NONE";
         case T_ASSIGN:
             return "'='";
         case T_COLON:

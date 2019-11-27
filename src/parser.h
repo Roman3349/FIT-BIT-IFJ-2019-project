@@ -161,7 +161,7 @@ bool statementPartToTokenType(statementPart_t statementPart, enum token_type* ty
  * @param stack token stack
  * @return parsing successful
  */
-bool parseExpression(tokenStack_t* stack, treeElement_t* tree);
+bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot);
 
 /**
  * Processes statement part

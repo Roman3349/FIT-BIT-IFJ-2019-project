@@ -185,6 +185,12 @@ void printTree(treeElement_t tree, int indent) {
 		case E_DIV_INT:
 			printf("//");
 			break;
+		case E_S_FUNCTION_DEF_PARAMS:
+			printf("FUNCTION_DEF_PARAMS");
+			break;
+		case E_S_FUNCTION_CALL_PARAMS:
+			printf("FUNCTION_CALL_PARAMS");
+			break;
 	}
     if(tree.type != E_TOKEN) {
         printf("{\n");
