@@ -73,4 +73,12 @@ namespace Tests {
 		ASSERT_TRUE(dynStrEqualString(string, "ABCD"));
 		ASSERT_FALSE(dynStrEqualString(string, "ABCDE"));
 	}
+
+	TEST_F(DynamicStringTest, IsEmpty) {
+		ASSERT_TRUE(dynStrIsEmpty(string));
+		dynStrAppendString(string, "ABCD");
+		ASSERT_FALSE(dynStrIsEmpty(string));
+		dynStrClear(string);
+		ASSERT_TRUE(dynStrIsEmpty(string));
+	}
 }

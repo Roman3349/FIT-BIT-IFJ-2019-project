@@ -73,6 +73,7 @@ namespace Tests {
 		 */
 		void SetUp() override {
 			stack = stackInit();
+			stackPush(stack, 0);
 		}
 
 		/**
@@ -120,16 +121,6 @@ namespace Tests {
 		//ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		//ASSERT_TOKEN(file, T_EOF);
-	}
-
-	TEST_F(ScannerTest, tabIndentation) {
-		FILE* file = openFile("tabIndentation.ifj19");
-		ASSERT_NE(file, nullptr);
-		ASSERT_TOKEN(file, T_INDENT);
-		ASSERT_TOKEN_STRING(file, T_ID, "a");
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_DEDENT);
-		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
@@ -255,22 +246,10 @@ namespace Tests {
 		FILE* file = openFile("errToken.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		//ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_ID);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		//ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
-		ASSERT_TOKEN(file, T_UNKNOWN);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tokensExample1) {
+	TEST_F(ScannerTest, tokenExample1) {
 		FILE* file = openFile("example1.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
@@ -343,6 +322,7 @@ namespace Tests {
 		ASSERT_TOKEN_STRING(file, T_STRING, "\n");
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
@@ -439,7 +419,6 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_COMMA);
 		ASSERT_TOKEN_STRING(file, T_ID, "vysl");
 		ASSERT_TOKEN(file, T_RPAR);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_EOF);
 	}
@@ -542,14 +521,19 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_OP_NOT_EQ);
 		ASSERT_TOKEN_STRING(file, T_STRING, "abcdefgh");
 		ASSERT_TOKEN(file,T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN_STRING(file, T_STRING, "Spatne zadana posloupnost, zkuste znovu: ");
+		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_STRING(file, T_ID, "s1");
 		ASSERT_TOKEN(file, T_ASSIGN);
 		ASSERT_TOKEN_STRING(file, T_ID, "inputs");
 		ASSERT_TOKEN(file, T_LPAR);
 		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_KW_ELSE);
@@ -557,8 +541,22 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN(file, T_KW_PASS);
-		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_DEDENT);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, escapeSeq) {
+		FILE* file = openFile("escapeSeq.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_STRING(file, T_STRING, "\'\r\n\t12Nn\\\"\\Z");
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN_STRING(file, T_ID, "print");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
