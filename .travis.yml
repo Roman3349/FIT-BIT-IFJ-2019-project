@@ -20,7 +20,7 @@ jobs:
         - cmake --build build
         - cd build/bin && ./tests
       after_success:
-        - cd build
+        - cd ..
         # Create lcov report
         - lcov --capture --directory . --output-file coverage.info
         - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
