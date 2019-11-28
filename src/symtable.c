@@ -117,9 +117,14 @@ bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool de
 	symbolInfo_t info = {.function = {.argc = argc, .defined = true, .table = localTable}};
 	symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info);
 	if (symbol == NULL) {
+		symTableFree(localTable);
 		return false;
 	}
-	return symTableInsert(table, symbol, definition);
+	bool retVal = symTableInsert(table, symbol, definition);
+	if (!retVal) {
+		symTableFree(localTable);
+	}
+	return retVal;
 }
 
 bool symTableInsertVariable(symTable_t *table, dynStr_t *name) {
