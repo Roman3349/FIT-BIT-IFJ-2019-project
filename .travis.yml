@@ -2,6 +2,7 @@ dist: bionic
 addons:
   apt:
     packages:
+      - gcovr
       - lcov
 language: c
 jobs:

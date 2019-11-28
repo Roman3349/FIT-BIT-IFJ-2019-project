@@ -18,7 +18,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project(FIT-BIT-IFJ-2019-project)
 
-set(ENABLE_TESTING TRUE CACHE BOOL "Build tests")
+set(BUILD_TESTING TRUE CACHE BOOL "Build tests")
 set(CODE_COVERAGE FALSE CACHE BOOL "Run code coverage")
 
 set(WARNING_FLAGS "-Wall -Werror -pedantic")
@@ -39,9 +39,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(src)
 
-if (ENABLE_TESTING)
+if (BUILD_TESTING)
 	if (CODE_COVERAGE)
-		set(COVERAGE_FLAGS "-fprofile-arcs -ftest-coverage")
+		set(COVERAGE_FLAGS "--coverage -fprofile-arcs -ftest-coverage")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_FLAGS}")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_FLAGS}")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COVERAGE_FLAGS}")
