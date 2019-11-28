@@ -19,7 +19,9 @@
 #pragma once
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,7 +55,7 @@ void dynStrFree(dynStr_t *string);
  * Appends a char to a dynamic string
  * @param string Dynamic string
  * @param c Char to append
- * @return Has not any error occurred?
+ * @return Execution status
  */
 bool dynStrAppendChar(dynStr_t *string, char c);
 
@@ -61,7 +63,7 @@ bool dynStrAppendChar(dynStr_t *string, char c);
  * Appends a string to a dynamic string
  * @param string Dynamic string
  * @param str String to append
- * @return Has not any error occurred?
+ * @return Execution status
  */
 bool dynStrAppendString(dynStr_t *string, const char* str);
 
@@ -79,3 +81,18 @@ bool dynStrEqualString(dynStr_t* string, const char* str);
  * @return Is dynamic string empty?
  */
 bool dynStrIsEmpty(dynStr_t *string);
+
+/**
+ * Copies the dynamic string
+ * @param dst Destination
+ * @param src Source
+ * @return Execution status
+ */
+bool dynStrCopy(dynStr_t *dst, dynStr_t *src);
+
+/**
+ * Escape the dynamic string
+ * @param string Dynamic string
+ * @return Execution status
+ */
+bool dynStrEscape(dynStr_t *string);
