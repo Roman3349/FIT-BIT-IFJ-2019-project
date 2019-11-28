@@ -27,6 +27,9 @@
  */
 int main(int argc, char *argv[]) {
 	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
-    syntaxParse(file);
+    treeElement_t tree = syntaxParse(file);
+	printTree(tree, 0);
+	treeFree(tree);
+    fclose(file);
 	return 0;
 }

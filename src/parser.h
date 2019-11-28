@@ -23,6 +23,8 @@
 
 #include "scanner.h"
 #include "token_stack.h"
+#include "parse_tree.h"
+#include "tree_element_stack.h"
 
 enum statementPart{
     S_EOL = T_EOL,
@@ -47,21 +49,6 @@ enum statementPart{
 typedef enum statementPart statementPart_t;
 
 
-// Derivation tree element data
-typedef union treeElData treeElData_t;
-
-// Derivation tree element
-typedef struct{
-    treeElData_t* data;
-} treeElement_t;
-
-union treeElData {
-    char* s;
-    double d;
-    long l;
-    treeElement_t element;
-};
-
 /**
  * Parse line of source code in file and creates derivation tree representation
  * @param file    source file
@@ -77,7 +64,7 @@ treeElement_t syntaxParse(FILE * file);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseWhile(tokenStack_t* stack);
+bool parseWhile(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Returns string representation of token
@@ -92,7 +79,7 @@ char* tokenToString(enum token_type type);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseBlock(tokenStack_t* stack);
+bool parseBlock(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function call
@@ -100,7 +87,7 @@ bool parseBlock(tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionCall(tokenStack_t* stack);
+bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses pass keyword
@@ -108,28 +95,28 @@ bool parseFunctionCall(tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parsePass(tokenStack_t* stack);
+bool parsePass(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses return keyword and value
  * @param stack token stack
  * @return parsing successful
  */
-bool parseReturn(tokenStack_t* stack);
+bool parseReturn(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses if keyword
  * @param stack token stack
  * @return parsing successful
  */
-bool parseIf(tokenStack_t* stack);
+bool parseIf(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses else keyword
  * @param stack token stack
  * @return parsing successful
  */
-bool parseElse(tokenStack_t* stack);
+bool parseElse(tokenStack_t* stack, treeElement_t* tree);
 
 
 /**
@@ -137,21 +124,21 @@ bool parseElse(tokenStack_t* stack);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionDef(tokenStack_t* stack);
+bool parseFunctionDef(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function definition parameters
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionDefParams(tokenStack_t* stack);
+bool parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function call parameters
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionCallParams(tokenStack_t* stack);
+bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Check if next token matches expected token eventually prints error message
@@ -159,7 +146,7 @@ bool parseFunctionCallParams(tokenStack_t* stack);
  * @param expectedToken expected token
  * @return got expected token
  */
-bool processToken(tokenStack_t* stack, enum token_type expectedToken);
+bool processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement_t* tree);
 
 /**
  * Converts statementPart to token if possible
@@ -174,7 +161,7 @@ bool statementPartToTokenType(statementPart_t statementPart, enum token_type* ty
  * @param stack token stack
  * @return parsing successful
  */
-bool parseExpression(tokenStack_t* stack);
+bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot);
 
 /**
  * Processes statement part
@@ -182,4 +169,4 @@ bool parseExpression(tokenStack_t* stack);
  * @param part statement part
  * @return processing successful
  */
-bool processStatementPart(tokenStack_t* stack, statementPart_t part);
+bool processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree);
