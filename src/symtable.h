@@ -23,54 +23,66 @@
 
 #include "dynamic_string.h"
 
+#define EMBEDDED_FUNCTIONS 8
 #define TABLE_SIZE 8191 // 2^13 - 1
 
+typedef struct symbol symbol_t;
+typedef struct symTable symTable_t;
+
 typedef struct functionSymbol {
-	unsigned argc;
+	int argc;
+	bool defined;
+	symTable_t *table;
 } functionSymbol_t;
+
+typedef struct variableSymbol {
+	bool assigned;
+} variableSymbol_t;
 
 typedef union symbolInfo {
 	functionSymbol_t function;
+	variableSymbol_t variable;
 } symbolInfo_t;
 
 typedef enum symbolType {
-	SYMBOL_UNDEFINED,
 	SYMBOL_FUNCTION,
 	SYMBOL_VARIABLE
 } symbolType_t;
 
-typedef struct symbol symbol_t;
-
 struct symbol {
 	dynStr_t *name;
 	symbolType_t type;
+	symbolInfo_t info;
+	bool used;
 	symbol_t *next;
 };
 
-typedef struct symTable {
+struct symTable {
 	size_t size;
 	size_t allocated;
+	symTable_t*parent;
 	symbol_t *array[];
-} symTable_t;
+};
 
 typedef struct symIterator {
 	symbol_t *symbol;
 	const symTable_t *table;
-	int index;
+	size_t index;
 } symIterator_t;
 
 /**
  * UNIX ELF hash function
- * @param str String to hash
+ * @param string String to hash
  * @return UNIX ELF hash
  */
-uint32_t symTableHash(const char *str);
+uint32_t symTableHash(dynStr_t *string);
 
 /**
  * Creates a new symbol table
- * @return
+ * @param parent Parent symbol table
+ * @return Initializes a new symbol table
  */
-symTable_t *symTableInit();
+symTable_t *symTableInit(symTable_t *parent);
 
 /**
  * Clears the symbol table
@@ -85,13 +97,37 @@ void symTableClear(symTable_t *table);
 void symTableFree(symTable_t *table);
 
 /**
- * Inserts a new symbol into the table
+ * Inserts the embedded functions
  * @param table Symbol table
- * @param name Symbol name
- * @param type Symbol type
- * @return Symbol table iterator
  */
-symIterator_t symTableInsert(symTable_t *table, dynStr_t *name, symbolType_t type);
+bool symTableInsertEmbedFunctions(symTable_t *table);
+
+/**
+ * Inserts a function
+ * @param table Symbol table
+ * @param name Function name
+ * @param argc Argument count
+ * @param definition Is function definition?
+ * @return Execution status
+ */
+bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition);
+
+/**
+ * Inserts a variable
+ * @param table Symbol table
+ * @param name Variable name
+ * @return Execution status
+ */
+bool symTableInsertVariable(symTable_t *table, dynStr_t *name);
+
+/**
+ * Inserts a symbol into the table
+ * @param table Symbol table
+ * @param symbol Symbol to insert
+ * @param unique Unique insert?
+ * @return Execution status
+ */
+bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique);
 
 /**
  * Returns size of symbol table
@@ -126,4 +162,19 @@ symIterator_t symIteratorNext(symIterator_t iterator);
  * @param iterator Symbol table iterator
  * @return Validity of the iterator
  */
-bool symIteratorValidate(const symIterator_t *iterator);
+bool symIteratorValidate(symIterator_t iterator);
+
+/**
+ * Initializes the symbol
+ * @param name Symbol name
+ * @param type Symbol type
+ * @param info Symbol info
+ * @return Initialized symbol
+ */
+symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info);
+
+/**
+ * Frees the symbol
+ * @param symbol Symbol to free
+ */
+void symbolFree(symbol_t* symbol);
