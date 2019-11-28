@@ -68,7 +68,15 @@ bool dynStrAppendChar(dynStr_t *string, char c);
 bool dynStrAppendString(dynStr_t *string, const char* str);
 
 /**
- * Equals a dynamic string and a string
+ * Determines whether two dynamic strings have the same value
+ * @param string1 First dynamic string to compare
+ * @param string2 Second dynamic string to compare
+ * @return String equality
+ */
+bool dynStrEqual(dynStr_t* string1, dynStr_t *string2);
+
+/**
+ * Determines whether dynamic string and string have the same value
  * @param string Dynamic string
  * @param str String to compare
  * @return String equality

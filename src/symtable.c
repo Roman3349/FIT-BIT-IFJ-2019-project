@@ -145,7 +145,7 @@ bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 	symbol_t *current = table->array[index], *previous = NULL;
 
 	while (current != NULL) {
-		if (dynStrEqualString(current->name, symbol->name->string)) {
+		if (dynStrEqual(current->name, symbol->name)) {
 			if (unique) {
 				return false;
 			}

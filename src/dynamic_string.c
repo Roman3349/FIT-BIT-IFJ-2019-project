@@ -85,6 +85,12 @@ bool dynStrAppendString(dynStr_t *string, const char* str) {
 	return true;
 }
 
+bool dynStrEqual(dynStr_t* string1, dynStr_t *string2) {
+	assert(string1 != NULL);
+	assert(string2 != NULL);
+	return strcmp(string1->string, string2->string) == 0;
+}
+
 bool dynStrEqualString(dynStr_t* string, const char* str) {
 	assert(string != NULL);
 	return strcmp(string->string, str) == 0;

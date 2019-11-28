@@ -67,6 +67,11 @@ namespace Tests {
 		ASSERT_EQ(symTableSize(table), 0);
 	}
 
+	TEST_F(SymTableTest, insertEmbedFunctions) {
+		ASSERT_TRUE(symTableInsertEmbedFunctions(table));
+		ASSERT_EQ(symTableSize(table), EMBEDDED_FUNCTIONS);
+	}
+
 	TEST_F(SymTableTest, insertFunctionDefinitions) {
 		ASSERT_TRUE(symTableInsertFunction(table, createDynStr("main"), 0, true));
 		ASSERT_EQ(symTableSize(table), 1);

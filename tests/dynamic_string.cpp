@@ -68,6 +68,16 @@ namespace Tests {
 		ASSERT_EQ(string->alloc_size, 2 * DYN_STR_LENGTH + size);
 	}
 
+	TEST_F(DynamicStringTest, Equal) {
+		dynStr_t *tmp = dynStrInit();
+		dynStrAppendString(string, "ABCD");
+		dynStrAppendString(tmp, "ABCD");
+		ASSERT_TRUE(dynStrEqual(string, tmp));
+		dynStrAppendChar(tmp, 'E');
+		ASSERT_FALSE(dynStrEqual(string, tmp));
+		dynStrFree(tmp);
+	}
+
 	TEST_F(DynamicStringTest, EqualString) {
 		dynStrAppendString(string, "ABCD");
 		ASSERT_TRUE(dynStrEqualString(string, "ABCD"));
