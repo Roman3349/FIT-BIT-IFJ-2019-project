@@ -17,7 +17,6 @@
  */
 
 #include "parser.h"
-#include "tree_element_stack.c"
 
 //Statement definitions
 statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
