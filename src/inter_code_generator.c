@@ -59,21 +59,22 @@ int processCode(treeElement_t codeElement) {
     return 0;
 }
 
-int processEToken(treeElement_t* EToken, void* tval) {
+int processEToken(treeElement_t* EToken) {
 
     assert(EToken);
     assert(EToken->type == E_TOKEN);
 
     switch (((token_t*)EToken->data)->type) {
         case T_NUMBER:
-            *(long *)tval = ((token_t*)EToken->data)->data.intval;
+            printf("int@%ld", ((token_t*)EToken->data)->data.intval);
             break;
         case T_FLOAT:
-            *(double *)tval = ((token_t*)EToken->data)->data.floatval;
+            printf("float@%a", ((token_t*)EToken->data)->data.floatval);
             break;
         case T_STRING_ML:
         case T_STRING:
-            *(dynStr_t **)tval = ((token_t*)EToken->data)->data.strval;
+            printf("%s", "string@");
+            //processString(((token_t*)EToken->data)->data.strval->string);
             break;
         default:
             return -1;
@@ -94,9 +95,14 @@ int processCodeBlock() {
 
 int processAdd(treeElement_t* AddToken) {
 
-    assert(AddToken->type == E_ADD);
-    assert((((treeElement_t*)AddToken->data)[0]).type == E_TOKEN);
-    assert((((treeElement_t*)AddToken->data)[1]).type == E_TOKEN);
+
+    if(AddToken->type != E_ADD) {
+        return -1;
+    }
+
+
+
+
 
     //TODO
     // get numbers from tokens and generate code
