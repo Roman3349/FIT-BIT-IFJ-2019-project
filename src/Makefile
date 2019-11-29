@@ -16,8 +16,8 @@
 
 CFLAGS=-std=c99 -g -Wall -Werror -pedantic -lm
 OBJECTS=$(SOURCES:.c=.o)
-SOURCES=$(wildcard src/*.c)
-TARGET=ic19int
+SOURCES=$(wildcard *.c)
+TARGET=ic19
 
 all: $(TARGET)
 
@@ -26,3 +26,8 @@ clean:
 
 $(TARGET): $(OBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS)
+
+pack:
+	rm -rf xondra58.tgz /tmp/ifj
+	tar -czvf xondra58.tgz * ../rozdeleni
+	bash ../is_it_ok.sh xondra58.tgz /tmp/ifj
