@@ -78,10 +78,21 @@ namespace Tests {
 		dynStrFree(tmp);
 	}
 
+	TEST_F(DynamicStringTest, EqualNull) {
+		ASSERT_FALSE(dynStrEqual(string, nullptr));
+		ASSERT_FALSE(dynStrEqual(nullptr, string));
+		ASSERT_TRUE(dynStrEqual(nullptr, nullptr));
+	}
+
 	TEST_F(DynamicStringTest, EqualString) {
 		dynStrAppendString(string, "ABCD");
 		ASSERT_TRUE(dynStrEqualString(string, "ABCD"));
 		ASSERT_FALSE(dynStrEqualString(string, "ABCDE"));
+	}
+
+	TEST_F(DynamicStringTest, EqualStringNull) {
+		ASSERT_FALSE(dynStrEqualString(string, nullptr));
+		ASSERT_FALSE(dynStrEqualString(nullptr, ""));
 	}
 
 	TEST_F(DynamicStringTest, IsEmpty) {
@@ -92,10 +103,15 @@ namespace Tests {
 		ASSERT_TRUE(dynStrIsEmpty(string));
 	}
 
+	TEST_F(DynamicStringTest, CopyNull) {
+		ASSERT_FALSE(dynStrCopy(nullptr, string));
+		ASSERT_FALSE(dynStrCopy(string, nullptr));
+	}
+
 	TEST_F(DynamicStringTest, Copy) {
 		dynStrAppendString(string, "ABCD");
 		dynStr_t *tmp = dynStrInit();
-		dynStrCopy(tmp, string);
+		ASSERT_TRUE(dynStrCopy(tmp, string));
 		ASSERT_EQ(tmp->alloc_size, string->alloc_size);
 		ASSERT_EQ(tmp->size, string->size);
 		ASSERT_STREQ(tmp->string, string->string);

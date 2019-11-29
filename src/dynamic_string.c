@@ -34,7 +34,9 @@ dynStr_t *dynStrInit() {
 }
 
 void dynStrClear(dynStr_t *string) {
-	assert(string != NULL);
+	if (string == NULL) {
+		return;
+	}
 	string->string[0] = 0;
 	string->size = 0;
 	char *tmp = realloc(string->string, DYN_STR_LENGTH);
@@ -52,7 +54,9 @@ void dynStrFree(dynStr_t *string) {
 }
 
 bool dynStrAppendChar(dynStr_t *string, char c) {
-	assert(string != NULL);
+	if (string == NULL) {
+		return false;
+	}
 	if (string->size + 1 >= string->alloc_size) {
 		unsigned long newSize = string->alloc_size + DYN_STR_LENGTH;
 		char *tmp = realloc(string->string, newSize);
@@ -68,7 +72,9 @@ bool dynStrAppendChar(dynStr_t *string, char c) {
 }
 
 bool dynStrAppendString(dynStr_t *string, const char* str) {
-	assert(string != NULL);
+	if (string == NULL || str == NULL) {
+		return false;
+	}
 	size_t strLen = strlen(str);
 	if (string->size + strLen + 1 >= string->alloc_size) {
 		unsigned long newSize = string->alloc_size + strLen + DYN_STR_LENGTH;
@@ -86,13 +92,19 @@ bool dynStrAppendString(dynStr_t *string, const char* str) {
 }
 
 bool dynStrEqual(dynStr_t* string1, dynStr_t *string2) {
-	assert(string1 != NULL);
-	assert(string2 != NULL);
+	if (string1 == NULL && string2 == NULL) {
+		return true;
+	}
+	if (string1 == NULL || string2 == NULL) {
+		return false;
+	}
 	return strcmp(string1->string, string2->string) == 0;
 }
 
 bool dynStrEqualString(dynStr_t* string, const char* str) {
-	assert(string != NULL);
+	if (string == NULL || str == NULL) {
+		return false;
+	}
 	return strcmp(string->string, str) == 0;
 }
 
@@ -102,8 +114,9 @@ bool dynStrIsEmpty(dynStr_t *string) {
 }
 
 bool dynStrCopy(dynStr_t *dst, dynStr_t *src) {
-	assert(src != NULL);
-	assert(dst != NULL);
+	if (dst == NULL || src == NULL) {
+		return false;
+	}
 	char* tmp = realloc(dst->string, src->alloc_size);
 	if (tmp == NULL) {
 		return false;
@@ -116,7 +129,9 @@ bool dynStrCopy(dynStr_t *dst, dynStr_t *src) {
 }
 
 bool dynStrEscape(dynStr_t *string) {
-	assert(string != NULL);
+	if (string == NULL) {
+		return false;
+	}
 	dynStr_t *tmp = dynStrInit();
 	if (tmp == NULL) {
 		return false;
@@ -143,7 +158,7 @@ bool dynStrEscape(dynStr_t *string) {
 }
 
 char dynStrGetChar(dynStr_t *string, unsigned long index) {
-	if (index > string->size) {
+	if (string == NULL || index > string->size) {
 		return 0;
 	}
 	return string->string[index];

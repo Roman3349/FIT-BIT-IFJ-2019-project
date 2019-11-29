@@ -32,12 +32,18 @@ typedef struct symTable symTable_t;
 typedef struct functionSymbol {
 	int argc;
 	bool defined;
-	symTable_t *table;
 } functionSymbol_t;
 
 typedef struct variableSymbol {
 	bool assigned;
 } variableSymbol_t;
+
+typedef enum symbolFrame {
+	FRAME_GLOBAL,
+	FRAME_LOCAL,
+	FRAME_TEMP,
+	FRAME_ERROR
+} symbolFrame_t;
 
 typedef union symbolInfo {
 	functionSymbol_t function;
@@ -53,6 +59,7 @@ struct symbol {
 	dynStr_t *name;
 	symbolType_t type;
 	symbolInfo_t info;
+	dynStr_t *context;
 	bool used;
 	symbol_t *next;
 };
@@ -60,7 +67,6 @@ struct symbol {
 struct symTable {
 	size_t size;
 	size_t allocated;
-	symTable_t*parent;
 	symbol_t *array[];
 };
 
@@ -79,10 +85,9 @@ uint32_t symTableHash(dynStr_t *string);
 
 /**
  * Creates a new symbol table
- * @param parent Parent symbol table
  * @return Initializes a new symbol table
  */
-symTable_t *symTableInit(symTable_t *parent);
+symTable_t *symTableInit();
 
 /**
  * Clears the symbol table
@@ -95,6 +100,14 @@ void symTableClear(symTable_t *table);
  * @param table Symbol table
  */
 void symTableFree(symTable_t *table);
+
+/**
+ * Removes a symbol from the symbol table
+ * @param table Symbol table
+ * @param name Symbol name
+ * @param context Symbol context (NULL = global, others = function name)
+ */
+void symTableRemove(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Inserts the embedded functions
@@ -116,9 +129,10 @@ bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool de
  * Inserts a variable
  * @param table Symbol table
  * @param name Variable name
+ * @param context Symbol context (NULL = global, others = function name)
  * @return Execution status
  */
-bool symTableInsertVariable(symTable_t *table, dynStr_t *name);
+bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Inserts a symbol into the table
@@ -135,6 +149,24 @@ bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique);
  * @return Size of symbol table
  */
 size_t symTableSize(symTable_t *table);
+
+/**
+ * Returns a symbol
+ * @param table Symbol table
+ * @param context Symbol context
+ * @param name Symbol name
+ * @return Symbol
+ */
+symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name);
+
+/**
+ * Returns the symbol frame type
+ * @param table Symbol table
+ * @param context Symbol context (NULL = global, others = function name)
+ * @param name Symbol name
+ * @return Symbol frame type
+ */
+symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *name);
 
 /**
  * Returns an iterator to the beginning
@@ -169,9 +201,10 @@ bool symIteratorValidate(symIterator_t iterator);
  * @param name Symbol name
  * @param type Symbol type
  * @param info Symbol info
+ * @param context Symbol context
  * @return Initialized symbol
  */
-symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info);
+symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info, dynStr_t *context);
 
 /**
  * Frees the symbol

@@ -21,9 +21,9 @@
 uint32_t symTableHash(dynStr_t *string) {
 	uint32_t hash = 0;
 	unsigned long i = 0;
-	while (string->string[i]) {
+	while (dynStrGetChar(string, i)) {
 		uint32_t high;
-		hash = (hash << 4) + string->string[i++];
+		hash = (hash << 4) + dynStrGetChar(string, i++);
 		high = hash & 0xF0000000;
 		if (high) {
 			hash ^= high >> 24;
@@ -33,14 +33,13 @@ uint32_t symTableHash(dynStr_t *string) {
 	return hash % TABLE_SIZE;
 }
 
-symTable_t *symTableInit(symTable_t *parent) {
+symTable_t *symTableInit() {
 	size_t size = TABLE_SIZE;
 	symTable_t *table = malloc(size * sizeof(symTable_t));
 	if (table == NULL) {
 		return NULL;
 	}
 	table->allocated = size;
-	table->parent = parent;
 	table->size = 0;
 	for (size_t i = 0; i < table->allocated; ++i) {
 		table->array[i] = NULL;
@@ -64,8 +63,32 @@ void symTableClear(symTable_t *table) {
 }
 
 void symTableFree(symTable_t *table) {
+	if (table == NULL) {
+		return;
+	}
 	symTableClear(table);
 	free(table);
+}
+
+void symTableRemove(symTable_t *table, dynStr_t *context, dynStr_t *name) {
+	if (table == NULL || name == NULL) {
+		return;
+	}
+
+	size_t index = symTableHash(name);
+	symbol_t *current = table->array[index], *previous = NULL;
+
+	while (current != NULL) {
+		if (dynStrEqual(current->name, name) &&
+			dynStrEqual(current->context, context)) {
+			if (previous != NULL) {
+				previous->next = current->next;
+			}
+			symbolFree(current);
+		}
+		previous = current;
+		current = current->next;
+	}
 }
 
 size_t symTableSize(symTable_t *table) {
@@ -75,7 +98,39 @@ size_t symTableSize(symTable_t *table) {
 	return table->size;
 }
 
+symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context) {
+	if (table == NULL || name == NULL) {
+		return NULL;
+	}
+
+	size_t index = symTableHash(name);
+	symbol_t *current = table->array[index];
+
+	while (current != NULL) {
+		if (dynStrEqual(current->name, name) &&
+		    dynStrEqual(current->context, context)) {
+			return current;
+		}
+		current = current->next;
+	}
+	return NULL;
+}
+
+symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *name) {
+	if (table == NULL || name == NULL) {
+		return FRAME_ERROR;
+	}
+	symbol_t *symbol = symTableFind(table, context, name);
+	if (symbol == NULL) {
+		return FRAME_ERROR;
+	}
+	return symbol->context == NULL ? FRAME_GLOBAL : FRAME_LOCAL;
+}
+
 bool symTableInsertEmbedFunctions(symTable_t *table) {
+	if (table == NULL) {
+		return false;
+	}
 	const char* names[EMBEDDED_FUNCTIONS] = {
 		"inputs",
 		"inputi",
@@ -98,14 +153,19 @@ bool symTableInsertEmbedFunctions(symTable_t *table) {
 	};
 	for (size_t i = 0; i < EMBEDDED_FUNCTIONS; ++i) {
 		dynStr_t *name = dynStrInit();
+		if (name == NULL) {
+			return false;
+		}
 		dynStrAppendString(name, names[i]);
 		symbolInfo_t info = {.function = {.argc = argc[i], .defined = true}};
-		symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info);
+		symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info, NULL);
 		if (symbol == NULL) {
 			dynStrFree(name);
 			return false;
 		}
 		if (!symTableInsert(table, symbol, true)) {
+			dynStrFree(name);
+			symbolFree(symbol);
 			return false;
 		}
 	}
@@ -113,23 +173,23 @@ bool symTableInsertEmbedFunctions(symTable_t *table) {
 }
 
 bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition) {
-	symTable_t *localTable = symTableInit(table);
-	symbolInfo_t info = {.function = {.argc = argc, .defined = true, .table = localTable}};
-	symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info);
+	if (table == NULL || name == NULL) {
+		return NULL;
+	}
+	symbolInfo_t info = {.function = {.argc = argc, .defined = true}};
+	symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info, NULL);
 	if (symbol == NULL) {
-		symTableFree(localTable);
 		return false;
 	}
-	bool retVal = symTableInsert(table, symbol, definition);
-	if (!retVal) {
-		symTableFree(localTable);
-	}
-	return retVal;
+	return symTableInsert(table, symbol, definition);
 }
 
-bool symTableInsertVariable(symTable_t *table, dynStr_t *name) {
+bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context) {
+	if (table == NULL || name == NULL) {
+		return NULL;
+	}
 	symbolInfo_t info = {.variable = {.assigned = true}};
-	symbol_t *symbol = symbolInit(name, SYMBOL_VARIABLE, info);
+	symbol_t *symbol = symbolInit(name, SYMBOL_VARIABLE, info, context);
 	if (symbol == NULL) {
 		return false;
 	}
@@ -145,7 +205,8 @@ bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 	symbol_t *current = table->array[index], *previous = NULL;
 
 	while (current != NULL) {
-		if (dynStrEqual(current->name, symbol->name)) {
+		if (dynStrEqual(current->name, symbol->name) &&
+			dynStrEqual(current->context, symbol->context)) {
 			if (unique) {
 				return false;
 			}
@@ -226,7 +287,7 @@ bool symIteratorValidate(symIterator_t iterator) {
 	return (iterator.table != NULL) && (iterator.symbol != NULL);
 }
 
-symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info) {
+symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info, dynStr_t *context) {
 	if (name == NULL) {
 		return NULL;
 	}
@@ -239,6 +300,7 @@ symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info) {
 	symbol->next = NULL;
 	symbol->type = type;
 	symbol->used = false;
+	symbol->context = context;
 	return symbol;
 }
 
@@ -246,15 +308,13 @@ void symbolFree(symbol_t *symbol) {
 	if (symbol == NULL) {
 		return;
 	}
+	if (symbol->context != NULL) {
+		dynStrFree(symbol->context);
+		symbol->context = NULL;
+	}
 	if (symbol->name != NULL) {
 		dynStrFree(symbol->name);
 		symbol->name = NULL;
-	}
-	if (symbol->type == SYMBOL_FUNCTION) {
-		if (symbol->info.function.table != NULL) {
-			symTableFree(symbol->info.function.table);
-			symbol->info.function.table = NULL;
-		}
 	}
 	free(symbol);
 }

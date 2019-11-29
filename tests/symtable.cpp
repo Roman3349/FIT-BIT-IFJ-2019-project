@@ -27,22 +27,22 @@ namespace Tests {
 	class SymTableTest : public ::testing::Test {
 	protected:
 		void SetUp() override {
-			table = symTableInit(nullptr);
+			table = symTableInit();
 		}
 
 		void TearDown() override {
 			symTableFree(table);
 		}
 
-		dynStr_t *createDynStr(std::string str) {
+		dynStr_t *createDynStr(const std::string &str) {
 			dynStr_t *string = dynStrInit();
 			dynStrAppendString(string, str.c_str());
 			return string;
 		}
 
-		symbol_t *createFunction(std::string name, int argc, bool defined) {
-			symbolInfo_t info = {.function = {.argc = argc, .defined = defined, .table = nullptr}};
-			symbol_t *symbol = symbolInit(createDynStr(name), SYMBOL_FUNCTION, info);
+		symbol_t *createFunction(const std::string &name, int argc, bool defined) {
+			symbolInfo_t info = {.function = {.argc = argc, .defined = defined}};
+			symbol_t *symbol = symbolInit(createDynStr(name), SYMBOL_FUNCTION, info, nullptr);
 			return symbol;
 		}
 
@@ -58,13 +58,26 @@ namespace Tests {
 		for (size_t i = 0; i < TABLE_SIZE; i++) {
 			ASSERT_EQ(table->array[i], nullptr);
 		}
-		ASSERT_EQ(table->parent, nullptr);
 		ASSERT_EQ(table->size, 0);
 	}
 
 	TEST_F(SymTableTest, size) {
 		ASSERT_EQ(symTableSize(nullptr), 0);
 		ASSERT_EQ(symTableSize(table), 0);
+	}
+
+	TEST_F(SymTableTest, find) {
+		symbol_t *symbol = createFunction("main", 0, true);
+		ASSERT_TRUE(symTableInsert(table, symbol, true));
+		dynStr_t *name = createDynStr("main");
+		symbol = symTableFind(table, name, nullptr);
+		ASSERT_NE(symbol, nullptr);
+		ASSERT_STREQ(symbol->name->string, "main");
+		ASSERT_EQ(symbol->next, nullptr);
+		ASSERT_EQ(symbol->type, SYMBOL_FUNCTION);
+		symbol = symTableFind(table, name, name);
+		ASSERT_EQ(symbol, nullptr);
+		dynStrFree(name);
 	}
 
 	TEST_F(SymTableTest, insertEmbedFunctions) {
@@ -89,11 +102,11 @@ namespace Tests {
 		ASSERT_FALSE(symTableInsertFunction(table, createDynStr("main"), 0, true));
 		ASSERT_TRUE(symTableInsertFunction(table, createDynStr("main"), 0, false));
 		ASSERT_FALSE(symTableInsertFunction(table, createDynStr("main"), 1, false));
-		ASSERT_FALSE(symTableInsertVariable(table, createDynStr("main")));
+		ASSERT_FALSE(symTableInsertVariable(table, createDynStr("main"), nullptr));
 	}
 
 	TEST_F(SymTableTest, insertVariable) {
-		ASSERT_TRUE(symTableInsertVariable(table, createDynStr("i")));
+		ASSERT_TRUE(symTableInsertVariable(table, createDynStr("i"), nullptr));
 		ASSERT_EQ(symTableSize(table), 1);
 		symIterator_t iterator = symIteratorBegin(table);
 		iterator = symIteratorNext(iterator);
@@ -105,7 +118,7 @@ namespace Tests {
 		ASSERT_EQ(iterator.symbol->next, nullptr);
 		ASSERT_EQ(iterator.symbol->type, SYMBOL_VARIABLE);
 		ASSERT_TRUE(iterator.symbol->info.variable.assigned);
-		ASSERT_TRUE(symTableInsertVariable(table, createDynStr("i")));
+		ASSERT_TRUE(symTableInsertVariable(table, createDynStr("i"), nullptr));
 		ASSERT_FALSE(symTableInsertFunction(table, createDynStr("i"), 0, false));
 	}
 
@@ -178,8 +191,8 @@ namespace Tests {
 	}
 
 	TEST_F(SymTableTest, symbolInit) {
-		symbolInfo_t info = {.function = {.argc = 0, .defined = true, .table = nullptr}};
-		ASSERT_EQ(symbolInit(nullptr, SYMBOL_FUNCTION, info), nullptr);
+		symbolInfo_t info = {.function = {.argc = 0, .defined = true}};
+		ASSERT_EQ(symbolInit(nullptr, SYMBOL_FUNCTION, info, nullptr), nullptr);
 	}
 
 }
