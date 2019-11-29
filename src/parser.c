@@ -36,19 +36,19 @@ signed int precedenceTable[19][19] =
 		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// //
 		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// +
 		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// -
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// =
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// <
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// >
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// <=
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// >=
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// ==
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// =
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <=
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >=
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// ==
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1,-1,-1, 1,-1, 1},// &&
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1,-1, 1,-1, 1},// ||
 		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1,-1, 1,-1, 1},// !
-		{-1,-1,-1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1,-1, 0,-1, 1,-1, 1},// !=
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// !=
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0},// (
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},// )
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1},// id
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-5, 1,-5, 1},// )
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,-5, 1},// id
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0} // $
 	};
 
@@ -59,6 +59,7 @@ treeElement_t syntaxParse(FILE* file) {
     tokenStack_t* tokenStack = tokenStackInit(file, intStack);
     treeElement_t tree;
     treeInit(&tree, E_CODE);
+
     while(tokenStackTop(tokenStack).type != T_EOF) {
         if (!parseBlock(tokenStack, &tree)) {
             fprintf(stderr, "!!!!!!!!!!!!! SYNTAX ERROR !!!!!!!!!!!!!\n");
@@ -75,6 +76,7 @@ treeElement_t syntaxParse(FILE* file) {
         }
 
     }
+    processToken(tokenStack, T_EOF, &tree);
     printf("Last token: %s\n", tokenToString(tokenStackTop(tokenStack).type)); //TODO: REMOVE debug print
     tokenStackFree(tokenStack);
     stackFree(intStack);
@@ -228,22 +230,22 @@ int getTokenTableId(enum token_type type) {
 		case T_ASSIGN:
 			return 5;
 		case T_LPAR:
-			return 18;
+			return 15;
 		case T_KW_NONE:
 			return 17;
 		case T_RPAR:
-			return 18;
+			return 16;
 		default:
 			return 18;
 	}
 }
 
-bool isTokenGreater(enum token_type a, enum token_type b, bool* result) {
+bool isTokenGreater(enum token_type a, enum token_type b, int* result) {
 	int tableResult = precedenceTable[getTokenTableId(a)][getTokenTableId(b)];
-	if(tableResult == 0)
+	if(tableResult == -5)
 		return false;
 
-	*result = tableResult > 0;
+	*result = tableResult;
 	return true;
 }
 
@@ -309,7 +311,7 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot)
     while(true) { // Probably not the best approach
 		token_t token = tokenStackPop(stack);
 		treeElement_t element;
-		bool greater = false;
+		int greater = 0;
 
 		if (token.type == T_ID && tokenStackTop(stack).type == T_LPAR) {
 			tokenStackPush(stack, token);
@@ -329,10 +331,10 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot)
 			return false;
 		}
 
-		if(!greater){
+		if(greater == -1){
 			treeStackPush(precedenceStack, element);
 		} else {
-			while(greater) {
+			while(greater == 1) {
 				treeElement_t operation = treeStackPop(precedenceStack);
 				switch (operation.type) {
 
@@ -385,7 +387,21 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot)
 					return true;
 				}
 			}
-			treeStackPush(precedenceStack, element);
+
+			if(greater == 0){
+				if(treeStackTop(precedenceStack).type == E_TOKEN && ((token_t*)treeStackTop(precedenceStack).data)->type == T_EOL) {
+					greater = false;
+					treeFree(element);
+					treeInsertElement(expressionTree, treeStackPop(resultStack)); // Insert final operation into expression tree
+					tokenStackPush(stack, token); // Push back last token (Not part of expression)
+					treeStackFree(resultStack);
+					treeStackFree(precedenceStack);
+					return true;
+				}
+				treeStackPop(precedenceStack); // Pop ( operator from stack
+			} else {
+				treeStackPush(precedenceStack, element); //Push operator to stack after popping
+			}
 		}
     }
 }
