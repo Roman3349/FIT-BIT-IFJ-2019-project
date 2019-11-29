@@ -16,27 +16,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <stdio.h>
-#include "error.h"
-#include "parser.h"
-
-/**
- * Main function
- * @param argc Argument count
- * @param argv Arguments
- * @return Execution status
- */
-int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		return ERROR_INTERNAL;
-	}
-	FILE* file = fopen(argv[1], "r");
-	if (file == NULL) {
-		return ERROR_INTERNAL;
-	}
-    treeElement_t tree = syntaxParse(file);
-	printTree(tree, 0);
-	treeFree(tree);
-    fclose(file);
-	return ERROR_SUCCESS;
-}
+typedef enum errorCode {
+	ERROR_SUCCESS = 0,
+	ERROR_LEXICAL = 1,
+	ERROR_SYNTAX = 2,
+	ERROR_SEMANTIC_FUNCTION = 3,
+	ERROR_SEMANTIC_EXPRESSION = 4,
+	ERROR_SEMANTIC_ARGC = 5,
+	ERROR_SEMANTIC_OTHER = 6,
+	ERROR_ZERO_DIVISION = 9,
+	ERROR_INTERNAL = 99
+} errorCode_t;
