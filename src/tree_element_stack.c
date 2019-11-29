@@ -28,6 +28,7 @@ void treeStackFree(treeStack_t* stack) {
     treeStackItem_t* next;
     while (item != NULL) {
         next = item->next;
+        treeFree(item->value);
         free(item);
         item = next;
     }
