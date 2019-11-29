@@ -21,12 +21,12 @@ project(FIT-BIT-IFJ-2019-project)
 set(BUILD_TESTING TRUE CACHE BOOL "Build tests")
 set(CODE_COVERAGE FALSE CACHE BOOL "Run code coverage")
 
-set(WARNING_FLAGS "-Wall -Werror -pedantic")
+set(WARNING_FLAGS "-Wall -Wextra -Werror")
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS} -fPIC -pthread")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${WARNING_FLAGS} -pedantic -fPIC -pthread")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_EXTENSIONS OFF)

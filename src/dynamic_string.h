@@ -68,7 +68,15 @@ bool dynStrAppendChar(dynStr_t *string, char c);
 bool dynStrAppendString(dynStr_t *string, const char* str);
 
 /**
- * Equals a dynamic string and a string
+ * Determines whether two dynamic strings have the same value
+ * @param string1 First dynamic string to compare
+ * @param string2 Second dynamic string to compare
+ * @return String equality
+ */
+bool dynStrEqual(dynStr_t* string1, dynStr_t *string2);
+
+/**
+ * Determines whether dynamic string and string have the same value
  * @param string Dynamic string
  * @param str String to compare
  * @return String equality
@@ -91,8 +99,30 @@ bool dynStrIsEmpty(dynStr_t *string);
 bool dynStrCopy(dynStr_t *dst, dynStr_t *src);
 
 /**
+ * Clones the dynamic string
+ * @param src Dynamic string
+ * @return Cloned dynamic string
+ */
+dynStr_t *dynStrClone(dynStr_t *src);
+
+/**
  * Escape the dynamic string
  * @param string Dynamic string
  * @return Execution status
  */
 bool dynStrEscape(dynStr_t *string);
+
+/**
+ * Returns a character from the string
+ * @param string Dynamic string
+ * @param index Character position in the string
+ * @return Character
+ */
+char dynStrGetChar(dynStr_t *string, unsigned long index);
+
+/**
+ * Returns a string value of the dynamic string
+ * @param string Dynamic string
+ * @return String value of the dynamic string
+ */
+const char *dynStrGetString(dynStr_t* string);
