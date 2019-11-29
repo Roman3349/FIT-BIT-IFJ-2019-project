@@ -81,4 +81,21 @@ namespace Tests {
 		dynStrClear(string);
 		ASSERT_TRUE(dynStrIsEmpty(string));
 	}
+
+	TEST_F(DynamicStringTest, Copy) {
+		dynStrAppendString(string, "ABCD");
+		dynStr_t *tmp = dynStrInit();
+		dynStrCopy(tmp, string);
+		ASSERT_EQ(tmp->alloc_size, string->alloc_size);
+		ASSERT_EQ(tmp->size, string->size);
+		ASSERT_STREQ(tmp->string, string->string);
+		dynStrFree(tmp);
+	}
+
+	TEST_F(DynamicStringTest, Escape) {
+		dynStrAppendString(string, "retezec s lomitkem \\ a\nnovym#radkem");
+		ASSERT_TRUE(dynStrEscape(string));
+		char expected[] = "retezec\\032s\\032lomitkem\\032\\092\\032a\\010novym\\035radkem";
+		ASSERT_STREQ(string->string, expected);
+	}
 }
