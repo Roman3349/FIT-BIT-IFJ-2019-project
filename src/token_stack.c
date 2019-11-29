@@ -48,9 +48,15 @@ void tokenStackPush(tokenStack_t* stack, token_t value) {
     stack->head = item;
 }
 
-token_t tokenStackPop(tokenStack_t* stack) {
+token_t tokenStackPop(tokenStack_t* stack, int* errCode) {
     if (tokenStackIsEmpty(stack)) {
-        tokenStackPush(stack, scan(stack->file, stack->lexStack));
+		token_t token = scan(stack->file, stack->lexStack);
+		if(token.type == T_UNKNOWN) {
+			*errCode = 1;
+		} else if(token.type == T_ERROR) {
+			*errCode = 99;
+		}
+		tokenStackPush(stack, token);
     }
     tokenStackItem_t* item = stack->head;
     stack->head = item->next;
@@ -59,9 +65,15 @@ token_t tokenStackPop(tokenStack_t* stack) {
     return token;
 }
 
-token_t tokenStackTop(tokenStack_t* stack) {
+token_t tokenStackTop(tokenStack_t* stack, int* errCode) {
     if (tokenStackIsEmpty(stack)) {
-        tokenStackPush(stack, scan(stack->file, stack->lexStack));
+    	token_t token = scan(stack->file, stack->lexStack);
+    	if(token.type == T_UNKNOWN) {
+    		*errCode = 1;
+    	} else if(token.type == T_ERROR) {
+    		*errCode = 99;
+    	}
+		tokenStackPush(stack, token);
     }
     return stack->head->value;
 }

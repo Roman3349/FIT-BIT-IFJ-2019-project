@@ -26,6 +26,9 @@
 #include "parse_tree.h"
 #include "tree_element_stack.h"
 
+#define SYNTAX_ERR_CODE 2
+#define LEXICAL_ERR_CODE 1
+
 enum statementPart{
     S_EOL = T_EOL,
     S_INDENT = T_INDENT,
@@ -64,7 +67,7 @@ treeElement_t syntaxParse(FILE * file);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseWhile(tokenStack_t* stack, treeElement_t* tree);
+int parseWhile(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Returns string representation of token
@@ -79,7 +82,7 @@ char* tokenToString(enum token_type type);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseBlock(tokenStack_t* stack, treeElement_t* tree);
+int parseBlock(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function call
@@ -87,7 +90,7 @@ bool parseBlock(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses pass keyword
@@ -95,28 +98,28 @@ bool parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing successful
  */
-bool parsePass(tokenStack_t* stack, treeElement_t* tree);
+int parsePass(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses return keyword and value
  * @param stack token stack
  * @return parsing successful
  */
-bool parseReturn(tokenStack_t* stack, treeElement_t* tree);
+int parseReturn(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses if keyword
  * @param stack token stack
  * @return parsing successful
  */
-bool parseIf(tokenStack_t* stack, treeElement_t* tree);
+int parseIf(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses else keyword
  * @param stack token stack
  * @return parsing successful
  */
-bool parseElse(tokenStack_t* stack, treeElement_t* tree);
+int parseElse(tokenStack_t* stack, treeElement_t* tree);
 
 
 /**
@@ -124,21 +127,21 @@ bool parseElse(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionDef(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function definition parameters
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Parses function call parameters
  * @param stack token stack
  * @return parsing successful
  */
-bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
 
 /**
  * Check if next token matches expected token eventually prints error message
@@ -146,7 +149,7 @@ bool parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
  * @param expectedToken expected token
  * @return got expected token
  */
-bool processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement_t* tree);
+int processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement_t* tree);
 
 /**
  * Converts statementPart to token if possible
@@ -154,14 +157,14 @@ bool processToken(tokenStack_t* stack, enum token_type expectedToken, treeElemen
  * @param type pointer to token type function
  * @return conversion successful
  */
-bool statementPartToTokenType(statementPart_t statementPart, enum token_type* type);
+int statementPartToTokenType(statementPart_t statementPart, enum token_type* type);
 
 /**
  * Parses expression
  * @param stack token stack
  * @return parsing successful
  */
-bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot);
+int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot);
 
 /**
  * Processes statement part
@@ -169,4 +172,4 @@ bool parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot)
  * @param part statement part
  * @return processing successful
  */
-bool processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree);
+int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree);
