@@ -120,7 +120,7 @@ symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *n
 	if (table == NULL || name == NULL) {
 		return FRAME_ERROR;
 	}
-	symbol_t *symbol = symTableFind(table, context, name);
+	symbol_t *symbol = symTableFind(table, name, context);
 	if (symbol == NULL) {
 		return FRAME_ERROR;
 	}
@@ -177,11 +177,15 @@ bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool de
 		return NULL;
 	}
 	symbolInfo_t info = {.function = {.argc = argc, .defined = true}};
-	symbol_t *symbol = symbolInit(name, SYMBOL_FUNCTION, info, NULL);
+	symbol_t *symbol = symbolInit(dynStrClone(name), SYMBOL_FUNCTION, info, NULL);
 	if (symbol == NULL) {
 		return false;
 	}
-	return symTableInsert(table, symbol, definition);
+	bool retVal = symTableInsert(table, symbol, definition);
+	if (!retVal) {
+		symbolFree(symbol);
+	}
+	return retVal;
 }
 
 bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context) {
@@ -189,11 +193,16 @@ bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context
 		return NULL;
 	}
 	symbolInfo_t info = {.variable = {.assigned = true}};
-	symbol_t *symbol = symbolInit(name, SYMBOL_VARIABLE, info, context);
+	symbol_t *symbol = symbolInit(dynStrClone(name), SYMBOL_VARIABLE, info, dynStrClone(context));
 	if (symbol == NULL) {
+		symbolFree(symbol);
 		return false;
 	}
-	return symTableInsert(table, symbol, false);
+	bool retVal = symTableInsert(table, symbol, false);
+	if (!retVal) {
+		symbolFree(symbol);
+	}
+	return retVal;
 }
 
 bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {

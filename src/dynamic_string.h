@@ -99,6 +99,13 @@ bool dynStrIsEmpty(dynStr_t *string);
 bool dynStrCopy(dynStr_t *dst, dynStr_t *src);
 
 /**
+ * Clones the dynamic string
+ * @param src Dynamic string
+ * @return Cloned dynamic string
+ */
+dynStr_t *dynStrClone(dynStr_t *src);
+
+/**
  * Escape the dynamic string
  * @param string Dynamic string
  * @return Execution status

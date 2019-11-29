@@ -124,8 +124,20 @@ bool dynStrCopy(dynStr_t *dst, dynStr_t *src) {
 	dst->string = tmp;
 	dst->alloc_size = src->alloc_size;
 	dst->size = src->size;
-	strncpy(dst->string, src->string, src->size);
+	strcpy(dst->string, src->string);
 	return true;
+}
+
+dynStr_t *dynStrClone(dynStr_t *src) {
+	dynStr_t *string = dynStrInit();
+	if (string == NULL) {
+		return NULL;
+	}
+	if (!dynStrCopy(string, src)) {
+		dynStrFree(string);
+		return NULL;
+	}
+	return string;
 }
 
 bool dynStrEscape(dynStr_t *string) {
