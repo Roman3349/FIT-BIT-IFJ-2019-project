@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include "parser.h"
 
 /**
  * Main function
@@ -25,6 +26,10 @@
  * @return Execution status
  */
 int main(int argc, char *argv[]) {
-	puts("Hello World!");
+	FILE* file = fopen("/home/fjerabek/Downloads/example1.src", "r");
+    treeElement_t tree = syntaxParse(file);
+	printTree(tree, 0);
+	treeFree(tree);
+    fclose(file);
 	return 0;
 }
