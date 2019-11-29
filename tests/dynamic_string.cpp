@@ -108,4 +108,15 @@ namespace Tests {
 		char expected[] = "retezec\\032s\\032lomitkem\\032\\092\\032a\\010novym\\035radkem";
 		ASSERT_STREQ(string->string, expected);
 	}
+
+	TEST_F(DynamicStringTest, GetChar) {
+		dynStrAppendChar(string, 'A');
+		ASSERT_EQ(dynStrGetChar(string, 0), 'A');
+		ASSERT_EQ(dynStrGetChar(string, 1), 0);
+	}
+
+	TEST_F(DynamicStringTest, GetString) {
+		dynStrAppendChar(string, 'A');
+		ASSERT_STREQ(dynStrGetString(string), "A");
+	}
 }

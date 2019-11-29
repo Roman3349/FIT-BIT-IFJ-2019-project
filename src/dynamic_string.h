@@ -104,3 +104,18 @@ bool dynStrCopy(dynStr_t *dst, dynStr_t *src);
  * @return Execution status
  */
 bool dynStrEscape(dynStr_t *string);
+
+/**
+ * Returns a character from the string
+ * @param string Dynamic string
+ * @param index Character position in the string
+ * @return Character
+ */
+char dynStrGetChar(dynStr_t *string, unsigned long index);
+
+/**
+ * Returns a string value of the dynamic string
+ * @param string Dynamic string
+ * @return String value of the dynamic string
+ */
+const char *dynStrGetString(dynStr_t* string);

@@ -141,3 +141,14 @@ bool dynStrEscape(dynStr_t *string) {
 	dynStrFree(tmp);
 	return true;
 }
+
+char dynStrGetChar(dynStr_t *string, unsigned long index) {
+	if (index > string->size) {
+		return 0;
+	}
+	return string->string[index];
+}
+
+const char *dynStrGetString(dynStr_t* string) {
+	return string->string;
+}
