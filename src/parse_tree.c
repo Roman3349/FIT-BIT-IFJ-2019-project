@@ -17,7 +17,6 @@
  */
 
 #include "parse_tree.h"
-#include "parser.h"
 
 void treeInit(treeElement_t* tree, treeElementType_t elementType) {
     tree->type = elementType;

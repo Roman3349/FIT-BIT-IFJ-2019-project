@@ -694,3 +694,84 @@ int remove_line_comment(FILE* file) {
     }
     return SUCCESS;
 }
+
+char* tokenToString (enum token_type type) {
+	switch(type) {
+		case T_EOL:
+			return "EOL";
+		case T_EOF:
+			return "EOF";
+		case T_OP_NEG:
+			return "'!='";
+		case T_OP_ADD:
+			return "'+'";
+		case T_OP_SUB:
+			return "'-'";
+		case T_OP_MUL:
+			return "'*'";
+		case T_OP_DIV:
+			return "'/'";
+		case T_OP_EQ:
+			return "'=='";
+		case T_OP_GREATER:
+			return "'>'";
+		case T_OP_LESS:
+			return "'<'";
+		case T_OP_GREATER_EQ:
+			return "'>='";
+		case T_OP_LESS_EQ:
+			return "'<='";
+		case T_OP_NOT_EQ:
+			return "'!='";
+		case T_BOOL_AND:
+			return "'and'";
+		case T_BOOL_OR:
+			return "'or'";
+		case T_BOOL_NEG:
+			return "'not'";
+		case T_NUMBER:
+			return "NUMBER";
+		case T_FLOAT:
+			return "FLOAT";
+		case T_STRING:
+			return "STRING";
+		case T_STRING_ML:
+			return "STRING_MULTILINE";
+		case T_ID:
+			return "IDENTIFIER";
+		case T_KW_DEF:
+			return "'def'";
+		case T_KW_IF:
+			return "'if'";
+		case T_KW_ELSE:
+			return "'else'";
+		case T_KW_WHILE:
+			return "'while'";
+		case T_KW_PASS:
+			return "'pass'";
+		case T_KW_RETURN:
+			return "'return'";
+		case T_KW_NONE:
+			return "NONE";
+		case T_ASSIGN:
+			return "'='";
+		case T_COLON:
+			return "':'";
+		case T_COMMA:
+			return "','";
+		case T_LPAR:
+			return "'('";
+		case T_RPAR:
+			return "')'";
+		case T_INDENT:
+			return "INDENTATION";
+		case T_DEDENT:
+			return "DEDENTATION";
+		case T_UNKNOWN:
+			return "UNKNOWN";
+		case T_ERROR:
+			return "ERROR";
+		default:
+			return "";
+	}
+}

@@ -70,13 +70,6 @@ treeElement_t syntaxParse(FILE * file);
 int parseWhile(tokenStack_t* stack, treeElement_t* tree);
 
 /**
- * Returns string representation of token
- * @param token token
- * @return string representation
- */
-char* tokenToString(enum token_type type);
-
-/**
  * Parses code block
  * @param file source file
  * @param stack token stack
