@@ -560,4 +560,11 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
+	TEST_F(ScannerTest, tokenToString) {
+		EXPECT_STREQ(tokenToString(T_EOF), "EOF");
+		EXPECT_STREQ(tokenToString(T_NUMBER), "NUMBER");
+		EXPECT_STREQ(tokenToString(T_ERROR), "ERROR");
+		EXPECT_STREQ(tokenToString((enum token_type) (T_ERROR + 1)), "");
+	}
+
 }
