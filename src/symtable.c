@@ -168,7 +168,6 @@ errorCode_t symTableInsertEmbedFunctions(symTable_t *table) {
 			return ERROR_INTERNAL;
 		}
 		if (symTableInsert(table, symbol, true) != ERROR_SUCCESS) {
-			dynStrFree(name);
 			symbolFree(symbol);
 			return ERROR_INTERNAL;
 		}
@@ -231,7 +230,8 @@ errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 				current->info.variable.assigned = true;
 			}
 			if (current->type == SYMBOL_FUNCTION) {
-				if (current->info.function.argc != symbol->info.function.argc) {
+				if (current->info.function.argc != symbol->info.function.argc &&
+					current->info.function.argc != -1) {
 					return ERROR_SEMANTIC_ARGC;
 				}
 				current->used = true;
