@@ -115,6 +115,13 @@ namespace Tests {
 		ASSERT_EQ(symTableSize(table), EMBEDDED_FUNCTIONS);
 	}
 
+	TEST_F(SymTableTest, insertEmbedFunctionsDuplicate) {
+		ASSERT_EQ(symTableInsertEmbedFunctions(table), ERROR_SUCCESS);
+		ASSERT_EQ(symTableSize(table), EMBEDDED_FUNCTIONS);
+		ASSERT_EQ(symTableInsertEmbedFunctions(table), ERROR_INTERNAL);
+		ASSERT_EQ(symTableSize(table), EMBEDDED_FUNCTIONS);
+	}
+
 	TEST_F(SymTableTest, insertFunctionNullName) {
 		ASSERT_EQ(symTableInsertFunction(table, nullptr, 0, true), ERROR_INTERNAL);
 	}
@@ -146,6 +153,16 @@ namespace Tests {
 		ASSERT_EQ(symTableInsertFunction(table, name, 1, false), ERROR_SEMANTIC_ARGC);
 		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SEMANTIC_EXPRESSION);
 		dynStrFree(name);
+	}
+
+	TEST_F(SymTableTest, insertFunctionDynamicArgc) {
+		dynStr_t *name = createDynStr("main");
+		ASSERT_EQ(symTableInsertFunction(table, name, -1, true), ERROR_SUCCESS);
+		ASSERT_EQ(symTableSize(table), 1);
+		ASSERT_EQ(symTableInsertFunction(table, name, 2, false), ERROR_SUCCESS);
+		ASSERT_EQ(symTableSize(table), 1);
+		dynStrFree(name);
+
 	}
 
 	TEST_F(SymTableTest, insertVariableNullName) {
