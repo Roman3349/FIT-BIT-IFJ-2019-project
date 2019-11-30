@@ -16,20 +16,21 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
-
 add_library(dynamic_string dynamic_string.c dynamic_string.h)
 add_library(parser parser.c parser.h)
 add_library(scanner scanner.c scanner.h)
 add_library(stack stack.c stack.h)
+add_library(symtable symtable.c symtable.h)
 add_library(token_stack token_stack.c token_stack.h)
 add_library(parse_tree parse_tree.c parse_tree.h)
+add_library(tree_element_stack tree_element_stack.c tree_element_stack.h)
 target_link_libraries(scanner dynamic_string stack m)
 target_link_libraries(token_stack scanner)
-target_link_libraries(parser token_stack)
-target_link_libraries(parser parse_tree token_stack)
+target_link_libraries(symtable dynamic_string)
+target_link_libraries(parse_tree scanner)
+target_link_libraries(parser parse_tree token_stack symtable tree_element_stack)
+target_link_libraries(tree_element_stack parse_tree)
 
-add_executable(ic19int main.c)
-target_link_libraries(ic19int scanner parser)
+add_executable(ic19 main.c)
+target_link_libraries(ic19 scanner parser)
 

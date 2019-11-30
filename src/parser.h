@@ -21,12 +21,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "error.h"
 #include "scanner.h"
 #include "token_stack.h"
 #include "parse_tree.h"
 #include "tree_element_stack.h"
-
-#define SYNTAX_ERR_CODE 2
 
 enum statementPart{
     S_EOL = T_EOL,
@@ -46,7 +45,7 @@ enum statementPart{
     S_EXPRESSION,
     S_DEF_PARAMS,
     S_CALL_PARAMS
-    };
+};
 
 typedef enum statementPart statementPart_t;
 
@@ -67,13 +66,6 @@ treeElement_t syntaxParse(FILE * file);
  * @return parsing error code
  */
 int parseWhile(tokenStack_t* stack, treeElement_t* tree);
-
-/**
- * Returns string representation of token
- * @param token token
- * @return string representation
- */
-char* tokenToString(enum token_type type);
 
 /**
  * Parses code block

@@ -23,13 +23,14 @@ jobs:
         - cd ..
         # Create lcov report
         - lcov --capture --directory . --output-file coverage.info
-        - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        - lcov --remove coverage.info 'tests/*' --output-file coverage.info # filter test files
+        - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system files
         - lcov --list coverage.info # debug info
         # Uploading report to CodeCov
         - bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
     - stage: Makefile build
       script:
-        - make
+        - make -C src
 notifications:
   slack:
     secure: h5TDhTg9y8uQXZQqcDEZeuUEjs1EllQ6yWY2zl1xImnjoviGeosRvGv3w82nMA0ry0wGpnCV6JcDldlD8wv50PNouklFYTPnOFNsglThxQr+rraQjC1HzAbEvYD9JW28yjSGVnKIcrbW02Pw9Fl6iA/dKtK9NEokzHHOumo/XIHF+6Q72Nsib0ieVywK8et32ATYPc9IMFjvkzobsU8hqOFjKiqXJearmvA2ZRLt3BB+if5jZYaXxFFDLqzrY2QQ8DmMPJCuzZJfPRIZkolUKL5pMnKIjIdW3VbTyo4UJFxwKpXLItb+09ulp10d79D1Gv92Ug4msZsbykbaLg+5bFinir5WDfy6fzF0ZH7yWmiSqKDMWIjieGDSQ22LHyk8DCC3hAcWKG06F82w9NLGK3dIijqoGUFgib2LtOinr/9gxCaDhamnU+Bw0ph+mA0DQ+VmVSij8A3V2NeyBrfxNSLzlc2VBwodKEr4HRt0S+z+PPNm3CKi1y5UE8xMZQ05ywdbioWmJpQUf1aSQJhqhyUNre144nOAvtWqp83l9AXzz9FY0iqbP2Pb+Y8d5Kcp09i0s76IHp4/RihsFRt4yd2oAsbCZh4ymMEsHnL/B8q/673TsVSFySliziL7NaCOiSMYE+EY4ZexpN6VLH9UHIa/nOJZLZwB1gpdmSE8s9c=

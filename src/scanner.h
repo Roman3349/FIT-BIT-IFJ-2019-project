@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2019 Pavel Raur <xraurp00@stud.fit.vutbr.cz>
+ * Copyright (C) 2019 Roman Ondráček <xondra58@stud.fit.vutbr.cz>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -154,3 +155,18 @@ int process_string(FILE* file, token_t* token, int qmark);
  */
 int remove_line_comment(FILE* file);
 
+/**
+ * Process the escape sequences
+ * @param file Source file
+ * @param token Token
+ * @param c Character to process
+ * @return Execution status
+ */
+int process_escape_seq(FILE* file, token_t *token, int c);
+
+/**
+ * Returns string representation of token
+ * @param token token
+ * @return string representation
+ */
+char* tokenToString(enum token_type type);

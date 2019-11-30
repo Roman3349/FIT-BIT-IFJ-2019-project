@@ -26,6 +26,8 @@ else (NOT GTest_FOUND)
     include_directories(${GTEST_INCLUDE_DIRS})
 endif (NOT GTest_FOUND)
 
+file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
-add_executable(tests dynamic_string.cpp scanner.cpp stack.cpp)
-target_link_libraries(tests ${GTEST_BOTH_LIBRARIES} dynamic_string scanner stack)
+add_executable(tests ${_HDRFILES} ${_SRCFILES})
+target_link_libraries(tests ${GTEST_BOTH_LIBRARIES} scanner parser)
