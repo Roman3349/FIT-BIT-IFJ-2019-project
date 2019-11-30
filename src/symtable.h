@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "dynamic_string.h"
+#include "error.h"
 
 #define EMBEDDED_FUNCTIONS 8
 #define TABLE_SIZE 8191 // 2^13 - 1
@@ -112,8 +113,9 @@ void symTableRemove(symTable_t *table, dynStr_t *name, dynStr_t *context);
 /**
  * Inserts the embedded functions
  * @param table Symbol table
+ * @return Execution status
  */
-bool symTableInsertEmbedFunctions(symTable_t *table);
+errorCode_t symTableInsertEmbedFunctions(symTable_t *table);
 
 /**
  * Inserts a function
@@ -123,7 +125,7 @@ bool symTableInsertEmbedFunctions(symTable_t *table);
  * @param definition Is function definition?
  * @return Execution status
  */
-bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition);
+errorCode_t symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition);
 
 /**
  * Inserts a variable
@@ -132,7 +134,7 @@ bool symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool de
  * @param context Symbol context (NULL = global, others = function name)
  * @return Execution status
  */
-bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context);
+errorCode_t symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Inserts a symbol into the table
@@ -141,7 +143,7 @@ bool symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context
  * @param unique Unique insert?
  * @return Execution status
  */
-bool symTableInsert(symTable_t *table, symbol_t *symbol, bool unique);
+errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique);
 
 /**
  * Returns size of symbol table
@@ -153,20 +155,20 @@ size_t symTableSize(symTable_t *table);
 /**
  * Returns a symbol
  * @param table Symbol table
- * @param context Symbol context
  * @param name Symbol name
+ * @param context Symbol context
  * @return Symbol
  */
-symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name);
+symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Returns the symbol frame type
  * @param table Symbol table
- * @param context Symbol context (NULL = global, others = function name)
  * @param name Symbol name
+ * @param context Symbol context (NULL = global, others = function name)
  * @return Symbol frame type
  */
-symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *name);
+symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Returns an iterator to the beginning

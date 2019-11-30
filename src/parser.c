@@ -29,29 +29,28 @@ statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS, S_RPAR};
 
 signed int precedenceTable[19][19] =
 	{
-	//    *  /  // +  -  =  <  > <= >= == && ||  ! !=  (  ) id  $
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// *
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// /
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// //
-		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// +
-		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// -
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// =
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <=
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >=
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// ==
-		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1,-1,-1, 1,-1, 1},// &&
-		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1,-1, 1,-1, 1},// ||
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1,-1, 1,-1, 1},// !
-		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// !=
-		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0},// (
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-5, 1,-5, 1},// )
-		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,-5, 1},// id
-		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0} // $
+	//    *  /  // +  -  <  > <= >= == && ||  ! !=  (  ) id  $
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// *
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// /
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// //
+		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// +
+		{-1,-1,-1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1, 1,-1, 1,-1, 1},// -
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// <=
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// >=
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// ==
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1, 1,-1,-1,-1, 1,-1, 1},// &&
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 1,-1,-1,-1, 1,-1, 1},// ||
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-1,-1, 1,-1, 1,-1, 1},// !
+		{-1,-1,-1,-1,-1,-5,-5,-5,-5,-5, 1, 1,-1,-5,-1, 1,-1, 1},// !=
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, 0,-1, 0},// (
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-5, 1,-5, 1},// )
+		{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,-5, 1},// id
+		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-5,-1,-5} // $
 	};
 
-treeElement_t syntaxParse(FILE* file) {
+treeElement_t syntaxParse(FILE* file, symTable_t* symTable) {
 
     intStack_t* intStack = stackInit();
     stackPush(intStack, 0);
@@ -59,22 +58,24 @@ treeElement_t syntaxParse(FILE* file) {
     treeElement_t tree;
     treeInit(&tree, E_CODE);
 
-    int errCode = 0;
+    int errCode = ERROR_SUCCESS;
     while(tokenStackTop(tokenStack, &errCode).type != T_EOF) {
-    	if(errCode != 0) { //Lexical analysis error
+    	if(errCode != ERROR_SUCCESS) { //Lexical analysis error
     		break;
     	}
-		errCode = parseBlock(tokenStack, &tree);
-        if (errCode != 0) {
+		errCode = parseBlock(tokenStack, &tree, symTable, NULL);
+        if (errCode != ERROR_SUCCESS) {
             break;
         }
 
         token_t token = tokenStackTop(tokenStack, &errCode);
-        if(errCode != 0) //Lexical analysis error
+        if(errCode != ERROR_SUCCESS) //Lexical analysis error
         	break;
 
         if (token.type == T_KW_DEF) {
-            parseFunctionDef(tokenStack, &tree);
+            errCode = parseFunctionDef(tokenStack, &tree, symTable);
+            if(errCode != ERROR_SUCCESS)
+            	break;
         } else if(token.type == T_EOF) {
             break;
         } else {
@@ -83,13 +84,13 @@ treeElement_t syntaxParse(FILE* file) {
         }
 
     }
-    if(errCode == 0) {
+    if(errCode == ERROR_SUCCESS) {
 		errCode = processToken(tokenStack, T_EOF, &tree);
 	}
     tokenStackFree(tokenStack);
     stackFree(intStack);
 
-    if(errCode != 0){
+    if(errCode != ERROR_SUCCESS){
     	treeFree(tree);
     	exit(errCode); //Exit with correct error code
     }
@@ -97,9 +98,9 @@ treeElement_t syntaxParse(FILE* file) {
 }
 
 int processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree) {
-	int errCode = 0;
+	int errCode = ERROR_SUCCESS;
     token_t token = tokenStackPop(stack, &errCode);
-    if(errCode != 0) {
+    if(errCode != ERROR_SUCCESS) {
 		return errCode;
     }
     if(token.type != type){
@@ -124,78 +125,84 @@ int processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree)
     	case T_STRING_ML:
     	case T_KW_NONE:
 		case T_KW_PASS:
-			treeAddToken(tree, token);
+			if(!treeAddToken(tree, token))
+				return ERROR_INTERNAL;
     		break;
 
 		default:
 			break;
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree) {
+int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
     enum token_type tokenType;
-    int errCode = 0;
+    int errCode;
     switch(part) {
         case S_BLOCK:
-			errCode = parseBlock(stack, tree);
-			if (errCode != 0)
+			errCode = parseBlock(stack, tree, symTable, context);
+			if (errCode != ERROR_SUCCESS)
 				return errCode;
 			break;
 
         case S_EXPRESSION:
-        	errCode = parseExpression(stack, tree, true);
-            if(errCode != 0)
-                return errCode;
-            break;
-
-        case S_DEF_PARAMS:
-        	errCode = parseFunctionDefParams(stack, tree);
-            if(errCode != 0)
-                return errCode;
-            break;
-
-        case S_CALL_PARAMS:
-        	errCode = parseFunctionCallParams(stack, tree);
-            if(errCode != 0)
+        	errCode = parseExpression(stack, tree, symTable, context);
+            if(errCode != ERROR_SUCCESS)
                 return errCode;
             break;
 
         default:
         	errCode = statementPartToTokenType(part, &tokenType);
-            if(errCode == 0) {
+            if(errCode == ERROR_SUCCESS) {
 				errCode = processToken(stack, tokenType, tree);
-                if(errCode != 0)
+                if(errCode != ERROR_SUCCESS)
                     return errCode;
             } else {
                 return errCode;
             }
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable) {
+	int errCode = ERROR_SUCCESS;
+	dynStr_t* context = NULL;
     size_t partSize = sizeof(functionDef_s) / sizeof(functionDef_s[0]); //Get number of statement parts
     treeElement_t* defFunTree = treeAddElement(tree, E_S_FUNCTION_DEF);
 
     for(size_t i = 0; i < partSize; i++){
-		errCode = processStatementPart(stack, functionDef_s[i], defFunTree);
-        if(errCode != 0)
-            return errCode;
+    	if(functionDef_s[i] == S_ID) {
+			token_t token = tokenStackTop(stack, &errCode);
+			if(errCode != ERROR_SUCCESS)
+				return errCode;
+			if(token.type == T_ID) {
+				processToken(stack, T_ID, defFunTree);
+				context = token.data.strval;
+			}
+		} else if (functionDef_s[i] == S_DEF_PARAMS) {
+			errCode = parseFunctionDefParams(stack, defFunTree, symTable, context);
+			if(errCode != ERROR_SUCCESS)
+				return errCode;
+		} else {
+			errCode = processStatementPart(stack, functionDef_s[i], defFunTree, symTable, context);
+			if(errCode != ERROR_SUCCESS)
+				return errCode;
+    	}
+
     }
 
     return errCode;
 }
 
-int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* funcName) {
+	int errCode = ERROR_SUCCESS;
+	int paramCount = 0;
     bool parameters = true;
     treeElement_t* defParamTree = NULL;
     while(parameters) {
         token_t token = tokenStackPop(stack, &errCode);
-        if(errCode != 0) {
+        if(errCode != ERROR_SUCCESS) {
 			return errCode;
         }
         switch (token.type) {
@@ -203,11 +210,18 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
             	if(defParamTree == NULL) {
 					defParamTree = treeAddElement(tree, E_S_FUNCTION_DEF_PARAMS);
             	}
-                treeAddToken(defParamTree, token);
+            	paramCount++;
+                if(!treeAddToken(defParamTree, token))
+					return ERROR_INTERNAL;
+
+                errCode = symTableInsertVariable(symTable, token.data.strval, funcName);
+            	if(errCode != ERROR_SUCCESS) //Insert parameter as local variable
+					return errCode;
+
             	token_t lookAheadToken = tokenStackTop(stack, &errCode);
                 if(lookAheadToken.type == T_COMMA) {
 					tokenStackPop(stack, &errCode); // multiple parameters pop comma
-					if(errCode != 0)
+					if(errCode != ERROR_SUCCESS)
 						return errCode;
 				}
                 break;
@@ -218,68 +232,65 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
 
             default:
             	lookAheadToken = tokenStackTop(stack, &errCode);
-            	if(errCode != 0) {
+            	if(errCode != ERROR_SUCCESS) {
 					return errCode;
             	}
                 fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(lookAheadToken.type));
                 return ERROR_SYNTAX;
         }
     }
-    return 0;
+
+    errCode = symTableInsertFunction(symTable, funcName, paramCount, true);
+	if (errCode != ERROR_SUCCESS) //Symtable insert function definition
+		return errCode;
+
+    return ERROR_SUCCESS;
 }
 
 int getTokenTableId(enum token_type type) {
 	switch (type){
-		case T_OP_NEG:
-			return 0;
-		case T_OP_ADD:
-			return 3;
-		case T_OP_SUB:
-			return 4;
 		case T_OP_MUL:
 			return 0;
 		case T_OP_DIV:
 			return 1;
 		case T_OP_IDIV:
 			return 2;
-		case T_OP_EQ:
-			return 10;
-		case T_OP_GREATER:
-			return 7;
+		case T_OP_ADD:
+			return 3;
+		case T_OP_SUB:
+			return 4;
 		case T_OP_LESS:
-			return 6;
-		case T_OP_GREATER_EQ:
-			return 9;
-		case T_OP_LESS_EQ:
-			return 8;
-		case T_OP_NOT_EQ:
-			return 14;
-		case T_BOOL_AND:
-			return 11;
-		case T_BOOL_OR:
-			return 12;
-		case T_BOOL_NEG:
-			return 13;
-		case T_NUMBER:
-			return 17;
-		case T_FLOAT:
-			return 17;
-		case T_STRING:
-			return 17;
-		case T_STRING_ML:
-			return 17;
-		case T_ID:
-			return 17;
-		case T_ASSIGN:
 			return 5;
+		case T_OP_GREATER:
+			return 6;
+		case T_OP_LESS_EQ:
+			return 7;
+		case T_OP_GREATER_EQ:
+			return 8;
+		case T_OP_EQ:
+			return 9;
+		case T_BOOL_AND:
+			return 10;
+		case T_BOOL_OR:
+			return 11;
+		case T_BOOL_NEG:
+		case T_OP_NEG:
+			return 12;
+		case T_OP_NOT_EQ:
+			return 13;
 		case T_LPAR:
-			return 15;
-		case T_KW_NONE:
-			return 17;
+			return 14;
 		case T_RPAR:
+			return 15;
+		case T_NUMBER:
+		case T_FLOAT:
+		case T_STRING:
+		case T_STRING_ML:
+		case T_ID:
+		case T_KW_NONE:
 			return 16;
 		default:
-			return 18;
+			return 17;
 	}
 }
 
@@ -328,25 +339,22 @@ enum token_type tokenTypeFromElement(treeElement_t element) {
 			return T_ID;
 
 		case E_TOKEN:
-			return ((token_t*)element.data)->type;
+			return element.data.token->type;
 		default:
 			return T_EOL; //TODO: Return something meaningful on error
 	}
 }
 
-int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
-	int errCode = 0;
+int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context){
+	int errCode = ERROR_SUCCESS;
 	token_t topToken = tokenStackTop(stack, &errCode);
-	if(errCode != 0) {
+	if(errCode != ERROR_SUCCESS) {
 		return errCode;
 	}
-	if(getTokenTableId(topToken.type) == 18) // If token is unrecognized by precedence analysis
+	if(getTokenTableId(topToken.type) == 17) // If token is unrecognized by precedence analysis
 		return ERROR_SYNTAX; //Syntax error
 	treeElement_t* expressionTree;
-    if(includeRoot)
-    	 expressionTree = treeAddElement(tree, E_S_EXPRESSION);
-    else
-    	expressionTree = tree;
+	expressionTree = treeAddElement(tree, E_S_EXPRESSION);
 
     treeStack_t* resultStack = treeStackInit();// stack for result tree
     treeStack_t* precedenceStack = treeStackInit();
@@ -358,7 +366,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 
     while(true) { // Probably not the best approach
 		token_t token = tokenStackPop(stack, &errCode);
-		if(errCode != 0){
+		if(errCode != ERROR_SUCCESS){
 			treeStackFree(resultStack);
 			treeStackFree(precedenceStack);
 			return errCode;
@@ -367,7 +375,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 		int greater = 0;
 
 		topToken = tokenStackTop(stack, &errCode);
-		if(errCode != 0) { // Lexical analysis error
+		if(errCode != ERROR_SUCCESS) { // Lexical analysis error
 			treeStackFree(resultStack);
 			treeStackFree(precedenceStack);
 			return errCode;
@@ -375,8 +383,8 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 
 		if (token.type == T_ID && topToken.type == T_LPAR) {
 			tokenStackPush(stack, token);
-			errCode = parseFunctionCall(stack, &element);
-			if(errCode != 0) {
+			errCode = parseFunctionCall(stack, &element, symTable, context);
+			if(errCode != ERROR_SUCCESS) {
 				treeFree(element);
 				treeStackFree(resultStack);
 				treeStackFree(precedenceStack);
@@ -392,11 +400,17 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 			}
 		}
 
-		if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
+		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.data.token->type == T_RPAR) {
+			element = treeStackPop(resultStack);
+			treeInsertElement(expressionTree, element);
+			tokenStackPush(stack, token); // Push back last token (Not part of expression)
+			treeStackFree(resultStack);
+			treeStackFree(precedenceStack);
+			return 0;
+		} else if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) {
 			fprintf(stderr, "EXPRESSION: Token unrecognized");
 			treeStackFree(resultStack);
 			treeStackFree(precedenceStack);
-			treeFree(element);
 			return ERROR_SYNTAX;
 		}
 
@@ -428,13 +442,13 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 						treeInsertElement(&operation, first);
 						treeInsertElement(&operation, second);
 
-						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL) { // Expression END
+						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && getTokenTableId(token.type) == 17) { // Expression END
 							treeInsertElement(expressionTree, operation);
 							tokenStackPush(stack, token); // Push back last token (Not part of expression)
 							treeFree(element);
 							treeStackFree(resultStack);
 							treeStackFree(precedenceStack);
-							return 0;
+							return ERROR_SUCCESS;
 						} else {
 							treeStackPush(resultStack, operation);
 						}
@@ -448,24 +462,25 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 
 				if(!isTokenGreater(tokenTypeFromElement(treeStackTop(precedenceStack)), tokenTypeFromElement(element), &greater)) { // Expression END
 					greater = false;
+					operation = treeStackPop(resultStack);
 					treeFree(element);
 					treeInsertElement(expressionTree, operation);
 					tokenStackPush(stack, token); // Push back last token (Not part of expression)
 					treeStackFree(resultStack);
 					treeStackFree(precedenceStack);
-					return 0;
+					return ERROR_SUCCESS;
 				}
 			}
 
 			if(greater == 0){
-				if(treeStackTop(precedenceStack).type == E_TOKEN && ((token_t*)treeStackTop(precedenceStack).data)->type == T_EOL) {
+				if(treeStackTop(precedenceStack).type == E_TOKEN && treeStackTop(precedenceStack).data.token->type == T_EOL) {
 					greater = false;
 					treeFree(element);
 					treeInsertElement(expressionTree, treeStackPop(resultStack)); // Insert final operation into expression tree
 					tokenStackPush(stack, token); // Push back last token (Not part of expression)
 					treeStackFree(resultStack);
 					treeStackFree(precedenceStack);
-					return 0;
+					return ERROR_SUCCESS;
 				}
 				treeStackPop(precedenceStack); // Pop ( operator from stack
 			} else {
@@ -475,31 +490,32 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
     }
 }
 
-int parseWhile(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseWhile(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	treeElement_t* whileTree = treeAddElement(tree, E_S_WHILE);
+	int errCode;
     size_t partSize = sizeof(while_s) / sizeof(while_s[0]); //Get number of statement parts
 
     for(size_t i = 0; i < partSize; i++){
-		errCode = processStatementPart(stack, while_s[i], tree);
-        if(errCode != 0)
+		errCode = processStatementPart(stack, while_s[i], whileTree, symTable, context);
+        if(errCode != ERROR_SUCCESS)
             return errCode;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
+int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
     /*
      * If parsing of any block-statement fails block parsing fails.
      * unexpected block-tokens are not popped from stack
     **/
-    int errCode = 0;
+    int errCode = ERROR_SUCCESS;
     bool tokenRecognized = true;
     token_t token;
 	treeElement_t* blockTree = NULL;
     while(tokenRecognized) {
         token = tokenStackTop(stack, &errCode);
-        if(errCode != 0) {
+        if(errCode != ERROR_SUCCESS) {
 			return errCode;
         }
         switch (token.type) {
@@ -507,8 +523,8 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
 
-				errCode = parseIf(stack, blockTree);
-                if(errCode != 0)
+				errCode = parseIf(stack, blockTree, symTable, context);
+                if(errCode != ERROR_SUCCESS)
                     return errCode;
                 break;
 
@@ -516,8 +532,8 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
 
-				errCode = parseWhile(stack, blockTree);
-                if (errCode != 0)
+				errCode = parseWhile(stack, blockTree, symTable, context);
+                if (errCode != ERROR_SUCCESS)
                     return errCode;
                 break;
 
@@ -525,8 +541,8 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
 
-				errCode = parsePass(stack, blockTree);
-                if (errCode != 0)
+				errCode = parsePass(stack, blockTree, symTable, context);
+                if (errCode != ERROR_SUCCESS)
                     return errCode;
                 break;
 
@@ -534,8 +550,8 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
 
-				errCode = parseReturn(stack, blockTree);
-                if(errCode != 0)
+				errCode = parseReturn(stack, blockTree, symTable, context);
+                if(errCode != ERROR_SUCCESS)
                     return errCode;
                 break;
 
@@ -543,12 +559,21 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
 
-				errCode = parseExpression(stack, blockTree, true);
-                if(errCode != 0)
-					return errCode;
+				token = tokenStackPop(stack, &errCode);
+				if(tokenStackTop(stack, &errCode).type == T_ASSIGN){
+					tokenStackPush(stack, token);
+					errCode = parseAssignment(stack, blockTree, symTable, context);
+					if(errCode != ERROR_SUCCESS)
+						return errCode;
+				} else {
+					tokenStackPush(stack, token);
+					errCode = parseExpression(stack, blockTree, symTable, context);
+					if(errCode != ERROR_SUCCESS)
+						return errCode;
+				}
 
                 errCode = processToken(stack, T_EOL, blockTree);
-                if(errCode != 0) // Newline after expression
+                if(errCode != ERROR_SUCCESS) // Newline after expression
                         return errCode;
                 break;
 
@@ -557,11 +582,22 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
                 case T_STRING:
                 case T_STRING_ML:
                 case T_FLOAT: { // ignore expressions if their result is not used
-					while (tokenStackPop(stack, &errCode).type != T_EOL) {
-						if(errCode != 0) {
+					do{
+						token = tokenStackPop(stack, &errCode);
+						if(errCode != ERROR_SUCCESS) {
 							return errCode;
 						}
-					}
+						switch(token.type){
+							case T_STRING:
+							case T_ID:
+							case T_STRING_ML:
+								dynStrFree(token.data.strval);
+								break;
+
+							default:
+								break;
+						}
+					} while (token.type != T_EOL);
 					break;
 				}
 
@@ -569,87 +605,102 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree) {
                 tokenRecognized = false;
         }
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 
-int parseIf(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseIf(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode = ERROR_SUCCESS;
 	treeElement_t* ifTree = treeAddElement(tree, E_S_IF);
     size_t partSize = sizeof(if_s) / sizeof(if_s[0]); //Get number of statement parts
 
     for(size_t i = 0; i < partSize; i++){
-    	errCode = processStatementPart(stack, if_s[i], ifTree);
-        if(errCode != 0)
+    	errCode = processStatementPart(stack, if_s[i], ifTree, symTable, context);
+        if(errCode != ERROR_SUCCESS)
             return errCode;
     }
 
     token_t token = tokenStackTop(stack, &errCode);
-    if(errCode != 0) {
+    if(errCode != ERROR_SUCCESS) {
 		return errCode;
     }
     if(token.type == T_KW_ELSE) {
-		errCode = parseElse(stack, ifTree);
-        if(errCode != 0)
+		errCode = parseElse(stack, ifTree, symTable, context);
+        if(errCode != ERROR_SUCCESS)
 			return errCode;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseElse(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode;
     size_t partSize = sizeof(else_s) / sizeof(else_s[0]); //Get number of statement parts
 
     treeElement_t* elseTree = treeAddElement(tree, E_S_ELSE);
 
     for(size_t i = 0; i < partSize; i++){
-		errCode = processStatementPart(stack, else_s[i], elseTree);
-        if(errCode != 0)
+		errCode = processStatementPart(stack, else_s[i], elseTree, symTable, context);
+        if(errCode != ERROR_SUCCESS)
             return errCode;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseReturn(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode;
     size_t partSize = sizeof(return_s) / sizeof(return_s[0]); //Get number of statement parts
 
     treeElement_t* returnTree = treeAddElement(tree, E_S_RETURN);
 
     for(size_t i = 0; i < partSize; i++){
-    	errCode = processStatementPart(stack, return_s[i], returnTree);
-        if(errCode != 0)
+    	errCode = processStatementPart(stack, return_s[i], returnTree, symTable, context);
+        if(errCode != ERROR_SUCCESS)
             return errCode;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode = ERROR_SUCCESS;
+	dynStr_t* funcName = NULL;
     size_t partSize = sizeof(functionCall_s) / sizeof(functionCall_s[0]); //Get number of statement parts
 
-     treeInit(tree, E_S_FUNCTION_CALL);
+    treeInit(tree, E_S_FUNCTION_CALL);
 
     for(size_t i = 0; i < partSize; i++){
-    	errCode = processStatementPart(stack, functionCall_s[i], tree);
-        if(errCode != 0)
-            return errCode;
+    	if(functionCall_s[i] == S_ID) {
+    		token_t token = tokenStackTop(stack, &errCode);
+			if(token.type == T_ID){
+				processToken(stack, T_ID, tree);
+				funcName = token.data.strval;
+			}
+    	} else if(functionCall_s[i] == S_CALL_PARAMS) {
+    			errCode = parseFunctionCallParams(stack, tree, symTable, context, funcName);
+			if (errCode != ERROR_SUCCESS){
+				return errCode;
+			}
+    	} else {
+			errCode = processStatementPart(stack, functionCall_s[i], tree, symTable, context);
+			if(errCode != ERROR_SUCCESS)
+				return errCode;
+    	}
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree) {
+int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context, dynStr_t* functionName) {
     bool parameters = true;
     treeElement_t* paramsTree = NULL;
-    int errCode = 0;
+    int errCode = ERROR_SUCCESS;
+    int paramCount = 0;
     token_t token;
     while(parameters) {
 		token = tokenStackTop(stack, &errCode);
-		if(errCode != 0) {
+		if(errCode != ERROR_SUCCESS) {
 			return errCode;
 		}
 		if(token.type == T_RPAR) {
@@ -658,39 +709,89 @@ int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree) {
 		if(paramsTree == NULL)
 			paramsTree = treeAddElement(tree, E_S_FUNCTION_CALL_PARAMS);
 
-		errCode = parseExpression(stack, paramsTree, false);
-        if(errCode != 0)
+		errCode = parseExpression(stack, paramsTree, symTable, context);
+		paramCount ++;
+        if(errCode != ERROR_SUCCESS)
             return errCode;
 
         token = tokenStackTop(stack, &errCode);
-        if(errCode != 0)
+        if(errCode != ERROR_SUCCESS)
 			return errCode;
 
         if(token.type == T_COMMA) {
 			tokenStackPop(stack, &errCode);// pop comma token if multiple parameters
-			if(errCode != 0)
+			if(errCode != ERROR_SUCCESS)
 				return errCode;
 		} else if(token.type == T_RPAR) {
 			parameters = false;
 		}
     }
-    return 0;
+
+    errCode = symTableInsertFunction(symTable, functionName, paramCount, false);
+    if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+    return ERROR_SUCCESS;
 }
 
 
-int parsePass(tokenStack_t* stack, treeElement_t* tree) {
-	int errCode = 0;
+int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode;
     size_t partSize = sizeof(pass_s) / sizeof(pass_s[0]); //Get number of statement parts
 
     treeElement_t* pass = treeAddElement(tree, E_S_PASS);
 
     for(size_t i = 0; i < partSize; i++){
-		errCode = processStatementPart(stack, pass_s[i], pass);
-        if(errCode != 0)
+		errCode = processStatementPart(stack, pass_s[i], pass, symTable, context);
+        if(errCode != ERROR_SUCCESS)
             return errCode;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
+}
+
+int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
+	int errCode = ERROR_SUCCESS;
+	treeElement_t* assignTree = treeAddElement(tree, E_ASSIGN);
+
+	token_t token = tokenStackTop(stack, &errCode);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	errCode = processToken(stack, T_ID, assignTree);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	errCode = symTableInsertVariable(symTable, token.data.strval, context);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	errCode = processToken(stack, T_ASSIGN, assignTree);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	token = tokenStackTop(stack, &errCode);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	if(token.type == T_ID) {
+		token = tokenStackPop(stack, &errCode);
+		token_t topToken = tokenStackTop(stack, &errCode);
+		if(errCode != ERROR_SUCCESS)
+			return errCode;
+		if(topToken.type == T_ASSIGN){
+			tokenStackPush(stack, token);
+			parseAssignment(stack, assignTree, symTable, context);
+		} else {
+			tokenStackPush(stack, token);
+			parseExpression(stack, assignTree, symTable, context);
+		}
+
+	} else {
+		errCode = parseExpression(stack, assignTree, symTable, context);
+	}
+
+	return errCode;
 }
 
 int statementPartToTokenType(statementPart_t part, enum token_type* type){
@@ -709,7 +810,7 @@ int statementPartToTokenType(statementPart_t part, enum token_type* type){
         case S_KW_DEF:
         case S_KW_WHILE:
             *type = (enum token_type)part;
-            return 0;
+            return ERROR_SUCCESS;
 
         default:
             return ERROR_SYNTAX;

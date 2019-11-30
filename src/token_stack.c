@@ -52,9 +52,9 @@ token_t tokenStackPop(tokenStack_t* stack, int* errCode) {
     if (tokenStackIsEmpty(stack)) {
 		token_t token = scan(stack->file, stack->lexStack);
 		if(token.type == T_UNKNOWN) {
-			*errCode = 1;
+			*errCode = LEXICAL_ERR_CODE;
 		} else if(token.type == T_ERROR) {
-			*errCode = 99;
+			*errCode = INTERNAL_ERR_CODE;
 		}
 		tokenStackPush(stack, token);
     }
@@ -69,9 +69,9 @@ token_t tokenStackTop(tokenStack_t* stack, int* errCode) {
     if (tokenStackIsEmpty(stack)) {
     	token_t token = scan(stack->file, stack->lexStack);
     	if(token.type == T_UNKNOWN) {
-    		*errCode = 1;
+    		*errCode = LEXICAL_ERR_CODE;
     	} else if(token.type == T_ERROR) {
-    		*errCode = 99;
+    		*errCode = INTERNAL_ERR_CODE;
     	}
 		tokenStackPush(stack, token);
     }

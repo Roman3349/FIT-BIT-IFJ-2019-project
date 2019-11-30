@@ -35,7 +35,12 @@ int main(int argc, char *argv[]) {
 	if (file == NULL) {
 		return ERROR_INTERNAL;
 	}
-    ic_generator(file);
+	symTable_t* symTable = symTableInit();
+	symTableInsertEmbedFunctions(symTable);
+    treeElement_t tree = syntaxParse(file, symTable);
+	printTree(tree, 0);
+	symTableFree(symTable);
+	treeFree(tree);
     fclose(file);
 	return ERROR_SUCCESS;
 }
