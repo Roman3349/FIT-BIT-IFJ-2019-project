@@ -70,7 +70,7 @@ void symTableFree(symTable_t *table) {
 	free(table);
 }
 
-void symTableRemove(symTable_t *table, dynStr_t *context, dynStr_t *name) {
+void symTableRemove(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	if (table == NULL || name == NULL) {
 		return;
 	}
@@ -102,7 +102,7 @@ size_t symTableSize(symTable_t *table) {
 	return table->size;
 }
 
-symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name) {
+symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	if (table == NULL || name == NULL) {
 		return NULL;
 	}
@@ -120,11 +120,11 @@ symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name) {
 	return NULL;
 }
 
-symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *name) {
+symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	if (table == NULL || name == NULL) {
 		return FRAME_ERROR;
 	}
-	symbol_t *symbol = symTableFind(table, context, name);
+	symbol_t *symbol = symTableFind(table, name, context);
 	if (symbol == NULL) {
 		return FRAME_ERROR;
 	}

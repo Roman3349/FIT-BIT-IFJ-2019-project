@@ -207,7 +207,7 @@ namespace Tests {
 	TEST_F(SymTableTest, find) {
 		createFunction("main", 0, true, true);
 		dynStr_t *name = createDynStr("main");
-		symbol_t *symbol = symTableFind(table, nullptr, name);
+		symbol_t *symbol = symTableFind(table, name, nullptr);
 		ASSERT_NE(symbol, nullptr);
 		ASSERT_STREQ(symbol->name->string, "main");
 		ASSERT_EQ(symbol->next, nullptr);
@@ -234,7 +234,7 @@ namespace Tests {
 		dynStr_t *name = createDynStr("main");
 		createFunction("main", 0, true, true);
 		ASSERT_EQ(symTableSize(table), 1);
-		symTableRemove(table, nullptr, name);
+		symTableRemove(table, name, nullptr);
 		ASSERT_EQ(symTableSize(table), 0);
 		dynStrFree(name);
 	}
@@ -252,9 +252,9 @@ namespace Tests {
 		dynStr_t *name = createDynStr("main");
 		dynStr_t *varName = createDynStr("a");
 		symTableInsertVariable(table, varName, name);
-		ASSERT_EQ(symTableGetFrame(table, nullptr, name), FRAME_GLOBAL);
-		ASSERT_EQ(symTableGetFrame(table, name, varName), FRAME_LOCAL);
-		ASSERT_EQ(symTableGetFrame(table, nullptr, varName), FRAME_ERROR);
+		ASSERT_EQ(symTableGetFrame(table, name, nullptr), FRAME_GLOBAL);
+		ASSERT_EQ(symTableGetFrame(table, varName, name), FRAME_LOCAL);
+		ASSERT_EQ(symTableGetFrame(table, varName, nullptr), FRAME_ERROR);
 		dynStrFree(name);
 		dynStrFree(varName);
 	}

@@ -155,20 +155,20 @@ size_t symTableSize(symTable_t *table);
 /**
  * Returns a symbol
  * @param table Symbol table
- * @param context Symbol context
  * @param name Symbol name
+ * @param context Symbol context
  * @return Symbol
  */
-symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name);
+symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Returns the symbol frame type
  * @param table Symbol table
- * @param context Symbol context (NULL = global, others = function name)
  * @param name Symbol name
+ * @param context Symbol context (NULL = global, others = function name)
  * @return Symbol frame type
  */
-symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *name);
+symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Returns an iterator to the beginning
