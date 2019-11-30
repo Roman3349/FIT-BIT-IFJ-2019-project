@@ -86,6 +86,18 @@ namespace Tests {
 		intStack_t* stack;
 	};
 
+	TEST_F(ScannerTest, scanErrors) {
+		token_t token = scan(nullptr, stack);
+		ASSERT_EQ(token.type, T_ERROR);
+		FILE* file = std::fopen(__FILE__, "r");
+		token = scan(file, nullptr);
+		ASSERT_EQ(token.type, T_ERROR);
+		intStack_t *intStack = stackInit();
+		token = scan(file, intStack);
+		ASSERT_EQ(token.type, T_ERROR);
+		stackFree(intStack);
+	}
+
 	TEST_F(ScannerTest, tokenEOF) {
 		FILE* file = openFile("eof.ifj19");
 		ASSERT_NE(file, nullptr);
@@ -215,6 +227,8 @@ namespace Tests {
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e-0);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN_FLOAT(file, T_FLOAT, 3e+0);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 		ASSERT_TOKEN(file, T_EOL);

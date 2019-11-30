@@ -83,8 +83,12 @@ void symTableRemove(symTable_t *table, dynStr_t *context, dynStr_t *name) {
 			dynStrEqual(current->context, context)) {
 			if (previous != NULL) {
 				previous->next = current->next;
+			} else {
+				table->array[index] = NULL;
 			}
 			symbolFree(current);
+			table->size--;
+			return;
 		}
 		previous = current;
 		current = current->next;
@@ -98,7 +102,7 @@ size_t symTableSize(symTable_t *table) {
 	return table->size;
 }
 
-symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context) {
+symbol_t *symTableFind(symTable_t *table, dynStr_t *context, dynStr_t *name) {
 	if (table == NULL || name == NULL) {
 		return NULL;
 	}
@@ -120,7 +124,7 @@ symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *context, dynStr_t *n
 	if (table == NULL || name == NULL) {
 		return FRAME_ERROR;
 	}
-	symbol_t *symbol = symTableFind(table, name, context);
+	symbol_t *symbol = symTableFind(table, context, name);
 	if (symbol == NULL) {
 		return FRAME_ERROR;
 	}
@@ -261,11 +265,12 @@ symIterator_t symIteratorBegin(const symTable_t *table) {
 symIterator_t symIteratorEnd(const symTable_t *table) {
 	symIterator_t iterator;
 	iterator.table = table;
-	iterator.index = iterator.table->allocated - 1;
+	iterator.index = 0;
 	iterator.symbol = NULL;
 	if (table == NULL) {
 		return iterator;
 	}
+	iterator.index = iterator.table->allocated - 1;
 	iterator.symbol = table->array[table->allocated - 1];
 	symbol_t *current = iterator.symbol;
 	while (current != NULL) {
