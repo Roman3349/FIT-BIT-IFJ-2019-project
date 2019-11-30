@@ -38,7 +38,8 @@ int main(int argc, char *argv[]) {
 	symTable_t* symTable = symTableInit();
 	symTableInsertEmbedFunctions(symTable);
     treeElement_t tree = syntaxParse(file, symTable);
-	printTree(tree, 0);
+    // TODO: add exit code check
+	processCode(tree);
 	symTableFree(symTable);
 	treeFree(tree);
     fclose(file);

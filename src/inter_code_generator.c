@@ -28,19 +28,6 @@ const char* FRAME_NAME[] = {
 // current frame
 enum frameType current_frame = GF;
 
-int ic_generator(FILE* file) {
-
-    assert(file);
-
-    treeElement_t code = syntaxParse(file);
-
-    if(processCode(code)) {
-        return -1; // code processing failed
-    }
-
-    return 0;
-}
-
 int processCode(treeElement_t codeElement) {
 
     assert(codeElement.type == E_CODE);
@@ -50,15 +37,15 @@ int processCode(treeElement_t codeElement) {
 
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
         // process code content
-        switch ((((treeElement_t*)codeElement.data)[i]).type) {
+        switch (codeElement.data.elements[i].type) {
             case E_TOKEN:
-                processEToken(((treeElement_t *)codeElement.data)[i]);
+                processEToken(codeElement.data.elements[i]);
                 break;
             case E_S_FUNCTION_DEF:
-                processFunctionDefinition(((treeElement_t *)codeElement.data)[i]);
+                processFunctionDefinition(codeElement.data.elements[i]);
                 break;
             case E_CODE_BLOCK:
-                processCodeBlock(((treeElement_t *)codeElement.data)[i]);
+                processCodeBlock(codeElement.data.elements[i]);
                 break;
             default:
                 return -1; // failed to process the code
@@ -77,21 +64,20 @@ int processEToken(treeElement_t eTokenElement) {
         return -1;
     }
 
-    switch (((token_t*)eTokenElement.data)->type) {
+    switch (eTokenElement.data.token->type) {
         case T_NUMBER:
-            printf("int@%ld", ((token_t*)eTokenElement.data)->data.intval);
+            printf("int@%ld", eTokenElement.data.token->data.intval);
             break;
         case T_FLOAT:
-            printf("float@%a", ((token_t*)eTokenElement.data)->data.floatval);
+            printf("float@%a", eTokenElement.data.token->data.floatval);
             break;
         case T_STRING_ML:
         case T_STRING:
             printf("%s", "string@");
-            //processString(((token_t*)eTokenElement->data)->data.strval->string);
-            if(!dynStrEscape(((token_t*)eTokenElement.data)->data.strval)) {
+            if(!dynStrEscape(eTokenElement.data.token->data.strval)) {
                 return -1;
             }
-            printf("%s", ((token_t*)eTokenElement.data)->data.strval->string);
+            printf("%s", eTokenElement.data.token->data.strval->string);
             break;
         default:
             return -1;
@@ -115,7 +101,7 @@ int processFunctionDefinition(treeElement_t defElement) {
     // processFunctionParams();
 
     // process function body
-    processCodeBlock(((treeElement_t *)defElement.data)[2]);
+    processCodeBlock(defElement.data.elements[2]);
 
     // add print return?
 
@@ -131,15 +117,15 @@ int processCodeBlock(treeElement_t codeBlockElement) {
     // BLOCK START
 
     for(unsigned i = 0; i < codeBlockElement.nodeSize; i++) {
-        switch (((treeElement_t *)codeBlockElement.data)[i].type) {
+        switch (codeBlockElement.data.elements[i].type) {
             case E_S_EXPRESSION:
-                processExpression(((treeElement_t *)codeBlockElement.data)[i]);
+                processExpression(codeBlockElement.data.elements[i]);
                 break;
             case E_S_IF:
-                processIf(((treeElement_t *)codeBlockElement.data)[i]);
+                processIf(codeBlockElement.data.elements[i]);
                 break;
             case E_S_WHILE:
-                // processWhile(((treeElement_t *)codeBlockElement.data)[i]);
+                 //processWhile(codeBlockElement.data.elements[i]);
                 break;
             default:
                 return -1;
@@ -157,14 +143,14 @@ int processExpression(treeElement_t expElement) {
         return -1;
     }
 
-    switch (((treeElement_t *)expElement.data)[0].type) {
+    switch (expElement.data.elements[0].type) {
         case E_TOKEN:
             printf("PUSHS ");
-            processEToken(((treeElement_t *)expElement.data)[0]);
+            processEToken(expElement.data.elements[0]);
             printf("\n");
             break;
         case E_S_EXPRESSION:
-            processExpression(((treeElement_t *)expElement.data)[0]);
+            processExpression(expElement.data.elements[0]);
             break;
         case E_ADD:
         case E_SUB:
@@ -176,16 +162,16 @@ int processExpression(treeElement_t expElement) {
         case E_EQ:
         case E_GT:
         case E_LT:
-            processTernaryOPeration(((treeElement_t *)expElement.data)[0]);
+			processBinaryOperation(expElement.data.elements[0]);
             break;
         case E_NOT:
-            processBinaryOperation(((treeElement_t *)expElement.data)[0]);
+			processUnaryOperation(expElement.data.elements[0]);
             break;
         case E_S_FUNCTION_CALL:
-            //processFunctionCall(((treeElement_t *)expElement.data)[0]);
+            //processFunctionCall(expElement.data.elements[0]);
             break;
         case E_ASSIGN:
-            processAssign(((treeElement_t *)expElement.data)[0]);
+            processAssign(expElement.data.elements[0]);
             break;
         default:
             return -1;
@@ -194,7 +180,7 @@ int processExpression(treeElement_t expElement) {
     return 0;
 }
 
-int processTernaryOPeration(treeElement_t operationElement) {
+int processBinaryOperation(treeElement_t operationElement) {
 
     if(operationElement.nodeSize != 2) {
         return -1;
@@ -202,14 +188,14 @@ int processTernaryOPeration(treeElement_t operationElement) {
 
     // extract data in reverse order and push them to stack
     for(unsigned i = 2; i > 0; i--) {
-        switch (((treeElement_t *)operationElement.data)[i].type) {
+        switch (operationElement.data.elements[i].type) {
             case E_TOKEN:
                 printf("PUSHS ");
-                processEToken(((treeElement_t *)operationElement.data)[i]);
+                processEToken(operationElement.data.elements[i]);
                 printf("\n");
                 break;
             case E_S_EXPRESSION:
-                processExpression(((treeElement_t *)operationElement.data)[i]);
+                processExpression(operationElement.data.elements[i]);
                 break;
             default:
                 return -1;
@@ -254,20 +240,20 @@ int processTernaryOPeration(treeElement_t operationElement) {
     return 0;
 }
 
-int processBinaryOperation(treeElement_t operationElement){
+int processUnaryOperation(treeElement_t operationElement){
 
     if(operationElement.nodeSize != 1) {
         return -1;
     }
 
-    switch (((treeElement_t *)operationElement.data)[0].type) {
+    switch (operationElement.data.elements[0].type) {
         case E_TOKEN:
             printf("PUSHS ");
-            processEToken(((treeElement_t *)operationElement.data)[0]);
+            processEToken(operationElement.data.elements[0]);
             printf("\n");
             break;
         case E_S_EXPRESSION:
-            processExpression(((treeElement_t *)operationElement.data)[0]);
+            processExpression(operationElement.data.elements[0]);
             break;
         default:
             return -1;
@@ -293,7 +279,7 @@ int processIf(treeElement_t ifElement) {
     static unsigned ifCounter = 0;
 
     // expression
-    if(processExpression(((treeElement_t* )ifElement.data)[0])){
+    if(processExpression(ifElement.data.elements[0])){
         return -1;
     }
 
@@ -304,7 +290,7 @@ int processIf(treeElement_t ifElement) {
 
     // else body
     if(ifElement.nodeSize > 2) {
-        if(processElse(((treeElement_t*)ifElement.data)[2])) {
+        if(processElse(ifElement.data.elements[2])) {
             return -1;
         }
     }
@@ -316,7 +302,7 @@ int processIf(treeElement_t ifElement) {
     printf("%s@:if%d\n", FRAME_NAME[current_frame],ifCounter);
 
     // if body
-    if(processCodeBlock(((treeElement_t*)ifElement.data)[1])){
+    if(processCodeBlock(ifElement.data.elements[1])){
         return -1;
     }
 
@@ -335,7 +321,7 @@ int processElse(treeElement_t elseElement) {
         return -1;
     }
 
-    if(processCodeBlock(((treeElement_t*)elseElement.data)[0])) {
+    if(processCodeBlock(elseElement.data.elements[0])) {
         return -1;
     }
 
