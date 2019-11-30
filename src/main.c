@@ -34,8 +34,10 @@ int main(int argc, char *argv[]) {
 	if (file == NULL) {
 		return ERROR_INTERNAL;
 	}
-    treeElement_t tree = syntaxParse(file);
+	symTable_t* symTable = symTableInit();
+    treeElement_t tree = syntaxParse(file, symTable);
 	printTree(tree, 0);
+	symTableFree(symTable);
 	treeFree(tree);
     fclose(file);
 	return ERROR_SUCCESS;

@@ -26,6 +26,7 @@
 #include "token_stack.h"
 #include "parse_tree.h"
 #include "tree_element_stack.h"
+#include "symtable.h"
 
 enum statementPart{
     S_EOL = T_EOL,
@@ -56,7 +57,7 @@ typedef enum statementPart statementPart_t;
  * @returns derivation  tree representation of one line
  * @pre file is opened in read mode
  */
-treeElement_t syntaxParse(FILE * file);
+treeElement_t syntaxParse(FILE * file, symTable_t* symTable);
 
 
 /**
@@ -65,7 +66,7 @@ treeElement_t syntaxParse(FILE * file);
  * @param stack token stack
  * @return parsing error code
  */
-int parseWhile(tokenStack_t* stack, treeElement_t* tree);
+int parseWhile(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses code block
@@ -73,7 +74,7 @@ int parseWhile(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing error code
  */
-int parseBlock(tokenStack_t* stack, treeElement_t* tree);
+int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses function call
@@ -81,7 +82,7 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing error code
  */
-int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses pass keyword
@@ -89,28 +90,28 @@ int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing error code
  */
-int parsePass(tokenStack_t* stack, treeElement_t* tree);
+int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses return keyword and value
  * @param stack token stack
  * @return parsing error code
  */
-int parseReturn(tokenStack_t* stack, treeElement_t* tree);
+int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses if keyword
  * @param stack token stack
  * @return parsing error code
  */
-int parseIf(tokenStack_t* stack, treeElement_t* tree);
+int parseIf(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses else keyword
  * @param stack token stack
  * @return parsing error code
  */
-int parseElse(tokenStack_t* stack, treeElement_t* tree);
+int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 
 /**
@@ -118,21 +119,21 @@ int parseElse(tokenStack_t* stack, treeElement_t* tree);
  * @param stack token stack
  * @return parsing error code
  */
-int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable);
 
 /**
  * Parses function definition parameters
  * @param stack token stack
  * @return parsing error code
  */
-int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* functionName);
 
 /**
  * Parses function call parameters
  * @param stack token stack
  * @return parsing error code
  */
-int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context, dynStr_t* functionName);
 
 /**
  * Check if next token matches expected token eventually prints error message
@@ -155,7 +156,7 @@ int statementPartToTokenType(statementPart_t statementPart, enum token_type* typ
  * @param stack token stack
  * @return parsing error code
  */
-int parseExpression(tokenStack_t* stack, treeElement_t* tree);
+int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Processes statement part
@@ -163,7 +164,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree);
  * @param part statement part
  * @return processing error code
  */
-int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree);
+int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses assignment
@@ -171,4 +172,4 @@ int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_
  * @param tree parse tree
  * @return processing error code
  */
-int parseAssignment(tokenStack_t* stack, treeElement_t* tree);
+int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);

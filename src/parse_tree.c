@@ -37,12 +37,13 @@ treeElement_t* treeAddElement(treeElement_t* treeNode, treeElementType_t type) {
         if(treeNode->data == NULL)
             return NULL;
     } else {
-        treeNode->data = realloc(treeNode->data, sizeof(treeElement_t[(treeNode->nodeSize + 1)]));
+        treeNode->data = realloc(treeNode->data, sizeof(treeElement_t) * (treeNode->nodeSize + 1));
     }
 
     treeInit(&((treeElement_t*)treeNode->data)[treeNode->nodeSize], type);
-
-    return &((treeElement_t*)treeNode->data)[treeNode->nodeSize++];
+	treeElement_t* element = &(((treeElement_t*)treeNode->data)[treeNode->nodeSize]);
+	treeNode->nodeSize++;
+    return element;
 }
 
 treeElement_t* treeInsertElement(treeElement_t* treeNode, treeElement_t element) {
