@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 		return ERROR_INTERNAL;
 	}
 	symTable_t* symTable = symTableInit();
+	symTableInsertEmbedFunctions(symTable);
     treeElement_t tree = syntaxParse(file, symTable);
 	printTree(tree, 0);
 	symTableFree(symTable);

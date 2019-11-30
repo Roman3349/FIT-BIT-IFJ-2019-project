@@ -48,7 +48,7 @@ void treeStackPush(treeStack_t* stack, treeElement_t value) {
 
 treeElement_t treeStackPop(treeStack_t* stack) {
     if (treeStackIsEmpty(stack)) {
-    	treeElement_t element = {.data = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: Need to throw some error
+    	treeElement_t element = {.data.elements = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: Need to throw some error
         return element;
     }
     treeStackItem_t* item = stack->head;
@@ -60,7 +60,7 @@ treeElement_t treeStackPop(treeStack_t* stack) {
 
 treeElement_t treeStackTop(treeStack_t* stack) {
 	if (treeStackIsEmpty(stack)) {
-		treeElement_t element = {.data = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: Need to throw some error
+		treeElement_t element = {.data.elements = NULL, .nodeSize = 0, .type = E_S_PASS}; //FIXME: Need to throw some error
 		return element;
 	}
     return stack->head->value;

@@ -339,7 +339,7 @@ enum token_type tokenTypeFromElement(treeElement_t element) {
 			return T_ID;
 
 		case E_TOKEN:
-			return ((token_t*)element.data)->type;
+			return element.data.token->type;
 		default:
 			return T_EOL; //TODO: Return something meaningful on error
 	}
@@ -400,7 +400,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 			}
 		}
 
-		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && ((token_t*)element.data)->type == T_RPAR) {
+		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.data.token->type == T_RPAR) {
 			element = treeStackPop(resultStack);
 			treeInsertElement(expressionTree, element);
 			tokenStackPush(stack, token); // Push back last token (Not part of expression)
@@ -473,7 +473,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 			}
 
 			if(greater == 0){
-				if(treeStackTop(precedenceStack).type == E_TOKEN && ((token_t*)treeStackTop(precedenceStack).data)->type == T_EOL) {
+				if(treeStackTop(precedenceStack).type == E_TOKEN && treeStackTop(precedenceStack).data.token->type == T_EOL) {
 					greater = false;
 					treeFree(element);
 					treeInsertElement(expressionTree, treeStackPop(resultStack)); // Insert final operation into expression tree

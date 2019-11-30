@@ -20,7 +20,7 @@
 
 void treeInit(treeElement_t* tree, treeElementType_t elementType) {
     tree->type = elementType;
-    tree->data = NULL;
+    tree->data.elements = NULL;
     tree->nodeSize = 0;
 }
 
@@ -32,16 +32,16 @@ treeElement_t* treeAddElement(treeElement_t* treeNode, treeElementType_t type) {
         return NULL;
     }
 
-    if(treeNode->data == NULL){
-        treeNode->data = malloc(sizeof(treeElement_t));
-        if(treeNode->data == NULL)
+    if(treeNode->data.elements == NULL){
+        treeNode->data.elements = malloc(sizeof(treeElement_t));
+        if(treeNode->data.elements == NULL)
             return NULL;
     } else {
-        treeNode->data = realloc(treeNode->data, sizeof(treeElement_t) * (treeNode->nodeSize + 1));
+        treeNode->data.elements = realloc(treeNode->data.elements, sizeof(treeElement_t) * (treeNode->nodeSize + 1));
     }
 
-    treeInit(&((treeElement_t*)treeNode->data)[treeNode->nodeSize], type);
-	treeElement_t* element = &(((treeElement_t*)treeNode->data)[treeNode->nodeSize]);
+    treeInit(&treeNode->data.elements[treeNode->nodeSize], type);
+	treeElement_t* element = &(treeNode->data.elements[treeNode->nodeSize]);
 	treeNode->nodeSize++;
     return element;
 }
@@ -60,40 +60,40 @@ bool treeAddToken(treeElement_t* tree, token_t token) {
     if(element == NULL)
         return false;
 
-    element->data = malloc(sizeof(token));
-    memcpy(element->data, &token, sizeof(token));
+    element->data.token = malloc(sizeof(token));
+    memcpy(element->data.token, &token, sizeof(token));
 
     return tree;
 }
 
 void treeFree(treeElement_t tree) {
     if (tree.type == E_TOKEN) {
-        switch(((token_t*)tree.data)->type){
+        switch(tree.data.token->type){
             case T_STRING:
             case T_STRING_ML:
             case T_ID:
-                dynStrFree(((token_t*)tree.data)->data.strval);
+                dynStrFree(tree.data.token->data.strval);
                 break;
             default:
                 break;
         }
-		free(tree.data);
+		free(tree.data.token);
         return;
     }
 
-    if (tree.data != NULL) {
+    if (tree.data.elements != NULL) {
         for(size_t i = 0; i < tree.nodeSize; i++) {
-            treeFree(((treeElement_t* )(tree.data))[i]);
+            treeFree(tree.data.elements[i]);
         }
-		free(tree.data);
+		free(tree.data.elements);
     }
 }
 
 void initTokenTreeElement(treeElement_t* element, token_t token) {
 	element->type = E_TOKEN;
 	element->nodeSize = 0;
-	element->data = malloc(sizeof(token));
-	memcpy(element->data, &token, sizeof(token));
+	element->data.token = malloc(sizeof(token));
+	memcpy(element->data.token, &token, sizeof(token));
 }
 
 void printTree(treeElement_t tree, int indent) {
@@ -102,7 +102,7 @@ void printTree(treeElement_t tree, int indent) {
     }
     switch(tree.type) {
         case E_TOKEN:
-            printf("TOKEN: %s\n", tokenToString(((token_t*)tree.data)->type));
+            printf("TOKEN: %s\n", tokenToString(tree.data.token->type));
             break;
         case E_CODE:
             printf("CODE ");
@@ -195,7 +195,7 @@ void printTree(treeElement_t tree, int indent) {
     if(tree.type != E_TOKEN) {
         printf("{\n");
         for (size_t i = 0; i < tree.nodeSize; i++) {
-            printTree(((treeElement_t *) tree.data)[i], indent + 1);
+            printTree(tree.data.elements[i], indent + 1);
         }
         for(int j = indent; j > 0; j--){
             printf("\t");
