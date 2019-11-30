@@ -164,3 +164,9 @@ int remove_line_comment(FILE* file);
  */
 int process_escape_seq(FILE* file, token_t *token, int c);
 
+/**
+ * Returns string representation of token
+ * @param token token
+ * @return string representation
+ */
+char* tokenToString(enum token_type type);

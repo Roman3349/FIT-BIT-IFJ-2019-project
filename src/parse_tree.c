@@ -17,7 +17,6 @@
  */
 
 #include "parse_tree.h"
-#include "parser.h"
 
 void treeInit(treeElement_t* tree, treeElementType_t elementType) {
     tree->type = elementType;
@@ -77,7 +76,7 @@ void treeFree(treeElement_t tree) {
             default:
                 break;
         }
-        free(tree.data);
+		free(tree.data);
         return;
     }
 
@@ -85,8 +84,8 @@ void treeFree(treeElement_t tree) {
         for(size_t i = 0; i < tree.nodeSize; i++) {
             treeFree(((treeElement_t* )(tree.data))[i]);
         }
+		free(tree.data);
     }
-    free(tree.data);
 }
 
 void initTokenTreeElement(treeElement_t* element, token_t token) {

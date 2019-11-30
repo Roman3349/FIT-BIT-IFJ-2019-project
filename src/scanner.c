@@ -694,3 +694,53 @@ int remove_line_comment(FILE* file) {
     }
     return SUCCESS;
 }
+
+char* tokenToString (enum token_type type) {
+	char *arr[] = {
+		"EOL",
+		"EOF",
+		"'!'",
+		"'+'",
+		"'-'",
+		"'*'",
+		"'/'",
+		"'//'",
+		"'=='",
+		"'>'",
+		"'<'",
+		"'>='",
+		"'<='",
+		"'!='",
+		"NUMBER",
+		"FLOAT",
+		"STRING",
+		"STRING_MULTILINE",
+		"IDENTIFIER",
+		"'def'",
+		"'if'",
+		"'else'",
+		"'while'",
+		"'pass'",
+		"'return'",
+		"'None'",
+		"'and'",
+		"'or'",
+		"'not'",
+		"'True'",
+		"'False'",
+		"'='",
+		"':'",
+		"','",
+		"'('",
+		"')'",
+		"INDENTATION",
+		"DEDENTATION",
+		"UNKNOWN",
+		"ERROR"
+	};
+	if (type >= T_EOL && type <= T_ERROR) {
+		return arr[type];
+	} else {
+		return "";
+	}
+}

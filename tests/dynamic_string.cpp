@@ -68,10 +68,31 @@ namespace Tests {
 		ASSERT_EQ(string->alloc_size, 2 * DYN_STR_LENGTH + size);
 	}
 
+	TEST_F(DynamicStringTest, Equal) {
+		dynStr_t *tmp = dynStrInit();
+		dynStrAppendString(string, "ABCD");
+		dynStrAppendString(tmp, "ABCD");
+		ASSERT_TRUE(dynStrEqual(string, tmp));
+		dynStrAppendChar(tmp, 'E');
+		ASSERT_FALSE(dynStrEqual(string, tmp));
+		dynStrFree(tmp);
+	}
+
+	TEST_F(DynamicStringTest, EqualNull) {
+		ASSERT_FALSE(dynStrEqual(string, nullptr));
+		ASSERT_FALSE(dynStrEqual(nullptr, string));
+		ASSERT_TRUE(dynStrEqual(nullptr, nullptr));
+	}
+
 	TEST_F(DynamicStringTest, EqualString) {
 		dynStrAppendString(string, "ABCD");
 		ASSERT_TRUE(dynStrEqualString(string, "ABCD"));
 		ASSERT_FALSE(dynStrEqualString(string, "ABCDE"));
+	}
+
+	TEST_F(DynamicStringTest, EqualStringNull) {
+		ASSERT_FALSE(dynStrEqualString(string, nullptr));
+		ASSERT_FALSE(dynStrEqualString(nullptr, ""));
 	}
 
 	TEST_F(DynamicStringTest, IsEmpty) {
@@ -82,10 +103,15 @@ namespace Tests {
 		ASSERT_TRUE(dynStrIsEmpty(string));
 	}
 
+	TEST_F(DynamicStringTest, CopyNull) {
+		ASSERT_FALSE(dynStrCopy(nullptr, string));
+		ASSERT_FALSE(dynStrCopy(string, nullptr));
+	}
+
 	TEST_F(DynamicStringTest, Copy) {
 		dynStrAppendString(string, "ABCD");
 		dynStr_t *tmp = dynStrInit();
-		dynStrCopy(tmp, string);
+		ASSERT_TRUE(dynStrCopy(tmp, string));
 		ASSERT_EQ(tmp->alloc_size, string->alloc_size);
 		ASSERT_EQ(tmp->size, string->size);
 		ASSERT_STREQ(tmp->string, string->string);
@@ -97,5 +123,16 @@ namespace Tests {
 		ASSERT_TRUE(dynStrEscape(string));
 		char expected[] = "retezec\\032s\\032lomitkem\\032\\092\\032a\\010novym\\035radkem";
 		ASSERT_STREQ(string->string, expected);
+	}
+
+	TEST_F(DynamicStringTest, GetChar) {
+		dynStrAppendChar(string, 'A');
+		ASSERT_EQ(dynStrGetChar(string, 0), 'A');
+		ASSERT_EQ(dynStrGetChar(string, 1), 0);
+	}
+
+	TEST_F(DynamicStringTest, GetString) {
+		dynStrAppendChar(string, 'A');
+		ASSERT_STREQ(dynStrGetString(string), "A");
 	}
 }
