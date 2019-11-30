@@ -83,17 +83,17 @@ namespace Tests {
 	}
 
 	TEST_F(SymTableTest, insertNullSymbol) {
-		ASSERT_FALSE(symTableInsert(table, nullptr, true));
+		ASSERT_EQ(symTableInsert(table, nullptr, true), ERROR_INTERNAL);
 	}
 
 	TEST_F(SymTableTest, insertNullTable) {
 		symbol_t *symbol = createFunction("main", 0, true);
-		ASSERT_FALSE(symTableInsert(nullptr, symbol, true));
+		ASSERT_EQ(symTableInsert(nullptr, symbol, true), ERROR_INTERNAL);
 	}
 
 	TEST_F(SymTableTest, insert) {
 		symbol_t *symbol = createFunction("main", 0, true);
-		ASSERT_TRUE(symTableInsert(table, symbol, true));
+		ASSERT_EQ(symTableInsert(table, symbol, true), ERROR_SUCCESS);
 		ASSERT_EQ(symTableSize(table), 1);
 		symIterator_t iterator = symIteratorBegin(table);
 		iterator = symIteratorNext(iterator);
@@ -111,23 +111,23 @@ namespace Tests {
 	}
 
 	TEST_F(SymTableTest, insertEmbedFunctions) {
-		ASSERT_TRUE(symTableInsertEmbedFunctions(table));
+		ASSERT_EQ(symTableInsertEmbedFunctions(table), ERROR_SUCCESS);
 		ASSERT_EQ(symTableSize(table), EMBEDDED_FUNCTIONS);
 	}
 
 	TEST_F(SymTableTest, insertFunctionNullName) {
-		ASSERT_FALSE(symTableInsertFunction(table, nullptr, 0, true));
+		ASSERT_EQ(symTableInsertFunction(table, nullptr, 0, true), ERROR_INTERNAL);
 	}
 
 	TEST_F(SymTableTest, insertFunctionNullTable) {
 		dynStr_t *name = createDynStr("main");
-		ASSERT_FALSE(symTableInsertFunction(nullptr, name, 0, true));
+		ASSERT_EQ(symTableInsertFunction(nullptr, name, 0, true), ERROR_INTERNAL);
 		dynStrFree(name);
 	}
 
 	TEST_F(SymTableTest, insertFunction) {
 		dynStr_t *name = createDynStr("main");
-		ASSERT_TRUE(symTableInsertFunction(table, name, 0, true));
+		ASSERT_EQ(symTableInsertFunction(table, name, 0, true), ERROR_SUCCESS);
 		ASSERT_EQ(symTableSize(table), 1);
 		symIterator_t iterator = symIteratorBegin(table);
 		iterator = symIteratorNext(iterator);
@@ -141,26 +141,26 @@ namespace Tests {
 		ASSERT_EQ(iterator.symbol->type, SYMBOL_FUNCTION);
 		ASSERT_EQ(iterator.symbol->info.function.argc, 0);
 		ASSERT_TRUE(iterator.symbol->info.function.defined);
-		ASSERT_TRUE(symTableInsertFunction(table, name, 0, false));
-		ASSERT_FALSE(symTableInsertFunction(table, name, 0, true));
-		ASSERT_FALSE(symTableInsertFunction(table, name, 1, false));
-		ASSERT_FALSE(symTableInsertVariable(table, name, nullptr));
+		ASSERT_EQ(symTableInsertFunction(table, name, 0, false), ERROR_SUCCESS);
+		ASSERT_EQ(symTableInsertFunction(table, name, 0, true), ERROR_SEMANTIC_FUNCTION);
+		ASSERT_EQ(symTableInsertFunction(table, name, 1, false), ERROR_SEMANTIC_ARGC);
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SEMANTIC_EXPRESSION);
 		dynStrFree(name);
 	}
 
 	TEST_F(SymTableTest, insertVariableNullName) {
-		ASSERT_FALSE(symTableInsertVariable(table, nullptr, nullptr));
+		ASSERT_EQ(symTableInsertVariable(table, nullptr, nullptr), ERROR_INTERNAL);
 	}
 
 	TEST_F(SymTableTest, insertVariableNullTable) {
 		dynStr_t *name = createDynStr("i");
-		ASSERT_FALSE(symTableInsertVariable(nullptr, name, nullptr));
+		ASSERT_EQ(symTableInsertVariable(nullptr, name, nullptr), ERROR_INTERNAL);
 		dynStrFree(name);
 	}
 
 	TEST_F(SymTableTest, insertVariable) {
 		dynStr_t *name = createDynStr("i");
-		ASSERT_TRUE(symTableInsertVariable(table, name, nullptr));
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SUCCESS);
 		ASSERT_EQ(symTableSize(table), 1);
 		symIterator_t iterator = symIteratorBegin(table);
 		iterator = symIteratorNext(iterator);
@@ -172,8 +172,8 @@ namespace Tests {
 		ASSERT_EQ(iterator.symbol->next, nullptr);
 		ASSERT_EQ(iterator.symbol->type, SYMBOL_VARIABLE);
 		ASSERT_TRUE(iterator.symbol->info.variable.assigned);
-		ASSERT_TRUE(symTableInsertVariable(table, name, nullptr));
-		ASSERT_FALSE(symTableInsertFunction(table, name, 0, false));
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SUCCESS);
+		ASSERT_EQ(symTableInsertFunction(table, name, 0, false), ERROR_SEMANTIC_EXPRESSION);
 		dynStrFree(name);
 	}
 
