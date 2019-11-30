@@ -22,12 +22,12 @@ TARGET=ic19
 all: $(TARGET)
 
 clean:
-	rm $(OBJECTS)
+	rm -f $(TARGET) $(OBJECTS)
 
 $(TARGET): $(OBJECTS)
 	$(CC) -o $@ $^ $(CFLAGS)
 
-pack:
+pack: clean
 	rm -rf xondra58.tgz /tmp/ifj
 	tar -czvf xondra58.tgz * ../rozdeleni
 	bash ../is_it_ok.sh xondra58.tgz /tmp/ifj
