@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#pragma once
+
 typedef enum errorCode {
 	ERROR_SUCCESS = 0,
 	ERROR_LEXICAL = 1,
