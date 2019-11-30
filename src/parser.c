@@ -125,7 +125,8 @@ int processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree)
     	case T_STRING_ML:
     	case T_KW_NONE:
 		case T_KW_PASS:
-			treeAddToken(tree, token);
+			if(!treeAddToken(tree, token))
+				return ERROR_INTERNAL;
     		break;
 
 		default:
@@ -210,10 +211,13 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 					defParamTree = treeAddElement(tree, E_S_FUNCTION_DEF_PARAMS);
             	}
             	paramCount++;
-                treeAddToken(defParamTree, token);
-            	if(!symTableInsertVariable(symTable, token.data.strval, funcName)) { //Insert parameter as local variable
-					return ERROR_SEMANTIC_OTHER; //TODO: Specify semantic error
-            	}
+                if(!treeAddToken(defParamTree, token))
+					return ERROR_INTERNAL;
+
+                errCode = symTableInsertVariable(symTable, token.data.strval, funcName);
+            	if(errCode != ERROR_SUCCESS) //Insert parameter as local variable
+					return errCode;
+
             	token_t lookAheadToken = tokenStackTop(stack, &errCode);
                 if(lookAheadToken.type == T_COMMA) {
 					tokenStackPop(stack, &errCode); // multiple parameters pop comma
@@ -235,8 +239,10 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
                 return ERROR_SYNTAX;
         }
     }
-	if (!symTableInsertFunction(symTable, funcName, paramCount, true)) //Symtable insert function definition
-		return ERROR_SEMANTIC_OTHER; //TODO: Specify semantic error
+
+    errCode = symTableInsertFunction(symTable, funcName, paramCount, true);
+	if (errCode != ERROR_SUCCESS) //Symtable insert function definition
+		return errCode;
 
     return ERROR_SUCCESS;
 }
@@ -720,8 +726,10 @@ int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t
 			parameters = false;
 		}
     }
-    if(!symTableInsertFunction(symTable, functionName, paramCount, false))
-		return ERROR_SEMANTIC_OTHER; //TODO: Specify semantic error
+
+    errCode = symTableInsertFunction(symTable, functionName, paramCount, false);
+    if(errCode != ERROR_SUCCESS)
+		return errCode;
 
     return ERROR_SUCCESS;
 }
@@ -754,8 +762,9 @@ int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 	if(errCode != ERROR_SUCCESS)
 		return errCode;
 
-	if(!symTableInsertVariable(symTable, token.data.strval, context))
-		return ERROR_SEMANTIC_OTHER; //TODO: Specify semantic error
+	errCode = symTableInsertVariable(symTable, token.data.strval, context);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
 
 	errCode = processToken(stack, T_ASSIGN, assignTree);
 	if(errCode != ERROR_SUCCESS)
