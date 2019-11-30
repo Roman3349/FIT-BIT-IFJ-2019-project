@@ -21,9 +21,31 @@
 #include "parse_tree.h"
 #include "parser.h"
 
+enum frameType {
+    GF, // global frame
+    LF, // local frame
+    TF  // temporary frame
+};
 
+/*
+ * intermediate code generator
+ * @param file source file with program in IFJ19
+ * @returns execution status
+ * Prints program translated to IFJcode19 to stdout
+ * */
 int ic_generator(FILE* file);
+
+/*
+ * Process body of the program
+ */
 int processCode(treeElement_t codeElement);
-int processEToken(treeElement_t* EToken);
-int processFunctionDefinition();
-int processCodeBlock();
+
+int processEToken(treeElement_t eTokenElement);
+int processFunctionDefinition(treeElement_t defElement);
+int processCodeBlock(treeElement_t codeBlockElement);
+int processExpression(treeElement_t expElement);
+int processTernaryOPeration(treeElement_t operationElement);
+int processBinaryOperation(treeElement_t operationElement);
+int processIf(treeElement_t ifElement);
+int processElse(treeElement_t elseElement);
+int processAssign(treeElement_t assignElement);
