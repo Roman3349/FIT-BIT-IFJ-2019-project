@@ -31,7 +31,8 @@ target_link_libraries(symtable dynamic_string)
 target_link_libraries(parse_tree scanner)
 target_link_libraries(parser parse_tree token_stack symtable tree_element_stack)
 target_link_libraries(tree_element_stack parse_tree)
+target_link_libraries(inter_code_generator parser)
 
 add_executable(ic19 main.c)
-target_link_libraries(ic19 scanner parser)
+target_link_libraries(ic19 scanner parser inter_code_generator)
 

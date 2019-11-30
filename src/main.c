@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include "error.h"
+#include "inter_code_generator.h"
 #include "parser.h"
 
 /**
@@ -34,9 +35,7 @@ int main(int argc, char *argv[]) {
 	if (file == NULL) {
 		return ERROR_INTERNAL;
 	}
-    treeElement_t tree = syntaxParse(file);
-	printTree(tree, 0);
-	treeFree(tree);
+    ic_generator(file);
     fclose(file);
 	return ERROR_SUCCESS;
 }
