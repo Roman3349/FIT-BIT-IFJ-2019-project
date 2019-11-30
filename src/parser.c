@@ -89,7 +89,6 @@ treeElement_t syntaxParse(FILE* file) {
     tokenStackFree(tokenStack);
     stackFree(intStack);
 
-    printf("Error code: %d\n", errCode);
     if(errCode != 0){
     	treeFree(tree);
     	exit(errCode); //Exit with correct error code
@@ -114,7 +113,7 @@ int processToken(tokenStack_t* stack, enum token_type type, treeElement_t* tree)
                 fprintf(stderr, "Syntax error. Expected %s, got: %s \n", tokenToString(type), tokenToString(token.type));
                 break;
         }
-        return SYNTAX_ERR_CODE;
+        return ERROR_SYNTAX;
     }
 
     switch (token.type) {
@@ -223,7 +222,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree) {
 					return errCode;
             	}
                 fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(lookAheadToken.type));
-                return SYNTAX_ERR_CODE;
+                return ERROR_SYNTAX;
         }
     }
     return 0;
@@ -342,7 +341,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 		return errCode;
 	}
 	if(getTokenTableId(topToken.type) == 18) // If token is unrecognized by precedence analysis
-		return SYNTAX_ERR_CODE; //Syntax error
+		return ERROR_SYNTAX; //Syntax error
 	treeElement_t* expressionTree;
     if(includeRoot)
     	 expressionTree = treeAddElement(tree, E_S_EXPRESSION);
@@ -398,7 +397,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot){
 			treeStackFree(resultStack);
 			treeStackFree(precedenceStack);
 			treeFree(element);
-			return SYNTAX_ERR_CODE;
+			return ERROR_SYNTAX;
 		}
 
 		if(greater == -1){
@@ -713,6 +712,6 @@ int statementPartToTokenType(statementPart_t part, enum token_type* type){
             return 0;
 
         default:
-            return SYNTAX_ERR_CODE;
+            return ERROR_SYNTAX;
     }
 }

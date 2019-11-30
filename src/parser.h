@@ -21,13 +21,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "error.h"
 #include "scanner.h"
 #include "token_stack.h"
 #include "parse_tree.h"
 #include "tree_element_stack.h"
-
-#define SYNTAX_ERR_CODE 2
-#define LEXICAL_ERR_CODE 1
 
 enum statementPart{
     S_EOL = T_EOL,
@@ -47,7 +45,7 @@ enum statementPart{
     S_EXPRESSION,
     S_DEF_PARAMS,
     S_CALL_PARAMS
-    };
+};
 
 typedef enum statementPart statementPart_t;
 
