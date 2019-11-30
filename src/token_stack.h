@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include "scanner.h"
 
+#define LEXICAL_ERR_CODE 1
+#define INTERNAL_ERR_CODE 99
+
 typedef struct tokenStackItem tokenStackItem_t;
 
 struct tokenStackItem {

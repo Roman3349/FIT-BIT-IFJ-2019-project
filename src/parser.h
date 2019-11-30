@@ -26,6 +26,7 @@
 #include "token_stack.h"
 #include "parse_tree.h"
 #include "tree_element_stack.h"
+#include "symtable.h"
 
 enum statementPart{
     S_EOL = T_EOL,
@@ -56,89 +57,89 @@ typedef enum statementPart statementPart_t;
  * @returns derivation  tree representation of one line
  * @pre file is opened in read mode
  */
-treeElement_t syntaxParse(FILE * file);
+treeElement_t syntaxParse(FILE * file, symTable_t* symTable);
 
 
 /**
  * Parses while structure after while keyword
  * @param file source file
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseWhile(tokenStack_t* stack, treeElement_t* tree);
+int parseWhile(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses code block
  * @param file source file
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseBlock(tokenStack_t* stack, treeElement_t* tree);
+int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses function call
  * @param file source file
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses pass keyword
  * @param file source file
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parsePass(tokenStack_t* stack, treeElement_t* tree);
+int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses return keyword and value
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseReturn(tokenStack_t* stack, treeElement_t* tree);
+int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses if keyword
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseIf(tokenStack_t* stack, treeElement_t* tree);
+int parseIf(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses else keyword
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseElse(tokenStack_t* stack, treeElement_t* tree);
+int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 
 /**
  * Parses function definition
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable);
 
 /**
  * Parses function definition parameters
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* functionName);
 
 /**
  * Parses function call parameters
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree);
+int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context, dynStr_t* functionName);
 
 /**
  * Check if next token matches expected token eventually prints error message
  * @param stack token stack
  * @param expectedToken expected token
- * @return got expected token
+ * @return processing error code
  */
 int processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement_t* tree);
 
@@ -146,21 +147,29 @@ int processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement
  * Converts statementPart to token if possible
  * @param statementPart statement part
  * @param type pointer to token type function
- * @return conversion successful
+ * @return conversion error code
  */
 int statementPartToTokenType(statementPart_t statementPart, enum token_type* type);
 
 /**
  * Parses expression
  * @param stack token stack
- * @return parsing successful
+ * @return parsing error code
  */
-int parseExpression(tokenStack_t* stack, treeElement_t* tree, bool includeRoot);
+int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Processes statement part
  * @param stack token stack
  * @param part statement part
- * @return processing successful
+ * @return processing error code
  */
-int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree);
+int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
+
+/**
+ * Parses assignment
+ * @param stack token stack
+ * @param tree parse tree
+ * @return processing error code
+ */
+int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);

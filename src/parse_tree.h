@@ -55,13 +55,19 @@ enum treeElementType {
 
 typedef enum treeElementType treeElementType_t;
 
-// Derivation tree element
-typedef struct{
-    treeElementType_t type;
-    void* data;
-    unsigned int nodeSize;
-} treeElement_t;
+typedef struct treeElement treeElement_t;
 
+union treeElementData {
+	treeElement_t *elements;
+	token_t *token;
+};
+
+// Derivation tree element
+struct treeElement {
+    treeElementType_t type;
+    union treeElementData data;
+    unsigned int nodeSize;
+};
 
 /**
  * Initializes new tree/subtree of set type
