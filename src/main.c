@@ -36,7 +36,15 @@ int main(int argc, char *argv[]) {
 	}
 	symTable_t* symTable = symTableInit();
 	symTableInsertEmbedFunctions(symTable);
-    treeElement_t tree = syntaxParse(file, symTable);
+	int errCode = ERROR_SUCCESS;
+    treeElement_t tree = syntaxParse(file, symTable, &errCode);
+
+    if(errCode != ERROR_SUCCESS){
+		symTableFree(symTable);
+		fclose(file);
+		exit(errCode);
+    }
+
 	printTree(tree, 0);
 	symTableFree(symTable);
 	treeFree(tree);
