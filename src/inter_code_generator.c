@@ -20,13 +20,19 @@
 
 // string names of the frames
 const char* FRAME_NAME[] = {
-        [GF] = "GF",
-        [LF] = "LF",
-        [TF] = "TF"
+        [FRAME_GLOBAL] = "GF",
+        [FRAME_LOCAL] = "LF",
+        [FRAME_TEMP] = "TF"
 };
 
 // current frame
-enum frameType current_frame = GF;
+symbolFrame_t current_frame = FRAME_GLOBAL;
+
+// current context
+dynStr_t* current_context = NULL;
+
+// symbol table
+symTable_t* table;
 
 int processCode(treeElement_t codeElement) {
 
@@ -39,13 +45,13 @@ int processCode(treeElement_t codeElement) {
         // process code content
         switch (codeElement.data.elements[i].type) {
             case E_TOKEN:
-                processEToken(codeElement.data.elements[i]);
+                processEToken(codeElement.data.elements[i], NULL);
                 break;
             case E_S_FUNCTION_DEF:
                 processFunctionDefinition(codeElement.data.elements[i]);
                 break;
             case E_CODE_BLOCK:
-                processCodeBlock(codeElement.data.elements[i]);
+                processCodeBlock(codeElement.data.elements[i], NULL);
                 break;
             default:
                 return -1; // failed to process the code
@@ -58,7 +64,7 @@ int processCode(treeElement_t codeElement) {
     return 0;
 }
 
-int processEToken(treeElement_t eTokenElement) {
+int processEToken(treeElement_t eTokenElement, dynStr_t** context) {
 
     if(eTokenElement.type == E_TOKEN) {
         return -1;
@@ -66,18 +72,26 @@ int processEToken(treeElement_t eTokenElement) {
 
     switch (eTokenElement.data.token->type) {
         case T_NUMBER:
-            printf("int@%ld", eTokenElement.data.token->data.intval);
+            printf("int@%ld ", eTokenElement.data.token->data.intval);
             break;
         case T_FLOAT:
-            printf("float@%a", eTokenElement.data.token->data.floatval);
+            printf("float@%a ", eTokenElement.data.token->data.floatval);
             break;
         case T_STRING_ML:
         case T_STRING:
-            printf("%s", "string@");
             if(!dynStrEscape(eTokenElement.data.token->data.strval)) {
                 return -1;
             }
-            printf("%s", eTokenElement.data.token->data.strval->string);
+            printf("string@%s ", eTokenElement.data.token->data.strval->string);
+            break;
+        case T_ID:
+            if(context) {
+                *context = eTokenElement.data.token->data.strval;
+            }
+            //TODO
+            // this line may not work for function params
+            symbolFrame_t idFrame = symTableGetFrame(table, eTokenElement.data.token->data.strval, current_context);
+            printf("%s@%s ", FRAME_NAME[idFrame],eTokenElement.data.token->data.strval->string);
             break;
         default:
             return -1;
@@ -92,29 +106,50 @@ int processFunctionDefinition(treeElement_t defElement) {
         return -1;
     }
 
-    //TODO
-    // process function name
-    // processID();
+    // processing function name
+    // (label to jump to when function is called)
+    printf("LABEL %s@:", FRAME_NAME[current_frame]);
+    dynStr_t* function_context = NULL;
+    if(processEToken(defElement.data.elements[0], &function_context)) {
+        return -1;
+    }
+    printf("\n");
 
     //TODO
-    // process function params
-    // processFunctionParams();
+    // process params
+    //current_frame = TF;
+    //if(processFunctionDefParams(defElement.data.elements[1])) {
+    //    return -1;
+    //}
 
     // process function body
-    processCodeBlock(defElement.data.elements[2]);
+    if(processCodeBlock(defElement.data.elements[2], function_context)) {
+        return -1;
+    }
 
+    //TODO
     // add print return?
 
     return 0;
 }
 
-int processCodeBlock(treeElement_t codeBlockElement) {
+int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
 
     if(codeBlockElement.type != E_CODE_BLOCK) {
         return -1;
     }
 
     // BLOCK START
+    
+    // save state
+    symbolFrame_t temp_frame = current_frame;
+    dynStr_t* temp_context = current_context;
+
+    // if local frame needs to be created
+    if(context) {
+        current_frame = FRAME_LOCAL;
+        current_context = context;
+    }
 
     for(unsigned i = 0; i < codeBlockElement.nodeSize; i++) {
         switch (codeBlockElement.data.elements[i].type) {
@@ -132,6 +167,12 @@ int processCodeBlock(treeElement_t codeBlockElement) {
         }
     }
 
+    // restore state
+    if(context) {
+        current_context = temp_context;
+        current_frame = temp_frame;
+    }
+
     // BLOCK END
 
     return 0;
@@ -146,11 +187,15 @@ int processExpression(treeElement_t expElement) {
     switch (expElement.data.elements[0].type) {
         case E_TOKEN:
             printf("PUSHS ");
-            processEToken(expElement.data.elements[0]);
+            if(processEToken(expElement.data.elements[0], NULL)) {
+                return -1;
+            }
             printf("\n");
             break;
         case E_S_EXPRESSION:
-            processExpression(expElement.data.elements[0]);
+            if(processExpression(expElement.data.elements[0])) {
+                return -1;
+            }
             break;
         case E_ADD:
         case E_SUB:
@@ -162,16 +207,22 @@ int processExpression(treeElement_t expElement) {
         case E_EQ:
         case E_GT:
         case E_LT:
-			processBinaryOperation(expElement.data.elements[0]);
+            if(processBinaryOperation(expElement.data.elements[0])) {
+                return -1;
+            }
             break;
         case E_NOT:
-			processUnaryOperation(expElement.data.elements[0]);
+			if(processUnaryOperation(expElement.data.elements[0])) {
+			    return -1;
+			}
             break;
         case E_S_FUNCTION_CALL:
             //processFunctionCall(expElement.data.elements[0]);
             break;
         case E_ASSIGN:
-            processAssign(expElement.data.elements[0]);
+            if(processAssign(expElement.data.elements[0])) {
+                return -1;
+            }
             break;
         default:
             return -1;
@@ -187,11 +238,11 @@ int processBinaryOperation(treeElement_t operationElement) {
     }
 
     // extract data in reverse order and push them to stack
-    for(unsigned i = 2; i > 0; i--) {
+    for(unsigned i = operationElement.nodeSize; i > 0; i--) {
         switch (operationElement.data.elements[i].type) {
             case E_TOKEN:
                 printf("PUSHS ");
-                processEToken(operationElement.data.elements[i]);
+                processEToken(operationElement.data.elements[i], NULL);
                 printf("\n");
                 break;
             case E_S_EXPRESSION:
@@ -249,7 +300,7 @@ int processUnaryOperation(treeElement_t operationElement){
     switch (operationElement.data.elements[0].type) {
         case E_TOKEN:
             printf("PUSHS ");
-            processEToken(operationElement.data.elements[0]);
+            processEToken(operationElement.data.elements[0], NULL);
             printf("\n");
             break;
         case E_S_EXPRESSION:
@@ -299,15 +350,15 @@ int processIf(treeElement_t ifElement) {
     printf("JUMP %s@:fi%d\n", FRAME_NAME[current_frame],ifCounter);
 
     // add if label
-    printf("%s@:if%d\n", FRAME_NAME[current_frame],ifCounter);
+    printf("LABEL %s@:if%d\n", FRAME_NAME[current_frame],ifCounter);
 
     // if body
-    if(processCodeBlock(ifElement.data.elements[1])){
+    if(processCodeBlock(ifElement.data.elements[1], NULL)){
         return -1;
     }
 
     // add fi (end of if-else)
-    printf("%s@:fi%d\n", FRAME_NAME[current_frame],ifCounter);
+    printf("LABEL %s@:fi%d\n", FRAME_NAME[current_frame],ifCounter);
 
     return 0;
 }
@@ -321,7 +372,7 @@ int processElse(treeElement_t elseElement) {
         return -1;
     }
 
-    if(processCodeBlock(elseElement.data.elements[0])) {
+    if(processCodeBlock(elseElement.data.elements[0], NULL)) {
         return -1;
     }
 
@@ -337,8 +388,111 @@ int processAssign(treeElement_t assignElement) {
         return -1;
     }
 
+    // left side of assignment must be id (variable)
+    if(assignElement.data.elements[0].type != E_TOKEN) {
+        return -1;
+    }
+
+
+    // TODO
+    //  frame processing in var names
+
+
+    switch (assignElement.data.elements[1].type) {
+        case E_S_EXPRESSION: // func call/expression ( l = f() | l = a + b)
+            if(processExpression(assignElement.data.elements[1])) {
+                return -1;
+            }
+            printf("POPS ");
+            if(processEToken(assignElement.data.elements[0], NULL)) {
+                return -1;
+            }
+            printf("\n");
+            break;
+        case E_TOKEN: // value or id ( l = r )
+            printf("MOVE ");
+            // process right side
+            if(processEToken(assignElement.data.elements[0], NULL)) {
+                return -1;
+            }
+            // process left side
+            if(processEToken(assignElement.data.elements[1], NULL)) {
+                return -1;
+            }
+            printf("\n");
+            break;
+        default:
+            return -1;
+    }
+
+    return 0;
+}
+
+int processFunctionDefParams(treeElement_t defParamsElement) {
+    if(defParamsElement.type != E_S_FUNCTION_DEF_PARAMS) {
+        return -1;
+    }
+
     //TODO
-    // add switch
+    // add temp frame
+
+    for(unsigned i = 0; i < defParamsElement.nodeSize; i++) {
+        if(processEToken(defParamsElement.data.elements[i], NULL)) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int processFunctionCall(treeElement_t callElement) {
+    if(callElement.type != E_S_FUNCTION_CALL) {
+        return -1;
+    }
+
+    if(callElement.nodeSize != 2) {
+        return -1;
+    }
+
+    printf("CREATEFRAME\n");
+    symbolFrame_t temp_frame = current_frame;
+    current_frame = FRAME_TEMP;
+
+    // create frame and process params
+    if(processFunctionCallParams(callElement.data.elements[1])) {
+        return -1;
+    }
+
+    current_frame = temp_frame;
+
+    printf("PUSHFRAME\n");
+
+    printf("CALL ");
+
+    // function name
+    if(processEToken(callElement.data.elements[0], NULL)) {
+        return -1;
+    }
+    printf("\n");
+
+    printf("POPFRAME\n");
+    printf("PUSH TF@retval\n");
+
+    return 0;
+}
+
+int processFunctionCallParams(treeElement_t callParamsElement) {
+    if(callParamsElement.type != E_S_FUNCTION_CALL_PARAMS) {
+        return -1;
+    }
+
+    // process arg[i]
+    for(unsigned i = 0; i < callParamsElement.nodeSize; i++) {
+        if(processExpression(callParamsElement.data.elements[i])) {
+            return -1;
+        }
+        printf("POPS %s@arg%d\n", FRAME_NAME[current_frame],i);
+    }
 
     return 0;
 }
