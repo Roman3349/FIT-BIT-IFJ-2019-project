@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "../src/stack.h"
+#include "stack.h"
 }
 
 namespace Tests {

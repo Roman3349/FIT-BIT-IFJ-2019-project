@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "../src/symtable.h"
+#include "symtable.h"
 }
 
 namespace Tests {
@@ -60,7 +60,7 @@ namespace Tests {
 			return symbol;
 		}
 
-		symTable_t *table = NULL;
+		symTable_t *table = nullptr;
 	};
 
 	TEST_F(SymTableTest, hash) {
@@ -89,6 +89,7 @@ namespace Tests {
 	TEST_F(SymTableTest, insertNullTable) {
 		symbol_t *symbol = createFunction("main", 0, true);
 		ASSERT_EQ(symTableInsert(nullptr, symbol, true), ERROR_INTERNAL);
+		symbolFree(symbol);
 	}
 
 	TEST_F(SymTableTest, insert) {
