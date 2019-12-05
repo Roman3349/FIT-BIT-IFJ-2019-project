@@ -273,7 +273,6 @@ int getTokenTableId(enum token_type type) {
 		case T_BOOL_OR:
 			return 11;
 		case T_BOOL_NEG:
-		case T_OP_NEG:
 			return 12;
 		case T_OP_NOT_EQ:
 			return 13;

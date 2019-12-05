@@ -35,7 +35,6 @@ enum execution_status {
 enum token_type {
     T_EOL,
     T_EOF,
-    T_OP_NEG,       // !
     T_OP_ADD,       // +
     T_OP_SUB,       // -
     T_OP_MUL,       // *
