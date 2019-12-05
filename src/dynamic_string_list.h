@@ -56,9 +56,10 @@ void dynStrListFree(dynStrList_t *list);
 
 /**
  * Checks is the dynamic string lis is empty
+ * @param list Dynamic string list
  * @return Dynamic string list emptyness
  */
-bool dynStrListIsEmpty();
+bool dynStrListIsEmpty(dynStrList_t *list);
 
 /**
  * Returns the size of the dynamic string list
@@ -131,9 +132,10 @@ void dynStrListRemove(dynStrListEl_t *element);
 
 /**
  * Initializes a new dynamic string list element
+ * @param string Dynamic string
  * @return Initialized dynamic string element
  */
-dynStrListEl_t *dynStrListElInit();
+dynStrListEl_t *dynStrListElInit(dynStr_t *string);
 
 /**
  * Frees a dynamic string list element

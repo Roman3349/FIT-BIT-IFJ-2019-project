@@ -31,8 +31,9 @@ dynStrList_t *dynStrListInit() {
 void dynStrListClear(dynStrList_t *list) {
 	dynStrListEl_t *current = list->head;
 	while (current != NULL) {
+		dynStrListEl_t *next = current->next;
 		dynStrListElFree(current);
-		current = list->head;
+		current = next;
 	}
 }
 
@@ -73,14 +74,17 @@ bool dynStrListPushFront(dynStrList_t *list, dynStr_t *string) {
 	if (list == NULL || string == NULL) {
 		return false;
 	}
-	dynStrListEl_t *element = dynStrListElInit();
+	dynStrListEl_t *element = dynStrListElInit(string);
 	if (element == NULL) {
 		return false;
 	}
-	element->string = string;
-	element->next = list->head;
-	list->head->prev = element;
-	list->head = element;
+	if (list->head == NULL) {
+		list->head = list->tail = element;
+	} else {
+		element->next = list->head;
+		list->head->prev = element;
+		list->head = element;
+	}
 	return true;
 }
 
@@ -88,14 +92,17 @@ bool dynStrListPushBack(dynStrList_t *list, dynStr_t *string) {
 	if (list == NULL || string == NULL) {
 		return false;
 	}
-	dynStrListEl_t *element = dynStrListElInit();
+	dynStrListEl_t *element = dynStrListElInit(string);
 	if (element == NULL) {
 		return false;
 	}
-	element->string = string;
-	element->prev = list->tail;
-	list->tail->next = element;
-	list->tail = element;
+	if (list->head == NULL) {
+		list->head = list->tail = element;
+	} else {
+		element->prev = list->tail;
+		list->tail->next = element;
+		list->tail = element;
+	}
 	return true;
 }
 
@@ -133,14 +140,17 @@ void dynStrListRemove(dynStrListEl_t *element) {
 	dynStrListElFree(element);
 }
 
-dynStrListEl_t *dynStrListElInit() {
+dynStrListEl_t *dynStrListElInit(dynStr_t *string) {
+	if (string == NULL) {
+		return NULL;
+	}
 	dynStrListEl_t *element = malloc(sizeof(dynStrListEl_t));
 	if (element == NULL) {
 		return NULL;
 	}
 	element->next = NULL;
 	element->prev = NULL;
-	element->string = NULL;
+	element->string = string;
 	return element;
 }
 
