@@ -1,0 +1,3 @@
+# Ukazka lexikalni chyby (neplatne oktalove cislo) v IFJ19 (chyba 1)
+
+a = 0o9

@@ -99,13 +99,13 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, tokenEOF) {
-		FILE* file = openFile("eof.ifj19");
+		FILE* file = openFile("eof/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenEOL) {
-		FILE* file = openFile("eol.ifj19");
+		FILE* file = openFile("eol/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_EOF);
 	}

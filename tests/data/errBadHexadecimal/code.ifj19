@@ -1,0 +1,3 @@
+# Ukazka lexikalni chyby (neplatne hexadecimalni cislo) v IFJ19 (chyba 1)
+
+a = 0xH

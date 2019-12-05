@@ -1,0 +1,3 @@
+# Ukazka celociselneho deleni nulou v IFJ19 (chyba 9)
+
+error = 42 // 0
