@@ -130,9 +130,7 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_DEDENT);
 		ASSERT_TOKEN(file, T_KW_ELSE);
         ASSERT_TOKEN(file, T_EOL);
-		//ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN(file, T_UNKNOWN);
-		//ASSERT_TOKEN(file, T_EOF);
 	}
 
 	TEST_F(ScannerTest, tokenInt) {
@@ -264,7 +262,7 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, tokenExample1) {
-		FILE* file = openFile("example1.ifj19");
+		FILE* file = openFile("example1/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
 		ASSERT_TOKEN(file, T_LPAR);
@@ -341,7 +339,7 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, tokenExample2) {
-		FILE* file = openFile("example2.ifj19");
+		FILE* file = openFile("example2/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN(file, T_KW_DEF);
 		ASSERT_TOKEN_STRING(file, T_ID, "factorial");
@@ -438,7 +436,7 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, tokenExample3) {
-		FILE* file = openFile("example3.ifj19");
+		FILE* file = openFile("example3/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_STRING_ML, " Program 3: Prace s retezci a vestavenymi funkcemi ");
 		ASSERT_TOKEN(file, T_EOL);
@@ -560,7 +558,7 @@ namespace Tests {
 	}
 
 	TEST_F(ScannerTest, escapeSeq) {
-		FILE* file = openFile("escapeSeq.ifj19");
+		FILE* file = openFile("escapeSeq/code.ifj19");
 		ASSERT_NE(file, nullptr);
 		ASSERT_TOKEN_STRING(file, T_ID, "a");
 		ASSERT_TOKEN(file, T_ASSIGN);

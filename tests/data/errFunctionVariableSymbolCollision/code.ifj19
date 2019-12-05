@@ -1,0 +1,11 @@
+# Ukazka kolize symbolu funkce a promenne v IFJ19 (chyba 3)
+
+a = 10
+
+
+def f():
+    print(a)
+
+
+f()
+f = 1  # vyvola chybu 3
