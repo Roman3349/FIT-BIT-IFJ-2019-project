@@ -1,4 +1,4 @@
-# Ukazka lexialni chyby v odsazeni v IFJ19 (chyba 1)
+# Ukazka syntakticke chyby v odsazeni v IFJ19 (chyba 2)
 
     b = 1
     print(b)
