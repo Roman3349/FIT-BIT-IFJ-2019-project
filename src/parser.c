@@ -21,8 +21,8 @@
 //Statement definitions
 statementPart_t while_s[] = {S_KW_WHILE, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t if_s[] = {S_KW_IF, S_EXPRESSION, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
-statementPart_t pass_s[] = {S_KW_PASS, S_EOL};
-statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION, S_EOL};
+statementPart_t pass_s[] = {S_KW_PASS};
+statementPart_t return_s[] = {S_KW_RETURN, S_EXPRESSION};
 statementPart_t else_s[] = {S_KW_ELSE, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t functionDef_s[] = {S_KW_DEF, S_ID, S_LPAR, S_DEF_PARAMS, S_COLON, S_EOL, S_INDENT, S_BLOCK, S_DEDENT};
 statementPart_t functionCall_s[] = {S_ID, S_LPAR, S_CALL_PARAMS, S_RPAR};
@@ -50,7 +50,7 @@ signed int precedenceTable[19][19] =
 		{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-5,-1,-5} // $
 	};
 
-treeElement_t syntaxParse(FILE* file, symTable_t* symTable) {
+treeElement_t syntaxParse(FILE* file, symTable_t* symTable, int* errCode) {
 
     intStack_t* intStack = stackInit();
     stackPush(intStack, 0);
@@ -58,41 +58,40 @@ treeElement_t syntaxParse(FILE* file, symTable_t* symTable) {
     treeElement_t tree;
     treeInit(&tree, E_CODE);
 
-    int errCode = ERROR_SUCCESS;
-    while(tokenStackTop(tokenStack, &errCode).type != T_EOF) {
-    	if(errCode != ERROR_SUCCESS) { //Lexical analysis error
+    *errCode = ERROR_SUCCESS;
+    while(tokenStackTop(tokenStack, errCode).type != T_EOF) {
+    	if(*errCode != ERROR_SUCCESS) { //Lexical analysis error
     		break;
     	}
-		errCode = parseBlock(tokenStack, &tree, symTable, NULL);
-        if (errCode != ERROR_SUCCESS) {
+		*errCode = parseBlock(tokenStack, &tree, symTable, NULL);
+        if (*errCode != ERROR_SUCCESS) {
             break;
         }
 
-        token_t token = tokenStackTop(tokenStack, &errCode);
-        if(errCode != ERROR_SUCCESS) //Lexical analysis error
+        token_t token = tokenStackTop(tokenStack, errCode);
+        if(*errCode != ERROR_SUCCESS) //Lexical analysis error
         	break;
 
         if (token.type == T_KW_DEF) {
-            errCode = parseFunctionDef(tokenStack, &tree, symTable);
-            if(errCode != ERROR_SUCCESS)
+            *errCode = parseFunctionDef(tokenStack, &tree, symTable);
+            if(*errCode != ERROR_SUCCESS)
             	break;
         } else if(token.type == T_EOF) {
             break;
         } else {
-            fprintf(stderr, "Syntax error. Expected 'def', got %s \n", tokenToString(tokenStackTop(tokenStack, &errCode).type));
+            fprintf(stderr, "Syntax error. Expected 'def', got %s \n", tokenToString(tokenStackTop(tokenStack, errCode).type));
             break;
         }
 
     }
-    if(errCode == ERROR_SUCCESS) {
-		errCode = processToken(tokenStack, T_EOF, &tree);
+    if(*errCode == ERROR_SUCCESS) {
+		*errCode = processToken(tokenStack, T_EOF, &tree);
 	}
     tokenStackFree(tokenStack);
     stackFree(intStack);
 
-    if(errCode != ERROR_SUCCESS){
+    if(*errCode != ERROR_SUCCESS){
     	treeFree(tree);
-    	exit(errCode); //Exit with correct error code
     }
     return tree;
 }
@@ -572,33 +571,58 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, d
 						return errCode;
 				}
 
-                errCode = processToken(stack, T_EOL, blockTree);
-                if(errCode != ERROR_SUCCESS) // Newline after expression
-                        return errCode;
-                break;
+				token = tokenStackTop(stack, &errCode);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
+
+				if(token.type == T_EOL){// Newline after expression
+					errCode = processToken(stack, T_EOL, blockTree);
+					if(errCode != ERROR_SUCCESS)
+						return errCode;
+					break;
+				}
+				break;
 
                 case T_NUMBER:
                 case T_LPAR:
                 case T_STRING:
                 case T_STRING_ML:
-                case T_FLOAT: { // ignore expressions if their result is not used
-					do{
-						token = tokenStackPop(stack, &errCode);
-						if(errCode != ERROR_SUCCESS) {
-							return errCode;
-						}
-						switch(token.type){
-							case T_STRING:
-							case T_ID:
-							case T_STRING_ML:
-								dynStrFree(token.data.strval);
-								break;
+                case T_FLOAT: { //Cant ignore expressions. Can contain function call inside
 
-							default:
-								break;
-						}
-					} while (token.type != T_EOL);
-					break;
+                	errCode = parseExpression(stack, tree, symTable, context);
+                	if(errCode != ERROR_SUCCESS) {
+						return errCode;
+                	}
+					token = tokenStackTop(stack, &errCode);
+					if(errCode != ERROR_SUCCESS)
+						return errCode;
+
+					if(token.type == T_EOL){// Newline after expression
+						errCode = processToken(stack, T_EOL, blockTree);
+						if(errCode != ERROR_SUCCESS)
+							return errCode;
+						break;
+					}
+
+                	break;
+
+//					do{
+//						token = tokenStackPop(stack, &errCode);
+//						if(errCode != ERROR_SUCCESS) {
+//							return errCode;
+//						}
+//						switch(token.type){
+//							case T_STRING:
+//							case T_ID:
+//							case T_STRING_ML:
+//								dynStrFree(token.data.strval);
+//								break;
+//
+//							default:
+//								break;
+//						}
+//					} while (token.type != T_EOL);
+//					break;
 				}
 
             default:
@@ -650,6 +674,11 @@ int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dy
 
 int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context) {
 	int errCode;
+
+	if(context == NULL) {
+		return ERROR_SYNTAX;
+	}
+
     size_t partSize = sizeof(return_s) / sizeof(return_s[0]); //Get number of statement parts
 
     treeElement_t* returnTree = treeAddElement(tree, E_S_RETURN);
@@ -659,6 +688,16 @@ int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, 
         if(errCode != ERROR_SUCCESS)
             return errCode;
     }
+
+	token_t token = tokenStackTop(stack, &errCode);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	if(token.type == T_EOL){// Newline after expression
+		errCode = processToken(stack, T_EOL, tree);
+		if(errCode != ERROR_SUCCESS)
+			return errCode;
+	}
 
     return ERROR_SUCCESS;
 }
@@ -746,6 +785,16 @@ int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dy
         if(errCode != ERROR_SUCCESS)
             return errCode;
     }
+
+	token_t token = tokenStackTop(stack, &errCode);
+	if(errCode != ERROR_SUCCESS)
+		return errCode;
+
+	if(token.type == T_EOL){// Newline after expression
+		errCode = processToken(stack, T_EOL, tree);
+		if(errCode != ERROR_SUCCESS)
+			return errCode;
+	}
 
     return ERROR_SUCCESS;
 }

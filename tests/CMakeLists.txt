@@ -26,6 +26,8 @@ else (NOT GTest_FOUND)
     include_directories(${GTEST_INCLUDE_DIRS})
 endif (NOT GTest_FOUND)
 
+include_directories(${CMAKE_SOURCE_DIR}/src)
+
 file(GLOB_RECURSE _HDRFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 file(GLOB_RECURSE _SRCFILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 

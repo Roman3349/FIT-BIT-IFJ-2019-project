@@ -19,7 +19,7 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "../src/dynamic_string.h"
+#include "dynamic_string.h"
 }
 
 namespace Tests {

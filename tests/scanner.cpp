@@ -23,8 +23,8 @@
 #include "gtest/gtest.h"
 
 extern "C" {
-#include "../src/dynamic_string.h"
-#include "../src/scanner.h"
+#include "dynamic_string.h"
+#include "scanner.h"
 }
 
 #define ASSERT_TOKEN_FLOAT(file, tokenType, value) \

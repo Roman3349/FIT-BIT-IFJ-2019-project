@@ -57,7 +57,7 @@ typedef enum statementPart statementPart_t;
  * @returns derivation  tree representation of one line
  * @pre file is opened in read mode
  */
-treeElement_t syntaxParse(FILE * file, symTable_t* symTable);
+treeElement_t syntaxParse(FILE * file, symTable_t* symTable, int* errCode);
 
 
 /**

@@ -28,17 +28,24 @@
  * @return Execution status
  */
 int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		return ERROR_INTERNAL;
+	FILE* file = stdin;
+	if (argc == 2) {
+		file = fopen(argv[1], "r");
 	}
-	FILE* file = fopen(argv[1], "r");
 	if (file == NULL) {
-		return ERROR_INTERNAL;
+		file = stdin;
 	}
 	symTable_t* symTable = symTableInit();
 	symTableInsertEmbedFunctions(symTable);
-    treeElement_t tree = syntaxParse(file, symTable);
-    // TODO: add exit code check
+	int errCode = ERROR_SUCCESS;
+    treeElement_t tree = syntaxParse(file, symTable, &errCode);
+
+    if(errCode != ERROR_SUCCESS){
+		symTableFree(symTable);
+		fclose(file);
+		return errCode;
+    }
+
 	processCode(tree);
 	symTableFree(symTable);
 	treeFree(tree);
