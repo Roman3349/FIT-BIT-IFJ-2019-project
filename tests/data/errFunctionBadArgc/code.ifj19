@@ -1,0 +1,10 @@
+# Ukazka spatneho poctu argumentu ve volani funkce v IFJ19 (chyba 5)
+
+a = 10
+
+
+def f():
+    print(a)
+
+
+f(1)  # vyvola chybu 5

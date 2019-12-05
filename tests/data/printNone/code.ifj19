@@ -1,0 +1,3 @@
+# Ukazka vypisu None v IFJ19
+
+print(None)

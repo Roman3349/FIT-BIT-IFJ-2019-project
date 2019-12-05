@@ -1,0 +1,5 @@
+# Ukazka lexialni chyby v odsazeni v IFJ19 (chyba 1)
+
+def a():
+    b = 1
+  print(b)
