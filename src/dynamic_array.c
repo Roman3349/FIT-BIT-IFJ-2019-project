@@ -18,25 +18,154 @@
 
 #include "dynamic_array.h"
 
-void initArray(Array *a, size_t initialSize) {
-  a->array = (char *)malloc(initialSize * sizeof(char));
-  a->used = 0;
-  a->size = initialSize;
+void ListInit (List *L) {
+    L->First = NULL;
+    L->Act = NULL;
+    L->Last = NULL;
 }
 
-void insertArray(Array *a, char element) {
-  // a->used is the number of used entries, because a->array[a->used++] updates a->used only *after* the array has been accessed.
-  // Therefore a->used can go up to a->size
-  if (a->used == a->size) {
-    a->size *= 2;
-    a->array = (char *)realloc(a->array, a->size * sizeof(char));
-  }
-  a->array[a->used++] = element;
+void ListDelete (List *L) {
+    ElemPtr Elem = L->First;
+    while (L->First != NULL){
+      L->First = L->First->rptr;
+      free(Elem);
+      Elem = L->First;
+    }
+    L->First = NULL;
+    L->Act = NULL;
+    L->Last = NULL;
 }
 
+void InsertFirstElem (List *L, dynStr_t *dynString) {
+    ElemPtr Elem = (ElemPtr) malloc(sizeof(struct Elem));
+    if (Elem == NULL){
+      return;
+    }
+    Elem->string = dynString;
+    Elem->lptr= NULL;
+    Elem->rptr= L->First;
 
-void freeArray(Array *a) {
-  free(a->array);
-  a->array = NULL;
-  a->used = a->size = 0;
+    if (L->First != NULL){
+        L->First->lptr = Elem; 
+    }
+    else {
+        L->Last = Elem; 
+    }
+    L->First = Elem; 
+
+}
+
+void InsertLastElem(DList *L, dynStr_t *dynString) {
+    ElemPtr Elem = (ElemPtr) malloc(sizeof(struct Elem));
+    if (Elem == 0){
+      return;
+    }
+    Elem->string = dynString;
+    Elem->lptr= L->Last;
+    Elem->rptr= NULL;
+
+    if (L->Last != NULL){
+        L->Last->rptr = Elem; 
+    }
+    else {
+        L->First = Elem; 
+    }
+    L->Last = Elem;
+}
+
+void DeleteFirstElem (List *L) {
+    ElemPtr LElem;
+    if (L->First != NULL){
+        Elem = L->First;
+        if (L->Act == L->First){ 
+            L->Act = NULL; 
+        }
+        if (L->First == L->Last){
+            L->First = NULL;
+            L->Last = NULL;
+        }
+        else {
+            L->First = L->First->rptr;
+            L->First->lptr = NULL; 
+        }
+        free(Elem);
+    }
+}
+
+void DeleteLastElem (List *L) {
+    ElemPtr Elem;
+    if (L->First != NULL){
+        Elem = L->First;
+        if (L->Act == L->First){ 
+            L->Act = NULL;
+        }
+        if (L->First == L->Last){
+            L->First = NULL;
+            L->Last = NULL;
+        }
+        else {
+            L->First = L->First->rptr;
+            L->First->lptr = NULL;
+        }
+        free(Elem);
+    }
+}
+
+void InsertPostElem (List *L, dynStr_t *dynString) {
+    if (L->Act != NULL){
+        ElemPtr Elem = (ElemPtr) malloc(sizeof(struct Elem));
+        if (Elem == NULL){
+            return;
+        }
+        Elem->string = dynString;
+        Elem->rptr = L->Act->rptr;
+        Elem->lptr = L->Act;
+        L->Act->rptr = Elem;
+        if (L->Act == L->Last){
+            L->Last = Elem;
+        }
+        else {
+            Elem->rptr->lptr = Elem;
+        }
+    }
+}
+
+void DeletePostElem (List *L) {
+    if(L->Act != NULL){
+       if(L->Act->rptr != NULL){
+          ElemPtr Elem;
+          Elem = L->Act->rptr; 
+          L->Act->rptr = Elem->rptr;
+          if (Elem == L->Last){
+              L->Last = L->Act;
+          }
+          else {
+              Elem->rptr->lptr = L->Act;
+          }
+          free(Elem);
+       }
+    }
+}
+
+void DeletePreElem (List *L) {
+    if(L->Act != NULL){
+       if(L->Act->lptr != NULL){
+          ElemPtr Elem;
+          Elem = L->Act->lptr; 
+          L->Act->lptr = Elem->lptr;
+          if (Elem == L->First){ 
+              L->Last = L->Act;
+          }
+          else {
+              Elem->lptr->rptr = L->Act;
+          }
+          free(Elem);
+       }
+    }
+}
+
+void DLActualize (List *L, dynStr_t *dynString) {
+    if (L->Act != NULL){
+        L->Act->string = dynString;
+    }
 }

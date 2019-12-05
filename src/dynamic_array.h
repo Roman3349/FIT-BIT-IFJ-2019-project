@@ -18,8 +18,26 @@
 
 #include "dynamic_string.h"
 
-typedef struct {
-  int *array;
-  size_t used;
-  size_t size;
-} Array;
+typedef struct Elem {                 
+        dynStr_t *string;                                        
+        struct Elem *lptr;         
+        struct Elem *rptr;        
+} *ElemPtr;
+
+typedef struct {                                  
+    ElemPtr First;                      
+    ElemPtr Act;                     
+    ElemPtr Last;                    
+} List;
+
+void ListInit (List *);
+void ListDelete (List *);
+void InsertFirstElem (List *, dynStr_t *);
+void InsertLastElem(List *, dynStr_t *);
+void DeleteFirstElem (List *);
+void DeleteLastElem (List *);
+void DeletePostElem (List *);
+void DeletePreElem (List *);
+void InsertPostElem (List *, dynStr_t *);
+//TODO void InsertPreElem (List *, dynStr_t *);
+void ElemOverwrite (List *, dynStr_t *);
