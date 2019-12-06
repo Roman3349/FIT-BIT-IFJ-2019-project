@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include "error.h"
+#include "inter_code_generator.h"
 #include "parser.h"
 
 /**
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]) {
 		return errCode;
     }
 
-	printTree(tree, 0);
+	processCode(tree);
 	symTableFree(symTable);
 	treeFree(tree);
     fclose(file);
