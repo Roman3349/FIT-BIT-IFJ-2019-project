@@ -223,7 +223,7 @@ errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 				return ERROR_SEMANTIC_FUNCTION;
 			}
 			if (current->type != symbol->type) {
-				return ERROR_SEMANTIC_EXPRESSION;
+				return ERROR_SEMANTIC_FUNCTION;
 			}
 			if (current->type == SYMBOL_VARIABLE) {
 				current->used = true;

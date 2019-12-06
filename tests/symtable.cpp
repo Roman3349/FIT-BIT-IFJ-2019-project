@@ -152,7 +152,7 @@ namespace Tests {
 		ASSERT_EQ(symTableInsertFunction(table, name, 0, false), ERROR_SUCCESS);
 		ASSERT_EQ(symTableInsertFunction(table, name, 0, true), ERROR_SEMANTIC_FUNCTION);
 		ASSERT_EQ(symTableInsertFunction(table, name, 1, false), ERROR_SEMANTIC_ARGC);
-		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SEMANTIC_EXPRESSION);
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SEMANTIC_FUNCTION);
 		dynStrFree(name);
 	}
 
@@ -191,7 +191,7 @@ namespace Tests {
 		ASSERT_EQ(iterator.symbol->type, SYMBOL_VARIABLE);
 		ASSERT_TRUE(iterator.symbol->info.variable.assigned);
 		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SUCCESS);
-		ASSERT_EQ(symTableInsertFunction(table, name, 0, false), ERROR_SEMANTIC_EXPRESSION);
+		ASSERT_EQ(symTableInsertFunction(table, name, 0, false), ERROR_SEMANTIC_FUNCTION);
 		dynStrFree(name);
 	}
 

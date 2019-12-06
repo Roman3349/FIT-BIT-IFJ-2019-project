@@ -207,7 +207,6 @@ void printTree(treeElement_t tree, int indent) {
 
 bool tokenToTreeElement(enum token_type type, treeElementType_t* elementType) {
 	switch(type) {
-		case T_OP_NEG:
 		case T_OP_ADD:
 		case T_OP_SUB:
 		case T_OP_MUL:

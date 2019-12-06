@@ -215,7 +215,6 @@ token_t scan(FILE* file, intStack_t* stack) {
                 }
                 break;
             case '!' :
-                output_token.type = T_OP_NEG;
                 if ((tmp = fgetc(file)) == '=') {
                     output_token.type = T_OP_NOT_EQ;
                 } else {
@@ -699,7 +698,6 @@ char* tokenToString (enum token_type type) {
 	char *arr[] = {
 		"EOL",
 		"EOF",
-		"'!'",
 		"'+'",
 		"'-'",
 		"'*'",

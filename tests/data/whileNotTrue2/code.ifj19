@@ -1,0 +1,2 @@
+while not True:
+    print('ERROR')

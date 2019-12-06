@@ -1,0 +1,3 @@
+# Ukazka symanticke chyby typove kompatibility ve vyrazech v IFJ19 (chyba 4)
+
+a = 'Text' - 1  # vyvola chybu 4
