@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #include "error.h"
+#include "dynamic_string_list.h"
 #include "scanner.h"
 #include "token_stack.h"
 #include "parse_tree.h"

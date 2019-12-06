@@ -31,7 +31,7 @@ target_link_libraries(scanner dynamic_string stack m)
 target_link_libraries(token_stack scanner)
 target_link_libraries(symtable dynamic_string)
 target_link_libraries(parse_tree scanner)
-target_link_libraries(parser parse_tree token_stack symtable tree_element_stack)
+target_link_libraries(parser parse_tree dynamic_string_list token_stack symtable tree_element_stack)
 target_link_libraries(tree_element_stack parse_tree)
 target_link_libraries(inter_code_generator parser)
 
