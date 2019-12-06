@@ -1,0 +1,5 @@
+def fce():
+	if 1:
+	  print('OK')
+
+fce()
