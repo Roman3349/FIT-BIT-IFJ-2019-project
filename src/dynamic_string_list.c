@@ -63,11 +63,11 @@ unsigned long dynStrListSize(dynStrList_t *list) {
 }
 
 void dynStrListPopFront(dynStrList_t *list) {
-	dynStrListRemove(dynStrListFront(list));
+	dynStrListRemove(list, dynStrListFront(list));
 }
 
 void dynStrListPopBack(dynStrList_t *list) {
-	dynStrListRemove(dynStrListBack(list));
+	dynStrListRemove(list, dynStrListBack(list));
 }
 
 bool dynStrListPushFront(dynStrList_t *list, dynStr_t *string) {
@@ -128,15 +128,28 @@ dynStrListEl_t *dynStrListElNext(dynStrListEl_t *element) {
 }
 
 dynStrListEl_t *dynStrListBack(dynStrList_t *list) {
+	if (list == NULL) {
+		return NULL;
+	}
 	return list->tail;
 }
 
-void dynStrListRemove(dynStrListEl_t *element) {
-	if (element == NULL) {
+void dynStrListRemove(dynStrList_t *list, dynStrListEl_t *element) {
+	if (list == NULL || element == NULL) {
 		return;
 	}
+	dynStrListEl_t *prev = element->prev;
 	dynStrListEl_t *next = element->next;
-	next->prev = element->prev;
+	if (prev != NULL) {
+		prev->next = next;
+	} else {
+		list->head = next;
+	}
+	if (next != NULL) {
+		next->prev = prev;
+	} else {
+		list->tail = prev;
+	}
 	dynStrListElFree(element);
 }
 

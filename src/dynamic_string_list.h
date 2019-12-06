@@ -126,9 +126,10 @@ dynStrListEl_t *dynStrListBack(dynStrList_t *list);
 
 /**
  * Removes the element from the dynamic string list
+ * @param list Dynamic string list
  * @param element Dynamic string list to remove
  */
-void dynStrListRemove(dynStrListEl_t *element);
+void dynStrListRemove(dynStrList_t *list, dynStrListEl_t *element);
 
 /**
  * Initializes a new dynamic string list element
