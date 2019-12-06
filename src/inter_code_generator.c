@@ -25,6 +25,50 @@ const char* FRAME_NAME[] = {
         [FRAME_TEMP] = "TF"
 };
 
+// strlen(s, i, n)  // variables are already defined in temp frame
+const char* substr_def =
+        "LABEL SUBSTR\n"        // function label
+        "DEFVAR $length\n"
+        "STRLEN $length s\n"    // get string length
+        "DEFVAR $temp\n"
+
+        "GT $temp i $length\n"  // check if i > string length
+        "JUMPIFEQ $retNone $temp bool@true\n"
+
+        "LT $temp i int@0\n"    // check if substring begining is in string
+        "JUMPIFEQ $retNone $temp bool@true\n" // jump to return none if i < 0
+
+        "LT $temp n int@0\n"    // check if n < 0
+        "JUMPIFEQ $retNone $temp bool@true\n"
+
+        "GT $temp n $length\n"  // n > length of string
+        "JUMPIFNEQ $notmaxlen $temp bool@true\n"
+            "MOVE n length\n"       // n = length of string (copy all)
+        "LABEL $notmaxlen\n"
+
+        "EQ $temp n int@0\n"    // check if n == 0
+        "JUMPIFNEQ $notempty $temp bool@true\n"
+            "MOVE LF@$retval string@\\000\n" // add NUL char to return variable
+            "RETURN\n"              // return \0 (empty string)
+        "$notempty\n"
+
+        "DEFVAR $tempchar\n"
+        "LABEL $for\n"
+            "JUMPIFEQ $endfor n int@0\n"
+            ""
+
+            // TODO
+            //  add implementation for ord
+
+            "SUB n n int@1\n"
+            "JUMP $for\n"
+        "LABEL $endfor\n"
+
+        "LABEL $retNone\n"      // return None
+        "MOVE LF@$retval nil@nil\n"
+        "RETURN\n"
+        ;
+
 // current frame
 symbolFrame_t current_frame = FRAME_GLOBAL;
 
@@ -40,6 +84,9 @@ int processCode(treeElement_t codeElement) {
 
     // IFJcode19 shebang
     printf(".IFJcode19\n");
+
+    //TODO
+    // jump na main funkci
 
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
         // process code content
@@ -108,7 +155,7 @@ int processFunctionDefinition(treeElement_t defElement) {
 
     // processing function name
     // (label to jump to when function is called)
-    printf("LABEL %s@:", FRAME_NAME[current_frame]);
+    printf("LABEL ");
     dynStr_t* function_context = NULL;
     if(processEToken(defElement.data.elements[0], &function_context)) {
         return -1;
@@ -347,10 +394,10 @@ int processIf(treeElement_t ifElement) {
     }
 
     // add jump to fi
-    printf("JUMP %s@:fi%d\n", FRAME_NAME[current_frame],ifCounter);
+    printf("JUMP $fi%d\n", ifCounter);
 
     // add if label
-    printf("LABEL %s@:if%d\n", FRAME_NAME[current_frame],ifCounter);
+    printf("LABEL $if%d\n", ifCounter);
 
     // if body
     if(processCodeBlock(ifElement.data.elements[1], NULL)){
@@ -358,7 +405,7 @@ int processIf(treeElement_t ifElement) {
     }
 
     // add fi (end of if-else)
-    printf("LABEL %s@:fi%d\n", FRAME_NAME[current_frame],ifCounter);
+    printf("LABEL $fi%d\n", ifCounter);
 
     return 0;
 }
