@@ -236,6 +236,7 @@ errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 				}
 				current->used = true;
 			}
+			symbolFree(symbol);
 			return ERROR_SUCCESS;
 		}
 		previous = current;
