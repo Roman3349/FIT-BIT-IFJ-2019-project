@@ -1,16 +1,16 @@
 #!/bin/bash
 
 findCompiler() {
-  if [[ -f 'ic19' ]]; then
-    COMPILER='ic19'
+  if [[ -f '../ic19' ]]; then
+    COMPILER='../ic19'
   elif [[ -f '../cmake-build-debug/bin/ic19' ]]; then
     COMPILER='../cmake-build-debug/bin/ic19'
   fi
 }
 
 findInterpreter() {
-  if [[ -f 'ic19int' ]]; then
-    INTERPRETER='ic19int'
+  if [[ -f '../ic19int' ]]; then
+    INTERPRETER='../ic19int'
   elif [[ -f '/usr/local/bin/ic19int' ]]; then
     INTERPRETER='/usr/local/bin/ic19int'
   fi
