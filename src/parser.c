@@ -93,6 +93,7 @@ treeElement_t syntaxParse(FILE* file, symTable_t* symTable, int* errCode) {
     if(*errCode != ERROR_SUCCESS){
     	treeFree(tree);
     }
+
     return tree;
 }
 
@@ -199,6 +200,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 	int paramCount = 0;
     bool parameters = true;
     treeElement_t* defParamTree = NULL;
+	dynStrList_t *params = dynStrListInit();
     while(parameters) {
         token_t token = tokenStackPop(stack, &errCode);
         if(errCode != ERROR_SUCCESS) {
@@ -210,18 +212,25 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 					defParamTree = treeAddElement(tree, E_S_FUNCTION_DEF_PARAMS);
             	}
             	paramCount++;
-                if(!treeAddToken(defParamTree, token))
-					return ERROR_INTERNAL;
+                if(!treeAddToken(defParamTree, token)) {
+	                dynStrListFree(params);
+	                return ERROR_INTERNAL;
+                }
 
+                dynStrListPushBack(params, dynStrClone(token.data.strval));
                 errCode = symTableInsertVariable(symTable, token.data.strval, funcName);
-            	if(errCode != ERROR_SUCCESS) //Insert parameter as local variable
-					return errCode;
+            	if(errCode != ERROR_SUCCESS) { //Insert parameter as local variable
+		            dynStrListFree(params);
+		            return errCode;
+	            }
 
             	token_t lookAheadToken = tokenStackTop(stack, &errCode);
                 if(lookAheadToken.type == T_COMMA) {
 					tokenStackPop(stack, &errCode); // multiple parameters pop comma
-					if(errCode != ERROR_SUCCESS)
+					if(errCode != ERROR_SUCCESS) {
+						dynStrListFree(params);
 						return errCode;
+					}
 				}
                 break;
 
@@ -232,6 +241,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
             default:
             	lookAheadToken = tokenStackTop(stack, &errCode);
             	if(errCode != ERROR_SUCCESS) {
+		            dynStrListFree(params);
 					return errCode;
             	}
                 fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(lookAheadToken.type));
@@ -239,9 +249,10 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
         }
     }
 
-    errCode = symTableInsertFunction(symTable, funcName, paramCount, true);
-	if (errCode != ERROR_SUCCESS) //Symtable insert function definition
+    errCode = symTableInsertFunctionDefinition(symTable, funcName, paramCount, params);
+	if (errCode != ERROR_SUCCESS) { //Symtable insert function definition
 		return errCode;
+	}
 
     return ERROR_SUCCESS;
 }
@@ -284,6 +295,8 @@ int getTokenTableId(enum token_type type) {
 		case T_FLOAT:
 		case T_STRING:
 		case T_STRING_ML:
+		case T_BOOL_TRUE:
+		case T_BOOL_FALSE:
 		case T_ID:
 		case T_KW_NONE:
 			return 16;
@@ -398,7 +411,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 			}
 		}
 
-		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.data.token->type == T_RPAR) {
+		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.type == E_TOKEN && element.data.token->type == T_RPAR) {
 			element = treeStackPop(resultStack);
 			treeInsertElement(expressionTree, element);
 			tokenStackPush(stack, token); // Push back last token (Not part of expression)
@@ -434,11 +447,39 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 					case E_ASSIGN:
 					case E_NEQ:
 					case E_DIV_INT: {
-						treeElement_t second = treeStackPop(resultStack); //If popped element is operator
-						treeElement_t first = treeStackPop(resultStack);
+						if(operation.type != E_NOT) {
+							treeElement_t second = treeStackPop(resultStack); //If popped element is operator
 
-						treeInsertElement(&operation, first);
-						treeInsertElement(&operation, second);
+							if (tokenTypeFromElement(second) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeElement_t first = treeStackPop(resultStack);
+
+							if (tokenTypeFromElement(first) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeInsertElement(&operation, first);
+							treeInsertElement(&operation, second);
+						} else {
+							treeElement_t operator = treeStackPop(resultStack); //If popped element is operator
+
+							if (tokenTypeFromElement(operator) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeInsertElement(&operation, operator);
+						}
 
 						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && getTokenTableId(token.type) == 17) { // Expression END
 							treeInsertElement(expressionTree, operation);
@@ -765,7 +806,7 @@ int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t
 		}
     }
 
-    errCode = symTableInsertFunction(symTable, functionName, paramCount, false);
+    errCode = symTableInsertFunction(symTable, functionName, paramCount);
     if(errCode != ERROR_SUCCESS)
 		return errCode;
 

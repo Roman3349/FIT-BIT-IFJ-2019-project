@@ -218,6 +218,7 @@ token_t scan(FILE* file, intStack_t* stack) {
                 if ((tmp = fgetc(file)) == '=') {
                     output_token.type = T_OP_NOT_EQ;
                 } else {
+					output_token.type = T_UNKNOWN;
                     ungetc(tmp, file);
                 }
                 break;

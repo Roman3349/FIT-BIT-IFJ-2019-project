@@ -175,16 +175,33 @@ errorCode_t symTableInsertEmbedFunctions(symTable_t *table) {
 	return ERROR_SUCCESS;
 }
 
-errorCode_t symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition) {
+errorCode_t symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc) {
 	if (table == NULL || name == NULL) {
 		return ERROR_INTERNAL;
 	}
-	symbolInfo_t info = {.function = {.argc = argc, .defined = true}};
+	symbolInfo_t info = {.function = {.argc = argc, .argv = NULL, .defined = false}};
 	symbol_t *symbol = symbolInit(dynStrClone(name), SYMBOL_FUNCTION, info, NULL);
 	if (symbol == NULL) {
 		return ERROR_INTERNAL;
 	}
-	errorCode_t retVal = symTableInsert(table, symbol, definition);
+	errorCode_t retVal = symTableInsert(table, symbol, false);
+	if (retVal != ERROR_SUCCESS) {
+		symbolFree(symbol);
+	}
+	return retVal;
+}
+
+errorCode_t symTableInsertFunctionDefinition(symTable_t *table, dynStr_t *name, int argc, dynStrList_t *argv) {
+	if (table == NULL || name == NULL || argv == NULL) {
+		return ERROR_INTERNAL;
+	}
+	symbolInfo_t info = {.function = {.argc = argc, .argv = argv, .defined = true}};
+	symbol_t *symbol = symbolInit(dynStrClone(name), SYMBOL_FUNCTION, info, NULL);
+	if (symbol == NULL) {
+		dynStrListFree(argv);
+		return ERROR_INTERNAL;
+	}
+	errorCode_t retVal = symTableInsert(table, symbol, true);
 	if (retVal != ERROR_SUCCESS) {
 		symbolFree(symbol);
 	}
@@ -219,7 +236,8 @@ errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 	while (current != NULL) {
 		if (dynStrEqual(current->name, symbol->name) &&
 			dynStrEqual(current->context, symbol->context)) {
-			if (unique) {
+			if (unique && current->type == SYMBOL_FUNCTION &&
+				current->info.function.defined) {
 				return ERROR_SEMANTIC_FUNCTION;
 			}
 			if (current->type != symbol->type) {
@@ -250,6 +268,29 @@ errorCode_t symTableInsert(symTable_t *table, symbol_t *symbol, bool unique) {
 		previous->next = symbol;
 	}
 	return ERROR_SUCCESS;
+}
+
+dynStr_t *symTableGetArgumentName(symTable_t *table, dynStr_t *function, unsigned long index) {
+	if (table == NULL || function == NULL) {
+		return NULL;
+	}
+	symbol_t *symbol = symTableFind(table, function, NULL);
+	if (symbol == NULL || symbol->type != SYMBOL_FUNCTION) {
+		return NULL;
+	}
+	functionSymbol_t info = symbol->info.function;
+	if (info.argc == -1 || info.argc == 0 ||
+		(unsigned long) info.argc < index || info.argv == NULL) {
+		return NULL;
+	}
+	dynStrListEl_t *element = dynStrListFront(info.argv);
+	for (unsigned long i = 0; i < index; ++i) {
+		element = dynStrListElNext(element);
+	}
+	if (element == NULL) {
+		return NULL;
+	}
+	return element->string;
 }
 
 symIterator_t symIteratorBegin(const symTable_t *table) {
@@ -323,6 +364,9 @@ symbol_t *symbolInit(dynStr_t *name, symbolType_t type, symbolInfo_t info, dynSt
 void symbolFree(symbol_t *symbol) {
 	if (symbol == NULL) {
 		return;
+	}
+	if (symbol->type == SYMBOL_FUNCTION) {
+		dynStrListFree(symbol->info.function.argv);
 	}
 	if (symbol->context != NULL) {
 		dynStrFree(symbol->context);
