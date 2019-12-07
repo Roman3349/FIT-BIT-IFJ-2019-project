@@ -93,6 +93,7 @@ treeElement_t syntaxParse(FILE* file, symTable_t* symTable, int* errCode) {
     if(*errCode != ERROR_SUCCESS){
     	treeFree(tree);
     }
+
     return tree;
 }
 
@@ -284,6 +285,8 @@ int getTokenTableId(enum token_type type) {
 		case T_FLOAT:
 		case T_STRING:
 		case T_STRING_ML:
+		case T_BOOL_TRUE:
+		case T_BOOL_FALSE:
 		case T_ID:
 		case T_KW_NONE:
 			return 16;
@@ -398,7 +401,7 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 			}
 		}
 
-		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.data.token->type == T_RPAR) {
+		if(tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && element.type == E_TOKEN && element.data.token->type == T_RPAR) {
 			element = treeStackPop(resultStack);
 			treeInsertElement(expressionTree, element);
 			tokenStackPush(stack, token); // Push back last token (Not part of expression)
@@ -434,11 +437,39 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 					case E_ASSIGN:
 					case E_NEQ:
 					case E_DIV_INT: {
-						treeElement_t second = treeStackPop(resultStack); //If popped element is operator
-						treeElement_t first = treeStackPop(resultStack);
+						if(operation.type != E_NOT) {
+							treeElement_t second = treeStackPop(resultStack); //If popped element is operator
 
-						treeInsertElement(&operation, first);
-						treeInsertElement(&operation, second);
+							if (tokenTypeFromElement(second) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeElement_t first = treeStackPop(resultStack);
+
+							if (tokenTypeFromElement(first) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeInsertElement(&operation, first);
+							treeInsertElement(&operation, second);
+						} else {
+							treeElement_t operator = treeStackPop(resultStack); //If popped element is operator
+
+							if (tokenTypeFromElement(operator) == T_EOL) {
+								treeFree(element);
+								treeStackFree(resultStack);
+								treeStackFree(precedenceStack);
+								return ERROR_SYNTAX;
+							}
+
+							treeInsertElement(&operation, operator);
+						}
 
 						if (tokenTypeFromElement(treeStackTop(precedenceStack)) == T_EOL && getTokenTableId(token.type) == 17) { // Expression END
 							treeInsertElement(expressionTree, operation);
