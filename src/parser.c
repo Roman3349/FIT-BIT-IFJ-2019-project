@@ -200,6 +200,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 	int paramCount = 0;
     bool parameters = true;
     treeElement_t* defParamTree = NULL;
+	dynStrList_t *params = dynStrListInit();
     while(parameters) {
         token_t token = tokenStackPop(stack, &errCode);
         if(errCode != ERROR_SUCCESS) {
@@ -211,18 +212,25 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 					defParamTree = treeAddElement(tree, E_S_FUNCTION_DEF_PARAMS);
             	}
             	paramCount++;
-                if(!treeAddToken(defParamTree, token))
-					return ERROR_INTERNAL;
+                if(!treeAddToken(defParamTree, token)) {
+	                dynStrListFree(params);
+	                return ERROR_INTERNAL;
+                }
 
+                dynStrListPushBack(params, dynStrClone(token.data.strval));
                 errCode = symTableInsertVariable(symTable, token.data.strval, funcName);
-            	if(errCode != ERROR_SUCCESS) //Insert parameter as local variable
-					return errCode;
+            	if(errCode != ERROR_SUCCESS) { //Insert parameter as local variable
+		            dynStrListFree(params);
+		            return errCode;
+	            }
 
             	token_t lookAheadToken = tokenStackTop(stack, &errCode);
                 if(lookAheadToken.type == T_COMMA) {
 					tokenStackPop(stack, &errCode); // multiple parameters pop comma
-					if(errCode != ERROR_SUCCESS)
+					if(errCode != ERROR_SUCCESS) {
+						dynStrListFree(params);
 						return errCode;
+					}
 				}
                 break;
 
@@ -233,6 +241,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
             default:
             	lookAheadToken = tokenStackTop(stack, &errCode);
             	if(errCode != ERROR_SUCCESS) {
+		            dynStrListFree(params);
 					return errCode;
             	}
                 fprintf(stderr, "Syntax error. Expected identifier, got %s \n", tokenToString(lookAheadToken.type));
@@ -240,9 +249,10 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
         }
     }
 
-    errCode = symTableInsertFunction(symTable, funcName, paramCount, true);
-	if (errCode != ERROR_SUCCESS) //Symtable insert function definition
+    errCode = symTableInsertFunctionDefinition(symTable, funcName, paramCount, params);
+	if (errCode != ERROR_SUCCESS) { //Symtable insert function definition
 		return errCode;
+	}
 
     return ERROR_SUCCESS;
 }
@@ -796,7 +806,7 @@ int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t
 		}
     }
 
-    errCode = symTableInsertFunction(symTable, functionName, paramCount, false);
+    errCode = symTableInsertFunction(symTable, functionName, paramCount);
     if(errCode != ERROR_SUCCESS)
 		return errCode;
 

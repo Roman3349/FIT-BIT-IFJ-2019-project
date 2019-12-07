@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "dynamic_string.h"
+#include "dynamic_string_list.h"
 #include "error.h"
 
 #define EMBEDDED_FUNCTIONS 8
@@ -32,6 +33,7 @@ typedef struct symTable symTable_t;
 
 typedef struct functionSymbol {
 	int argc;
+	dynStrList_t *argv;
 	bool defined;
 } functionSymbol_t;
 
@@ -122,10 +124,19 @@ errorCode_t symTableInsertEmbedFunctions(symTable_t *table);
  * @param table Symbol table
  * @param name Function name
  * @param argc Argument count
- * @param definition Is function definition?
  * @return Execution status
  */
-errorCode_t symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc, bool definition);
+errorCode_t symTableInsertFunction(symTable_t *table, dynStr_t *name, int argc);
+
+/**
+ * Inserts a function definition
+ * @param table Symbol table
+ * @param name Function name
+ * @param argc Argument count
+ * @param argv Argument list
+ * @return Execution status
+ */
+errorCode_t symTableInsertFunctionDefinition(symTable_t *table, dynStr_t *name, int argc, dynStrList_t *argv);
 
 /**
  * Inserts a variable
@@ -160,6 +171,15 @@ size_t symTableSize(symTable_t *table);
  * @return Symbol
  */
 symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context);
+
+/**
+ * Returns the argument name of the function
+ * @param table Symbol table
+ * @param function Function name
+ * @param index Argument index
+ * @return Function's argument name
+ */
+dynStr_t *symTableGetArgumentName(symTable_t *table, dynStr_t *function, unsigned long index);
 
 /**
  * Returns the symbol frame type

@@ -29,6 +29,9 @@ dynStrList_t *dynStrListInit() {
 }
 
 void dynStrListClear(dynStrList_t *list) {
+	if (list == NULL) {
+		return;
+	}
 	dynStrListEl_t *current = list->head;
 	while (current != NULL) {
 		dynStrListEl_t *next = current->next;
