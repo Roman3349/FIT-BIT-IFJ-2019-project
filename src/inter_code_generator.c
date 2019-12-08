@@ -78,112 +78,242 @@ dynStr_t* current_context = NULL;
 // symbol table
 symTable_t* table;
 
+// string list where code is generated to
+dynStrList_t* codeStrList;
+
 int processCode(treeElement_t codeElement) {
 
-    assert(codeElement.type == E_CODE);
+    if(codeElement.type != E_CODE){
+        return ERROR_SEMANTIC_OTHER;
+    }
+
+    //TODO
+    // list dealocation!
+
+    // dynamic list allocation
+    codeStrList = dynStrListInit();
+
+    if(codeStrList == NULL) {
+        return ERROR_SEMANTIC_OTHER;
+    }
 
     // IFJcode19 shebang
-    printf(".IFJcode19\n");
+    dynStr_t* header = dynStrInit();
+    if(header == NULL) {
+        return ERROR_INTERNAL;
+    }
+    if(dynStrAppendString(header , ".IFJcode19\n")) {
+        dynStrFree(header);
+        return ERROR_INTERNAL;
+    }
+    if(dynStrListPushBack(codeStrList, header)) {
+        dynStrFree(header);
+        return ERROR_INTERNAL;
+    }
 
     //TODO
     // jump na main funkci
 
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
+        int retval = 0;
         // process code content
         switch (codeElement.data.elements[i].type) {
             case E_TOKEN:
-                processEToken(codeElement.data.elements[i], NULL);
+                retval = processEToken(codeElement.data.elements[i], NULL);
                 break;
             case E_S_FUNCTION_DEF:
-                processFunctionDefinition(codeElement.data.elements[i]);
+                retval = processFunctionDefinition(codeElement.data.elements[i]);
                 break;
             case E_CODE_BLOCK:
-                processCodeBlock(codeElement.data.elements[i], NULL);
+                retval = processCodeBlock(codeElement.data.elements[i], NULL);
                 break;
             default:
-                return -1; // failed to process the code
+                return ERROR_SEMANTIC_OTHER; // failed to process the code
         }
+        if(retval)
+            return retval;
     }
 
     //TODO
     // process code content ending
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
-int processEToken(treeElement_t eTokenElement, dynStr_t** context) {
+int processEToken(treeElement_t eTokenElement, dynStr_t** id) {
 
     if(eTokenElement.type == E_TOKEN) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
+
+    // id have to be returned, but token type doesnt match
+    if(id && eTokenElement.data.token->type != T_ID) {
+        return ERROR_SEMANTIC_OTHER;
+    }
+
+    dynStr_t *element;
+    if((element = dynStrInit()) == NULL) {
+        return ERROR_INTERNAL;
+    }
+    unsigned strSize = 0;
+    char* buffer = NULL;
 
     switch (eTokenElement.data.token->type) {
         case T_NUMBER:
-            printf("int@%ld ", eTokenElement.data.token->data.intval);
+            // add type
+            if(dynStrAppendString(element, "int@")){
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
+            // get size of string where number will be converted to
+            strSize = snprintf(NULL, 0, "%ld", eTokenElement.data.token->data.intval);
+            // string buffer
+            if((buffer = malloc(strSize + 2)) == NULL) { // + space and \0
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
+            // convert, add space and termination character
+            snprintf(buffer, strSize, "%ld", eTokenElement.data.token->data.intval);
+            buffer[strSize] = ' ';
+            buffer[strSize + 1] = '\0';
+            // add to rest of the code
+            if(dynStrAppendString(element, buffer)) {
+                dynStrFree(element);
+                free(buffer);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrListPushBack(codeStrList, element)) {
+                dynStrFree(element);
+                free(buffer);
+                return ERROR_INTERNAL;
+            }
+            free(buffer);
             break;
         case T_FLOAT:
-            printf("float@%a ", eTokenElement.data.token->data.floatval);
+            // add type
+            if(dynStrAppendString(element, "float@")){
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
+            // get size of string where number will be converted to
+            strSize = snprintf(NULL, 0, "%a", eTokenElement.data.token->data.floatval);
+            // string buffer
+            if((buffer = malloc(strSize + 2)) == NULL) { // + space and \0
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
+            // convert, add space and termination character
+            snprintf(buffer, strSize, "%a", eTokenElement.data.token->data.floatval);
+            buffer[strSize] = ' ';
+            buffer[strSize + 1] = '\0';
+            // add to rest of the code
+            if(dynStrAppendString(element, buffer)) {
+                dynStrFree(element);
+                free(buffer);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrListPushBack(codeStrList, element)) {
+                dynStrFree(element);
+                free(buffer);
+                return ERROR_INTERNAL;
+            }
+            free(buffer);
             break;
         case T_STRING_ML:
         case T_STRING:
             if(!dynStrEscape(eTokenElement.data.token->data.strval)) {
-                return -1;
+                dynStrFree(element);
+                return ERROR_SEMANTIC_OTHER;
             }
-            printf("string@%s ", eTokenElement.data.token->data.strval->string);
+            if(dynStrAppendString(element, "string@")){
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(element, eTokenElement.data.token->data.strval->string)) {
+                dynStrFree(element);
+                return ERROR_INTERNAL;
+            }
             break;
         case T_ID:
-            if(context) {
-                *context = eTokenElement.data.token->data.strval;
+            if(id) { // return id
+                dynStrFree(element); // no code is added
+                *id = eTokenElement.data.token->data.strval;
             }
-            //TODO
-            // this line may not work for function params
-            symbolFrame_t idFrame = symTableGetFrame(table, eTokenElement.data.token->data.strval, current_context);
-            printf("%s@%s ", FRAME_NAME[idFrame],eTokenElement.data.token->data.strval->string);
+            else {
+                // determine if variable is local or global
+                symbolFrame_t idFrame = symTableGetFrame(table, eTokenElement.data.token->data.strval, current_context);
+                if (dynStrAppendString(element, FRAME_NAME[idFrame])) {
+                    dynStrFree(element);
+                    return ERROR_INTERNAL;
+                }
+                if(dynStrAppendString(element, "@")) {
+                    dynStrFree(element);
+                    return ERROR_INTERNAL;
+                }
+                // add name
+                if(dynStrAppendString(element, eTokenElement.data.token->data.strval->string)) {
+                    dynStrFree(element);
+                    return ERROR_INTERNAL;
+                }
+            }
             break;
         default:
-            return -1;
+            dynStrFree(element);
+            return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 int processFunctionDefinition(treeElement_t defElement) {
 
     if(defElement.type != E_S_FUNCTION_DEF) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
+
+    int retval = ERROR_SUCCESS;
 
     // processing function name
     // (label to jump to when function is called)
-    printf("LABEL ");
-    dynStr_t* function_context = NULL;
-    if(processEToken(defElement.data.elements[0], &function_context)) {
-        return -1;
+    dynStr_t* temp = dynStrInit();
+    if(temp == NULL) {
+        return ERROR_INTERNAL;
     }
-    printf("\n");
+    if(dynStrAppendString(temp, "LABEL ")) {
+        return ERROR_INTERNAL;
+    }
+    // dynamic string with function name, to determine variable context
+    dynStr_t* function_context = NULL;
+    retval = processEToken(defElement.data.elements[0], &function_context);
 
-    //TODO
-    // process params
-    //current_frame = TF;
-    //if(processFunctionDefParams(defElement.data.elements[1])) {
-    //    return -1;
-    //}
+    if(retval) {
+        dynStrFree(function_context);
+        return retval;
+    }
+    if(dynStrAppendString(temp, dynStrGetString(function_context))) {
+        dynStrFree(function_context);
+        return ERROR_INTERNAL;
+    }
+    if(dynStrAppendString(temp, " \n")) {
+        dynStrFree(function_context);
+        return ERROR_INTERNAL;
+    }
 
     // process function body
-    if(processCodeBlock(defElement.data.elements[2], function_context)) {
-        return -1;
-    }
+    retval = processCodeBlock(defElement.data.elements[2], function_context);
 
+    dynStrFree(function_context);
     //TODO
     // add print return?
+    // add error check
 
-    return 0;
+    return retval;
 }
 
 int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
 
     if(codeBlockElement.type != E_CODE_BLOCK) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     // BLOCK START
@@ -199,19 +329,24 @@ int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
     }
 
     for(unsigned i = 0; i < codeBlockElement.nodeSize; i++) {
+
+        int retval = ERROR_SUCCESS;
+
         switch (codeBlockElement.data.elements[i].type) {
             case E_S_EXPRESSION:
-                processExpression(codeBlockElement.data.elements[i]);
+                retval = processExpression(codeBlockElement.data.elements[i]);
                 break;
             case E_S_IF:
-                processIf(codeBlockElement.data.elements[i]);
+                retval = processIf(codeBlockElement.data.elements[i]);
                 break;
             case E_S_WHILE:
-                 //processWhile(codeBlockElement.data.elements[i]);
+                 //retval = processWhile(codeBlockElement.data.elements[i]);
                 break;
             default:
-                return -1;
+                return ERROR_SEMANTIC_OTHER;
         }
+        if(retval)
+            return retval;
     }
 
     // restore state
@@ -222,27 +357,30 @@ int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
 
     // BLOCK END
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 int processExpression(treeElement_t expElement) {
 
     if(expElement.type != E_S_EXPRESSION) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
+
+    int retval = ERROR_SUCCESS;
 
     switch (expElement.data.elements[0].type) {
         case E_TOKEN:
+            //TODO
+            // allocation / dealocation
             printf("PUSHS ");
-            if(processEToken(expElement.data.elements[0], NULL)) {
-                return -1;
+            retval = processEToken(expElement.data.elements[0], NULL);
+            if(retval) {
+                break;
             }
             printf("\n");
             break;
         case E_S_EXPRESSION:
-            if(processExpression(expElement.data.elements[0])) {
-                return -1;
-            }
+            retval = processExpression(expElement.data.elements[0]);
             break;
         case E_ADD:
         case E_SUB:
@@ -254,123 +392,183 @@ int processExpression(treeElement_t expElement) {
         case E_EQ:
         case E_GT:
         case E_LT:
-            if(processBinaryOperation(expElement.data.elements[0])) {
-                return -1;
-            }
+            retval = processBinaryOperation(expElement.data.elements[0]);
             break;
         case E_NOT:
-			if(processUnaryOperation(expElement.data.elements[0])) {
-			    return -1;
-			}
+			retval = processUnaryOperation(expElement.data.elements[0]);
             break;
         case E_S_FUNCTION_CALL:
-            //processFunctionCall(expElement.data.elements[0]);
+            //retval = processFunctionCall(expElement.data.elements[0]);
             break;
         case E_ASSIGN:
-            if(processAssign(expElement.data.elements[0])) {
-                return -1;
-            }
+            retval = processAssign(expElement.data.elements[0]);
             break;
         default:
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
+    return retval;
 }
 
 int processBinaryOperation(treeElement_t operationElement) {
 
     if(operationElement.nodeSize != 2) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
+
+    int retval;
+
+    dynStr_t* temp;
 
     // extract data in reverse order and push them to stack
     for(unsigned i = operationElement.nodeSize; i > 0; i--) {
         switch (operationElement.data.elements[i].type) {
             case E_TOKEN:
-                printf("PUSHS ");
-                processEToken(operationElement.data.elements[i], NULL);
-                printf("\n");
+                temp = dynStrInit();
+                if(dynStrAppendString(temp, "PUSHS ")) {
+                    dynStrFree(temp);
+                    retval = ERROR_INTERNAL;
+                    break;
+                }
+                if(dynStrListPushBack(codeStrList, temp)) {
+                    dynStrFree(temp);
+                    retval = ERROR_INTERNAL;
+                    break;
+                }
+                retval = processEToken(operationElement.data.elements[i], NULL);
+                if(retval) {
+                    break;
+                }
+                if(dynStrAppendString(temp, "\n")){
+                    retval = ERROR_INTERNAL;
+                }
                 break;
             case E_S_EXPRESSION:
-                processExpression(operationElement.data.elements[i]);
+                retval = processExpression(operationElement.data.elements[i]);
                 break;
             default:
-                return -1;
+                return ERROR_SEMANTIC_OTHER;
+        }
+        if(retval) {
+            return retval;
         }
     }
 
+    temp = dynStrInit();
+
     switch (operationElement.type) {
         case E_ADD:
-            printf("ADDS\n");
+            retval = dynStrAppendString(temp, "ADDS\n");
             break;
         case E_SUB:
-            printf("SUBS\n");
+            retval = dynStrAppendString(temp, "SUBS\n");
             break;
         case E_MUL:
-            printf("MULS\n");
+            retval = dynStrAppendString(temp, "MULS\n");
             break;
         case E_DIV:
-            printf("DIVS\n");
+            retval = dynStrAppendString(temp, "DIVS\n");
             break;
         case E_DIV_INT:
-            printf("IDIVS\n");
+            retval = dynStrAppendString(temp, "IDIVS\n");
             break;
         case E_AND:
-            printf("ANDS\n");
+            retval = dynStrAppendString(temp, "ANDS\n");
             break;
         case E_OR:
-            printf("ORS\n");
+            retval = dynStrAppendString(temp, "ORS\n");
             break;
         case E_EQ:
-            printf("EQS\n");
+            retval = dynStrAppendString(temp, "EQS\n");
             break;
         case E_LT:
-            printf("LTS\n");
+            retval = dynStrAppendString(temp, "LTS\n");
             break;
         case E_GT:
-            printf("GTS\n");
+            retval = dynStrAppendString(temp, "GTS\n");
             break;
         default:
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    // add to list
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    return ERROR_SUCCESS;
 }
 
 int processUnaryOperation(treeElement_t operationElement){
 
     if(operationElement.nodeSize != 1) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
+
+    int retval = ERROR_SUCCESS;
+
+    dynStr_t* temp;
 
     switch (operationElement.data.elements[0].type) {
         case E_TOKEN:
-            printf("PUSHS ");
-            processEToken(operationElement.data.elements[0], NULL);
-            printf("\n");
+            temp = dynStrInit();
+            if(dynStrAppendString(temp, "PUSHS ")) {
+                dynStrFree(temp);
+                retval = ERROR_INTERNAL;
+                break;
+            }
+            if(dynStrListPushBack(codeStrList, temp)) {
+                dynStrFree(temp);
+                retval = ERROR_INTERNAL;
+                break;
+            }
+            //TODO
+            // apend data returned from token
+            retval = processEToken(operationElement.data.elements[0], NULL);
+            if(retval)
+                break;
+            if(dynStrAppendString(temp, "\n")) {
+                retval = ERROR_INTERNAL;
+            }
             break;
         case E_S_EXPRESSION:
             processExpression(operationElement.data.elements[0]);
             break;
         default:
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
     }
+    if(retval)
+        return retval;
+
+    temp = dynStrInit();
 
     switch (operationElement.type){
         case E_NOT:
-            printf("NOTS\n");
+            if(dynStrAppendString(temp, "NOTS\n")) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrListPushBack(codeStrList, temp)) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
             break;
         default:
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 int processIf(treeElement_t ifElement) {
     if(ifElement.type != E_S_IF) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     // used to make labels unique
@@ -378,168 +576,313 @@ int processIf(treeElement_t ifElement) {
 
     // expression
     if(processExpression(ifElement.data.elements[0])){
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
-    // jump to if body if condition is true
-    printf("PUSHS bool@true\nJUMPIFEQS %s@:if%d\n", FRAME_NAME[current_frame],ifCounter);
+    dynStr_t* temp = dynStrInit();
+    if(!temp) {
+        return ERROR_INTERNAL;
+    }
+
+    int retval = ERROR_SUCCESS;
+
+    retval = numberToDynStr(temp, "PUSHS bool@true\nJUMPIFEQS $if%d\n", ifCounter);
+
+    if(retval){
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = dynStrListPushBack(codeStrList, temp);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
     // fall through to else
 
     // else body
     if(ifElement.nodeSize > 2) {
-        if(processElse(ifElement.data.elements[2])) {
-            return -1;
+        retval = processElse(ifElement.data.elements[2]);
+        if(retval){
+            return retval;
         }
     }
 
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "JUMP $fi%d\n", ifCounter);
+
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = dynStrListPushBack(codeStrList, temp);
+    if(retval){
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    // next string have same size
+
     // add jump to fi
-    printf("JUMP $fi%d\n", ifCounter);
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "JUMP $fi%d\n", ifCounter);
+
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = dynStrListPushBack(codeStrList, temp);
+    if(retval){
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
     // add if label
-    printf("LABEL $if%d\n", ifCounter);
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "LABEL $if%d\n", ifCounter);
+
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = dynStrListPushBack(codeStrList, temp);
+    if(retval){
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
     // if body
     if(processCodeBlock(ifElement.data.elements[1], NULL)){
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     // add fi (end of if-else)
-    printf("LABEL $fi%d\n", ifCounter);
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "LABEL $fi%d\n", ifCounter);
 
-    return 0;
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = dynStrListPushBack(codeStrList, temp);
+    if(retval){
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+int numberToDynStr(dynStr_t* outputStr, char* formatString, long number) {
+    int retval; // return value
+
+    // get size of string
+    unsigned strSize = snprintf(NULL, 0, formatString, number);
+    char* buffer = malloc(strSize + 1); // + \0
+    // check allocation
+    if(!buffer) {
+        return ERROR_INTERNAL;
+    }
+
+    // print string to buffer
+    snprintf(buffer, strSize, formatString, number);
+    buffer[strSize] = '\0';
+
+    // append buffer to dynamic string
+    retval = dynStrAppendString(outputStr, buffer);
+    free(buffer);
+    if(retval) {
+        return ERROR_INTERNAL;
+    }
+
+    return retval; // ERROR_SUCCESS == 0, ERROR_INTERNAL == 99
 }
 
 int processElse(treeElement_t elseElement) {
     if(elseElement.type != E_S_ELSE) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     if(elseElement.nodeSize != 1) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     if(processCodeBlock(elseElement.data.elements[0], NULL)) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 int processAssign(treeElement_t assignElement) {
     if(assignElement.type != E_ASSIGN) {
-        return  -1;
+        return  ERROR_SEMANTIC_OTHER;
     }
 
     if(assignElement.nodeSize != 2) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     // left side of assignment must be id (variable)
     if(assignElement.data.elements[0].type != E_TOKEN) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
-
-    // TODO
-    //  frame processing in var names
-
+    dynStr_t* temp;
+    int retval = ERROR_SUCCESS;
 
     switch (assignElement.data.elements[1].type) {
         case E_S_EXPRESSION: // func call/expression ( l = f() | l = a + b)
-            if(processExpression(assignElement.data.elements[1])) {
-                return -1;
+            retval = processExpression(assignElement.data.elements[1]);
+            if(retval) {
+                return retval;
             }
-            printf("POPS ");
-            if(processEToken(assignElement.data.elements[0], NULL)) {
-                return -1;
+            temp = dynStrInit();
+            if(dynStrAppendString(temp, "POPS ")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
             }
-            printf("\n");
+
+            // TODO
+            //  process token name
+
+            retval = processEToken(assignElement.data.elements[0], NULL);
+            if(retval) {
+                dynStrFree(temp);
+                return retval;
+            }
+            if(dynStrAppendString(temp, "\n")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
             break;
         case E_TOKEN: // value or id ( l = r )
-            printf("MOVE ");
+            temp = dynStrInit();
+            if(dynStrAppendString(temp, "MOVE ")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            //TODO
+            // process token names
+
             // process right side
-            if(processEToken(assignElement.data.elements[0], NULL)) {
-                return -1;
+            retval = processEToken(assignElement.data.elements[0], NULL);
+            if(retval) {
+                dynStrFree(temp);
+                return retval;
             }
             // process left side
-            if(processEToken(assignElement.data.elements[1], NULL)) {
-                return -1;
+            retval = processEToken(assignElement.data.elements[1], NULL);
+            if(retval) {
+                dynStrFree(temp);
+                return retval;
             }
-            printf("\n");
+            // add eol
+            if(dynStrAppendString(temp, "\n")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
             break;
         default:
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
     }
 
-    return 0;
-}
-
-int processFunctionDefParams(treeElement_t defParamsElement) {
-    if(defParamsElement.type != E_S_FUNCTION_DEF_PARAMS) {
-        return -1;
-    }
-
-    //TODO
-    // add temp frame
-
-    for(unsigned i = 0; i < defParamsElement.nodeSize; i++) {
-        if(processEToken(defParamsElement.data.elements[i], NULL)) {
-            return -1;
-        }
-    }
-
-    return 0;
+    return retval;
 }
 
 int processFunctionCall(treeElement_t callElement) {
     if(callElement.type != E_S_FUNCTION_CALL) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
     if(callElement.nodeSize != 2) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
-    printf("CREATEFRAME\n");
+    int retval = ERROR_SUCCESS;
+
+    dynStr_t* temp = dynStrInit();
+    if(dynStrAppendString(temp, "CREATEFRAME\n")) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
     symbolFrame_t temp_frame = current_frame;
     current_frame = FRAME_TEMP;
 
     // create frame and process params
-    if(processFunctionCallParams(callElement.data.elements[1])) {
-        return -1;
+    retval = processFunctionCallParams(callElement.data.elements[1]);
+    if(retval) {
+        return retval;
     }
 
-    current_frame = temp_frame;
+    temp = dynStrInit();
+    if(dynStrAppendString(temp, "PUSHFRAME\n")) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
-    printf("PUSHFRAME\n");
+    //TODO
+    // this part have to be processed before params to know function name
+    // can be generated to string after params...
 
-    printf("CALL ");
+    temp = dynStrInit();
+    if(dynStrAppendString(temp, "CALL ")) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    //TODO
+    // add token name to the string
 
     // function name
-    if(processEToken(callElement.data.elements[0], NULL)) {
-        return -1;
+    retval = processEToken(callElement.data.elements[0], NULL);
+    if(retval) {
+        return retval;
     }
-    printf("\n");
+    if(dynStrAppendString(temp, "\n")) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
     printf("POPFRAME\n");
-    printf("PUSH TF@retval\n");
 
-    return 0;
+    //TODO
+    // this will be in expression processin:
+    // printf("PUSH %s@$retval\n", FRAME_NAME[current_frame]);
+
+    // restore frame
+    current_frame = temp_frame;
+
+    return ERROR_SUCCESS;
 }
 
 int processFunctionCallParams(treeElement_t callParamsElement) {
     if(callParamsElement.type != E_S_FUNCTION_CALL_PARAMS) {
-        return -1;
+        return ERROR_SEMANTIC_OTHER;
     }
 
+    dynStr_t* temp = dynStrInit();
+    if(!temp) {
+        return ERROR_INTERNAL;
+    }
     // process arg[i]
     for(unsigned i = 0; i < callParamsElement.nodeSize; i++) {
+
+        //TODO
+        // add dynamic string print
+        // add determine name of target variable (arg)
+
         if(processExpression(callParamsElement.data.elements[i])) {
-            return -1;
+            return ERROR_SEMANTIC_OTHER;
         }
-        printf("POPS %s@arg%d\n", FRAME_NAME[current_frame],i);
+        //printf("POPS %s@arg%d\n", FRAME_NAME[current_frame],i);
     }
 
-    return 0;
+    return ERROR_SUCCESS;
 }

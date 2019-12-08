@@ -20,6 +20,9 @@
 
 #include "parse_tree.h"
 #include "parser.h"
+#include "dynamic_string_list.h"
+
+
 
 /*
  * Process body of the program
@@ -31,11 +34,11 @@ int processCode(treeElement_t codeElement);
 /*
  * Process element with token
  * @param eTokenElement tree element with token
- * @param context pointer to pointer to the function context
- *                is used to return function name
+ * @param id used to get function id for further use
+ *           if specified, id is not added to code
  * @return execution status
  */
-int processEToken(treeElement_t eTokenElement, dynStr_t** context);
+int processEToken(treeElement_t eTokenElement, dynStr_t** id);
 
 /*
  * Process definition of new function
@@ -79,6 +82,15 @@ int processUnaryOperation(treeElement_t operationElement);
  * @returns execution status
  */
 int processIf(treeElement_t ifElement);
+
+/*
+ * Convert number to dynamic string
+ * @param outputStr dynamic string where number will be put to
+ * @param formatString printf style format string
+ * @param number number
+ * @return execution status
+ */
+int numberToDynStr(dynStr_t* outputStr, char* formatString, long number);
 
 /*
  * Process else statement
