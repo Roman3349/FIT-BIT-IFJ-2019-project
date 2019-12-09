@@ -46,9 +46,9 @@ int main(int argc, char *argv[]) {
 		return errCode;
     }
 
-	processCode(tree);
+	int retval = processCode(tree, symTable);
 	symTableFree(symTable);
 	treeFree(tree);
     fclose(file);
-	return ERROR_SUCCESS;
+	return retval;
 }
