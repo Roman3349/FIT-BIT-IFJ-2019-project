@@ -34,11 +34,11 @@ int processCode(treeElement_t codeElement);
 /*
  * Process element with token
  * @param eTokenElement tree element with token
- * @param id used to get function id for further use
- *           if specified, id is not added to code
+ * @param outputDynStr dynamic string where output will be writen to
+ * @param id_only tels if there should be FRAME_TYPE@id or id only in the output
  * @return execution status
  */
-int processEToken(treeElement_t eTokenElement, dynStr_t** id);
+int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only);
 
 /*
  * Process definition of new function
@@ -58,23 +58,32 @@ int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context);
 /*
  * Process expression
  * @param expElement tree element with expression
+ * @param pushToStack if true, generates pushs instruction
+ *                    for processed variables and constants
+ *                    , is also used to return this value to calling function
  * @return execution status
  */
-int processExpression(treeElement_t expElement);
+int processExpression(treeElement_t expElement, bool* pushToStack);
 
 /*
  * Process operation with 2 operands
  * @param operationElement tree element containing operation to process
+ * @param pushToStack if true, generates pushs instruction
+ *                    for processed variables and constants
+ *                    , is also used to return this value to calling function
  * @return execution status
  */
-int processBinaryOperation(treeElement_t operationElement);
+int processBinaryOperation(treeElement_t operationElement, bool* pushToStack);
 
 /*
  * Process operation operation with only 1 operand
  * @param operationElement tree element with operation to process
+ * @param pushToStack if true, generates pushs instruction
+ *                    for processed variables and constants
+ *                    , is also used to return this value to calling function
  * @return execution status
  */
-int processUnaryOperation(treeElement_t operationElement);
+int processUnaryOperation(treeElement_t operationElement, bool* pushToStack);
 
 /*
  * Process if statement
@@ -93,6 +102,15 @@ int processIf(treeElement_t ifElement);
 int numberToDynStr(dynStr_t* outputStr, char* formatString, long number);
 
 /*
+ * Convert float to dynamic string
+ * @param outputStr dynamic string where number will be put to
+ * @param formatString printf style format string
+ * @param number float number
+ * @return execution status
+ */
+int floatToDynStr(dynStr_t* outputStr, char* formatString, float number);
+
+/*
  * Process else statement
  * @param elseElement tree element with else code block to process
  * @return execution status
@@ -107,13 +125,6 @@ int processElse(treeElement_t elseElement);
 int processAssign(treeElement_t assignElement);
 
 /*
- * Process function definition params
- * @param defParamsElement tree element with function params used in definition
- * @return execution status
- */
-int processFunctionDefParams(treeElement_t defParamsElement);
-
-/*
  * Create temporary frame and process function call
  * @param callElement tree element containing function call
  * @return execution status
@@ -125,4 +136,4 @@ int processFunctionCall(treeElement_t callElement);
  * @param callParamsElement tree element containing called function parameters
  * @return execution status
  */
-int processFunctionCallParams(treeElement_t callParamsElement);
+int processFunctionCallParams(treeElement_t callParamsElement, dynStr_t* functionName);

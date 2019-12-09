@@ -115,11 +115,22 @@ int processCode(treeElement_t codeElement) {
     // jump na main funkci
 
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
-        int retval = 0;
+        int retval = ERROR_SUCCESS;
+        dynStr_t* temp;
+
         // process code content
         switch (codeElement.data.elements[i].type) {
             case E_TOKEN:
-                retval = processEToken(codeElement.data.elements[i], NULL);
+                temp = dynStrInit();
+                retval = processEToken(codeElement.data.elements[i], temp, false);
+                if(retval) {
+                    dynStrFree(temp);
+                    return retval;
+                }
+                if(dynStrListPushBack(codeStrList, temp)) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
                 break;
             case E_S_FUNCTION_DEF:
                 retval = processFunctionDefinition(codeElement.data.elements[i]);
@@ -140,125 +151,64 @@ int processCode(treeElement_t codeElement) {
     return ERROR_SUCCESS;
 }
 
-int processEToken(treeElement_t eTokenElement, dynStr_t** id) {
+int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only) {
 
     if(eTokenElement.type == E_TOKEN) {
         return ERROR_SEMANTIC_OTHER;
     }
 
-    // id have to be returned, but token type doesnt match
-    if(id && eTokenElement.data.token->type != T_ID) {
-        return ERROR_SEMANTIC_OTHER;
-    }
-
-    dynStr_t *element;
-    if((element = dynStrInit()) == NULL) {
+    if(!outputDynStr) {
         return ERROR_INTERNAL;
     }
-    unsigned strSize = 0;
-    char* buffer = NULL;
+
+    if(id_only && eTokenElement.data.token->type != T_ID) {
+        return ERROR_SEMANTIC_OTHER;
+    }
 
     switch (eTokenElement.data.token->type) {
         case T_NUMBER:
             // add type
-            if(dynStrAppendString(element, "int@")){
-                dynStrFree(element);
+            if(numberToDynStr(outputDynStr, "int@%ld", eTokenElement.data.token->data.intval)){
+                dynStrFree(outputDynStr);
                 return ERROR_INTERNAL;
             }
-            // get size of string where number will be converted to
-            strSize = snprintf(NULL, 0, "%ld", eTokenElement.data.token->data.intval);
-            // string buffer
-            if((buffer = malloc(strSize + 2)) == NULL) { // + space and \0
-                dynStrFree(element);
-                return ERROR_INTERNAL;
-            }
-            // convert, add space and termination character
-            snprintf(buffer, strSize, "%ld", eTokenElement.data.token->data.intval);
-            buffer[strSize] = ' ';
-            buffer[strSize + 1] = '\0';
-            // add to rest of the code
-            if(dynStrAppendString(element, buffer)) {
-                dynStrFree(element);
-                free(buffer);
-                return ERROR_INTERNAL;
-            }
-            if(dynStrListPushBack(codeStrList, element)) {
-                dynStrFree(element);
-                free(buffer);
-                return ERROR_INTERNAL;
-            }
-            free(buffer);
             break;
         case T_FLOAT:
             // add type
-            if(dynStrAppendString(element, "float@")){
-                dynStrFree(element);
+            if(floatToDynStr(outputDynStr, "float@%a", eTokenElement.data.token->data.floatval)){
+                dynStrFree(outputDynStr);
                 return ERROR_INTERNAL;
             }
-            // get size of string where number will be converted to
-            strSize = snprintf(NULL, 0, "%a", eTokenElement.data.token->data.floatval);
-            // string buffer
-            if((buffer = malloc(strSize + 2)) == NULL) { // + space and \0
-                dynStrFree(element);
-                return ERROR_INTERNAL;
-            }
-            // convert, add space and termination character
-            snprintf(buffer, strSize, "%a", eTokenElement.data.token->data.floatval);
-            buffer[strSize] = ' ';
-            buffer[strSize + 1] = '\0';
-            // add to rest of the code
-            if(dynStrAppendString(element, buffer)) {
-                dynStrFree(element);
-                free(buffer);
-                return ERROR_INTERNAL;
-            }
-            if(dynStrListPushBack(codeStrList, element)) {
-                dynStrFree(element);
-                free(buffer);
-                return ERROR_INTERNAL;
-            }
-            free(buffer);
             break;
         case T_STRING_ML:
         case T_STRING:
             if(!dynStrEscape(eTokenElement.data.token->data.strval)) {
-                dynStrFree(element);
-                return ERROR_SEMANTIC_OTHER;
-            }
-            if(dynStrAppendString(element, "string@")){
-                dynStrFree(element);
                 return ERROR_INTERNAL;
             }
-            if(dynStrAppendString(element, eTokenElement.data.token->data.strval->string)) {
-                dynStrFree(element);
+            if(dynStrAppendString(outputDynStr, "string@")){
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(outputDynStr, eTokenElement.data.token->data.strval->string)) {
                 return ERROR_INTERNAL;
             }
             break;
         case T_ID:
-            if(id) { // return id
-                dynStrFree(element); // no code is added
-                *id = eTokenElement.data.token->data.strval;
-            }
-            else {
+            if(!id_only) { // variable - add  FRAME_TYPE@
                 // determine if variable is local or global
                 symbolFrame_t idFrame = symTableGetFrame(table, eTokenElement.data.token->data.strval, current_context);
-                if (dynStrAppendString(element, FRAME_NAME[idFrame])) {
-                    dynStrFree(element);
+                if (dynStrAppendString(outputDynStr, FRAME_NAME[idFrame])) {
                     return ERROR_INTERNAL;
                 }
-                if(dynStrAppendString(element, "@")) {
-                    dynStrFree(element);
+                if (dynStrAppendString(outputDynStr, "@")) {
                     return ERROR_INTERNAL;
                 }
-                // add name
-                if(dynStrAppendString(element, eTokenElement.data.token->data.strval->string)) {
-                    dynStrFree(element);
-                    return ERROR_INTERNAL;
-                }
+            }
+            // add name
+            if(dynStrAppendString(outputDynStr, dynStrGetString(eTokenElement.data.token->data.strval))) {
+                return ERROR_INTERNAL;
             }
             break;
         default:
-            dynStrFree(element);
             return ERROR_SEMANTIC_OTHER;
     }
 
@@ -284,7 +234,7 @@ int processFunctionDefinition(treeElement_t defElement) {
     }
     // dynamic string with function name, to determine variable context
     dynStr_t* function_context = NULL;
-    retval = processEToken(defElement.data.elements[0], &function_context);
+    retval = processEToken(defElement.data.elements[0], function_context, true);
 
     if(retval) {
         dynStrFree(function_context);
@@ -334,7 +284,7 @@ int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
 
         switch (codeBlockElement.data.elements[i].type) {
             case E_S_EXPRESSION:
-                retval = processExpression(codeBlockElement.data.elements[i]);
+                retval = processExpression(codeBlockElement.data.elements[i], false);
                 break;
             case E_S_IF:
                 retval = processIf(codeBlockElement.data.elements[i]);
@@ -360,27 +310,55 @@ int processCodeBlock(treeElement_t codeBlockElement, dynStr_t* context) {
     return ERROR_SUCCESS;
 }
 
-int processExpression(treeElement_t expElement) {
+int processExpression(treeElement_t expElement, bool* pushToStack) {
 
     if(expElement.type != E_S_EXPRESSION) {
         return ERROR_SEMANTIC_OTHER;
     }
 
+    //TODO
+    // add pushToStack / use variables
+
     int retval = ERROR_SUCCESS;
+    dynStr_t* temp;
 
     switch (expElement.data.elements[0].type) {
         case E_TOKEN:
             //TODO
             // allocation / dealocation
-            printf("PUSHS ");
-            retval = processEToken(expElement.data.elements[0], NULL);
-            if(retval) {
-                break;
+            temp = dynStrInit();
+            if(pushToStack) {
+                if (dynStrAppendString(temp, "PUSHS ")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
             }
-            printf("\n");
+            retval = processEToken(expElement.data.elements[0], temp, false);
+            if(retval) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(pushToStack) {
+                // add eol after pushs varname
+                if (dynStrAppendString(temp, "\n")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+            } else {
+                // add space after varname
+                if (dynStrAppendString(temp, " ")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+            }
+            // add to list
+            if(dynStrListPushBack(codeStrList, temp)) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
             break;
         case E_S_EXPRESSION:
-            retval = processExpression(expElement.data.elements[0]);
+            retval = processExpression(expElement.data.elements[0], pushToStack);
             break;
         case E_ADD:
         case E_SUB:
@@ -392,10 +370,10 @@ int processExpression(treeElement_t expElement) {
         case E_EQ:
         case E_GT:
         case E_LT:
-            retval = processBinaryOperation(expElement.data.elements[0]);
+            retval = processBinaryOperation(expElement.data.elements[0], pushToStack);
             break;
         case E_NOT:
-			retval = processUnaryOperation(expElement.data.elements[0]);
+			retval = processUnaryOperation(expElement.data.elements[0], pushToStack);
             break;
         case E_S_FUNCTION_CALL:
             //retval = processFunctionCall(expElement.data.elements[0]);
@@ -410,102 +388,176 @@ int processExpression(treeElement_t expElement) {
     return retval;
 }
 
-int processBinaryOperation(treeElement_t operationElement) {
+int processBinaryOperation(treeElement_t operationElement, bool* pushToStack) {
 
-    if(operationElement.nodeSize != 2) {
+    if (operationElement.nodeSize != 2) {
         return ERROR_SEMANTIC_OTHER;
     }
 
-    int retval;
+    int retval = ERROR_SUCCESS;
 
-    dynStr_t* temp;
+    if (operationElement.data.elements[0].type == E_S_EXPRESSION ||
+        operationElement.data.elements[1].type == E_S_EXPRESSION) {
+        *pushToStack = true;
+    }
 
-    // extract data in reverse order and push them to stack
-    for(unsigned i = operationElement.nodeSize; i > 0; i--) {
+    dynStr_t *temp[3] = {NULL, NULL, NULL};
+
+    // extract data in reverse order (for pushing them to stack)
+    for (unsigned i = 2; i > 0; i--) {
         switch (operationElement.data.elements[i].type) {
             case E_TOKEN:
-                temp = dynStrInit();
-                if(dynStrAppendString(temp, "PUSHS ")) {
-                    dynStrFree(temp);
-                    retval = ERROR_INTERNAL;
+                temp[i] = dynStrInit();
+                if (*pushToStack) {
+                    if (dynStrAppendString(temp[i], "PUSHS ")) {
+                        retval = ERROR_INTERNAL;
+                        break;
+                    }
+                }
+                retval = processEToken(operationElement.data.elements[i], temp[i], pushToStack);
+                if (retval) {
                     break;
                 }
-                if(dynStrListPushBack(codeStrList, temp)) {
-                    dynStrFree(temp);
-                    retval = ERROR_INTERNAL;
-                    break;
-                }
-                retval = processEToken(operationElement.data.elements[i], NULL);
-                if(retval) {
-                    break;
-                }
-                if(dynStrAppendString(temp, "\n")){
-                    retval = ERROR_INTERNAL;
+                if (*pushToStack) {
+                    if (dynStrAppendString(temp[i], "\n")) {
+                        retval = ERROR_INTERNAL;
+                        break;
+                    }
+                    if (dynStrListPushBack(codeStrList, temp[i])) {
+                        retval = ERROR_INTERNAL;
+                        break;
+                    }
                 }
                 break;
             case E_S_EXPRESSION:
-                retval = processExpression(operationElement.data.elements[i]);
+                retval = processExpression(operationElement.data.elements[i], pushToStack);
                 break;
             default:
                 return ERROR_SEMANTIC_OTHER;
         }
-        if(retval) {
+        if (retval) {
+            // free dynamic strings if they are not appended to the codeStrList
+            if (i != 1 || operationElement.data.elements[1].type != E_S_EXPRESSION) {
+                dynStrFree(temp[1]);
+                dynStrFree(temp[0]);
+            }
             return retval;
         }
     }
 
-    temp = dynStrInit();
 
+    temp[2] = dynStrInit(); // init last string
+    // determine operation
+    // if value is not pushed, var name is added to operation in calling function
+    // and strings are concatenated
     switch (operationElement.type) {
         case E_ADD:
-            retval = dynStrAppendString(temp, "ADDS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "ADDS\n");
+            else
+                retval = dynStrAppendString(temp[2], "ADD ");
             break;
         case E_SUB:
-            retval = dynStrAppendString(temp, "SUBS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "SUBS\n");
+            else
+                retval = dynStrAppendString(temp[2], "SUB ");
             break;
         case E_MUL:
-            retval = dynStrAppendString(temp, "MULS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "MULS\n");
+            else
+                retval = dynStrAppendString(temp[2], "MUL ");
             break;
         case E_DIV:
-            retval = dynStrAppendString(temp, "DIVS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "DIVS\n");
+            else
+                retval = dynStrAppendString(temp[2], "DIV ");
             break;
         case E_DIV_INT:
-            retval = dynStrAppendString(temp, "IDIVS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "IDIVS\n");
+            else
+                retval = dynStrAppendString(temp[2], "IDIV ");
             break;
         case E_AND:
-            retval = dynStrAppendString(temp, "ANDS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "ANDS\n");
+            else
+                retval = dynStrAppendString(temp[2], "AND ");
             break;
         case E_OR:
-            retval = dynStrAppendString(temp, "ORS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "ORS\n");
+            else
+                retval = dynStrAppendString(temp[2], "OR ");
             break;
         case E_EQ:
-            retval = dynStrAppendString(temp, "EQS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "EQS\n");
+            else
+                retval = dynStrAppendString(temp[2], "EQ ");
             break;
         case E_LT:
-            retval = dynStrAppendString(temp, "LTS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "LTS\n");
+            else
+                retval = dynStrAppendString(temp[2], "LT ");
             break;
         case E_GT:
-            retval = dynStrAppendString(temp, "GTS\n");
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[2], "GTS\n");
+            else
+                retval = dynStrAppendString(temp[2], "GT ");
             break;
         default:
             return ERROR_SEMANTIC_OTHER;
     }
-
-    if(retval) {
-        dynStrFree(temp);
+    // check for error
+    if (retval) {
+        dynStrFree(temp[2]);
+        if (!(*pushToStack)) {
+            dynStrFree(temp[1]);
+            dynStrFree(temp[0]);
+        }
         return ERROR_INTERNAL;
+    }
+    if(!(*pushToStack)) {
+        // concatenate strings, add space and eol
+        // output is like "str1 str2\n"
+        if(dynStrAppendString(temp[0], " ")
+        && dynStrAppendString(temp[0], dynStrGetString(temp[1]))
+        && dynStrAppendString(temp[0], "\n")) {
+            dynStrFree(temp[0]);
+            dynStrFree(temp[1]);
+            dynStrFree(temp[2]);
+            return ERROR_INTERNAL;
+        }
+        // free second string after concatenation
+        dynStrFree(temp[1]);
+
+        if(dynStrListPushBack(codeStrList, temp[0])) {
+            dynStrFree(temp[0]);
+            dynStrFree(temp[2]);
+            return ERROR_INTERNAL;
+        }
     }
 
     // add to list
-    if(dynStrListPushBack(codeStrList, temp)) {
-        dynStrFree(temp);
+    if (dynStrListPushBack(codeStrList, temp[2])) {
+        dynStrFree(temp[2]);
+        if (!(*pushToStack)) {
+            dynStrFree(temp[1]);
+            dynStrFree(temp[0]);
+        }
         return ERROR_INTERNAL;
     }
 
     return ERROR_SUCCESS;
 }
 
-int processUnaryOperation(treeElement_t operationElement){
+int processUnaryOperation(treeElement_t operationElement, bool* pushToStack){
 
     if(operationElement.nodeSize != 1) {
         return ERROR_SEMANTIC_OTHER;
@@ -513,54 +565,63 @@ int processUnaryOperation(treeElement_t operationElement){
 
     int retval = ERROR_SUCCESS;
 
-    dynStr_t* temp;
+    dynStr_t* temp[2] = { NULL, NULL };
 
     switch (operationElement.data.elements[0].type) {
         case E_TOKEN:
-            temp = dynStrInit();
-            if(dynStrAppendString(temp, "PUSHS ")) {
-                dynStrFree(temp);
-                retval = ERROR_INTERNAL;
-                break;
+            temp[0] = dynStrInit();
+            if(*pushToStack) {
+                if (dynStrAppendString(temp[0], "PUSHS ")) {
+                    dynStrFree(temp[0]);
+                    retval = ERROR_INTERNAL;
+                    break;
+                }
             }
-            if(dynStrListPushBack(codeStrList, temp)) {
-                dynStrFree(temp);
-                retval = ERROR_INTERNAL;
-                break;
-            }
-            //TODO
-            // apend data returned from token
-            retval = processEToken(operationElement.data.elements[0], NULL);
+            retval = processEToken(operationElement.data.elements[0], temp[0], pushToStack);
             if(retval)
                 break;
-            if(dynStrAppendString(temp, "\n")) {
-                retval = ERROR_INTERNAL;
+            if(*pushToStack) {
+                if (dynStrAppendString(temp[0], "\n")) {
+                    retval = ERROR_INTERNAL;
+                }
             }
             break;
         case E_S_EXPRESSION:
-            processExpression(operationElement.data.elements[0]);
+            retval = processExpression(operationElement.data.elements[0], pushToStack);
             break;
         default:
-            return ERROR_SEMANTIC_OTHER;
+            retval = ERROR_SEMANTIC_OTHER;
     }
-    if(retval)
+    if(retval) {
+        dynStrFree(temp[0]);
         return retval;
+    }
 
-    temp = dynStrInit();
+    temp[1] = dynStrInit();
 
     switch (operationElement.type){
         case E_NOT:
-            if(dynStrAppendString(temp, "NOTS\n")) {
-                dynStrFree(temp);
-                return ERROR_INTERNAL;
-            }
-            if(dynStrListPushBack(codeStrList, temp)) {
-                dynStrFree(temp);
-                return ERROR_INTERNAL;
-            }
+            if(*pushToStack)
+                retval = dynStrAppendString(temp[1], "NOTS\n");
+            else
+                retval = dynStrAppendString(temp[1], "NOT ");
             break;
         default:
-            return ERROR_SEMANTIC_OTHER;
+            retval = ERROR_SEMANTIC_OTHER;
+    }
+
+    // check for errors
+    if(retval) {
+        dynStrFree(temp[1]);
+        dynStrFree(temp[0]);
+        return retval;
+    }
+
+    if(dynStrListPushBack(codeStrList, temp[0])
+    && dynStrListPushBack(codeStrList, temp[1])) {
+        dynStrFree(temp[0]);
+        dynStrFree(temp[1]);
+        return ERROR_INTERNAL;
     }
 
     return ERROR_SUCCESS;
@@ -575,7 +636,7 @@ int processIf(treeElement_t ifElement) {
     static unsigned ifCounter = 0;
 
     // expression
-    if(processExpression(ifElement.data.elements[0])){
+    if(processExpression(ifElement.data.elements[0], false)){
         return ERROR_SEMANTIC_OTHER;
     }
 
@@ -675,10 +736,37 @@ int processIf(treeElement_t ifElement) {
         return ERROR_INTERNAL;
     }
 
+    ifCounter++;
+
     return ERROR_SUCCESS;
 }
 
 int numberToDynStr(dynStr_t* outputStr, char* formatString, long number) {
+    int retval; // return value
+
+    // get size of string
+    unsigned strSize = snprintf(NULL, 0, formatString, number);
+    char* buffer = malloc(strSize + 1); // + \0
+    // check allocation
+    if(!buffer) {
+        return ERROR_INTERNAL;
+    }
+
+    // print string to buffer
+    snprintf(buffer, strSize, formatString, number);
+    buffer[strSize] = '\0';
+
+    // append buffer to dynamic string
+    retval = dynStrAppendString(outputStr, buffer);
+    free(buffer);
+    if(retval) {
+        return ERROR_INTERNAL;
+    }
+
+    return retval; // ERROR_SUCCESS == 0, ERROR_INTERNAL == 99
+}
+
+int floatToDynStr(dynStr_t* outputStr, char* formatString, float number) {
     int retval; // return value
 
     // get size of string
@@ -735,30 +823,54 @@ int processAssign(treeElement_t assignElement) {
 
     dynStr_t* temp;
     int retval = ERROR_SUCCESS;
+    bool pushToStack = false;
 
     switch (assignElement.data.elements[1].type) {
         case E_S_EXPRESSION: // func call/expression ( l = f() | l = a + b)
-            retval = processExpression(assignElement.data.elements[1]);
+            retval = processExpression(assignElement.data.elements[1], &pushToStack);
             if(retval) {
                 return retval;
             }
             temp = dynStrInit();
-            if(dynStrAppendString(temp, "POPS ")){
-                dynStrFree(temp);
-                return ERROR_INTERNAL;
+            if(pushToStack) { // pop from stack
+                if (dynStrAppendString(temp, "POPS ")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+            } else { // add binary operation from expression processing (last element of stack)
+                dynStr_t* lastStr = dynStrListElGet(dynStrListBack(codeStrList));
+                if(dynStrAppendString(temp, dynStrGetString(lastStr))) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+                // remove operation from list
+                dynStrListPopBack(codeStrList);
             }
-
-            // TODO
-            //  process token name
-
-            retval = processEToken(assignElement.data.elements[0], NULL);
+            // get variable id
+            retval = processEToken(assignElement.data.elements[0], temp, false);
             if(retval) {
                 dynStrFree(temp);
                 return retval;
             }
-            if(dynStrAppendString(temp, "\n")){
-                dynStrFree(temp);
-                return ERROR_INTERNAL;
+            if(pushToStack) {
+                // add eol to pop
+                if (dynStrAppendString(temp, "\n")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+            } else {
+                if(dynStrAppendString(temp, " ")) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+                // add operands to binary operation
+                dynStr_t* lastStr = dynStrListElGet(dynStrListBack(codeStrList));
+                if(dynStrAppendString(temp, dynStrGetString(lastStr))) {
+                    dynStrFree(temp);
+                    return ERROR_INTERNAL;
+                }
+                // remove operands from list
+                dynStrListPopBack(codeStrList);
             }
             break;
         case E_TOKEN: // value or id ( l = r )
@@ -767,17 +879,19 @@ int processAssign(treeElement_t assignElement) {
                 dynStrFree(temp);
                 return ERROR_INTERNAL;
             }
-            //TODO
-            // process token names
 
-            // process right side
-            retval = processEToken(assignElement.data.elements[0], NULL);
+            // process left side
+            retval = processEToken(assignElement.data.elements[0], temp, false);
             if(retval) {
                 dynStrFree(temp);
                 return retval;
             }
-            // process left side
-            retval = processEToken(assignElement.data.elements[1], NULL);
+            if(dynStrAppendString(temp, " ")) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            // process right side
+            retval = processEToken(assignElement.data.elements[1], temp, false);
             if(retval) {
                 dynStrFree(temp);
                 return retval;
@@ -790,6 +904,11 @@ int processAssign(treeElement_t assignElement) {
             break;
         default:
             return ERROR_SEMANTIC_OTHER;
+    }
+    // add to list
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
     }
 
     return retval;
@@ -806,54 +925,91 @@ int processFunctionCall(treeElement_t callElement) {
 
     int retval = ERROR_SUCCESS;
 
+    // function name
+    dynStr_t* fname = dynStrInit();
+    retval = processEToken(callElement.data.elements[0], fname, true);
+    if(retval) {
+        dynStrFree(fname);
+        return retval;
+    }
+
+    // add create frame
     dynStr_t* temp = dynStrInit();
     if(dynStrAppendString(temp, "CREATEFRAME\n")) {
+        dynStrFree(fname);
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
+    // add to list
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(fname);
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    // TODO
+    //  remove temporary frame and hardcode it in processFunctionCallParams?
 
     symbolFrame_t temp_frame = current_frame;
     current_frame = FRAME_TEMP;
 
     // create frame and process params
-    retval = processFunctionCallParams(callElement.data.elements[1]);
+    retval = processFunctionCallParams(callElement.data.elements[1], fname);
     if(retval) {
         return retval;
     }
 
+    // add pushframe
     temp = dynStrInit();
     if(dynStrAppendString(temp, "PUSHFRAME\n")) {
+        dynStrFree(fname);
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to list
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(fname);
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
 
-    //TODO
-    // this part have to be processed before params to know function name
-    // can be generated to string after params...
-
+    // call the function
     temp = dynStrInit();
     if(dynStrAppendString(temp, "CALL ")) {
+        dynStrFree(fname);
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-
-    //TODO
-    // add token name to the string
-
     // function name
-    retval = processEToken(callElement.data.elements[0], NULL);
-    if(retval) {
-        return retval;
+    if(dynStrAppendString(temp, dynStrGetString(fname))){
+        dynStrFree(fname);
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
     }
+    dynStrFree(fname);
     if(dynStrAppendString(temp, "\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
 
-    printf("POPFRAME\n");
+    // pop frame
+    temp = dynStrInit();
+    if(dynStrAppendString(temp, "POPFRAME\n")) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    if(dynStrListPushBack(codeStrList, temp)) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
 
     //TODO
-    // this will be in expression processin:
+    // this will be in expression processing:
     // printf("PUSH %s@$retval\n", FRAME_NAME[current_frame]);
 
     // restore frame
@@ -862,27 +1018,92 @@ int processFunctionCall(treeElement_t callElement) {
     return ERROR_SUCCESS;
 }
 
-int processFunctionCallParams(treeElement_t callParamsElement) {
+int processFunctionCallParams(treeElement_t callParamsElement, dynStr_t* functionName) {
     if(callParamsElement.type != E_S_FUNCTION_CALL_PARAMS) {
         return ERROR_SEMANTIC_OTHER;
     }
 
-    dynStr_t* temp = dynStrInit();
-    if(!temp) {
-        return ERROR_INTERNAL;
-    }
+    int retval = ERROR_SUCCESS;
+
+    dynStr_t* temp = NULL;
+    dynStr_t* argName = NULL;
     // process arg[i]
     for(unsigned i = 0; i < callParamsElement.nodeSize; i++) {
+        bool pushToStack = false;
 
         //TODO
-        // add dynamic string print
-        // add determine name of target variable (arg)
+        // process params and create assignment after loop (because of expressions and function calls)
 
-        if(processExpression(callParamsElement.data.elements[i])) {
+        // get expression data
+        retval = processExpression(callParamsElement.data.elements[i], &pushToStack);
+        if(retval){
+            return retval;
+        }
+        // get argument variable name
+        argName = symTableGetArgumentName(table, functionName, i);
+        // check if name exists
+        if(!argName) {
             return ERROR_SEMANTIC_OTHER;
         }
-        //printf("POPS %s@arg%d\n", FRAME_NAME[current_frame],i);
-    }
+        // create data assignment
+        temp = dynStrInit();
+        // value is on stack
+        if(pushToStack) {
+            if(dynStrAppendString(temp, "POPS ")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(temp, "TF@")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(temp, dynStrGetString(argName))) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(temp, "\n")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+        }
+        // value is assigned directly to variable
+        else {
+            // get operation from list
+            dynStr_t* lastStr = dynStrListElGet(dynStrListBack(codeStrList));
+            if(dynStrAppendString(temp, dynStrGetString(lastStr))) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            // remove operation from list
+            dynStrListPopBack(codeStrList);
+            if(dynStrAppendString(temp, "TF@")){
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(temp, dynStrGetString(argName))) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            if(dynStrAppendString(temp, " ")) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            // add operands
+            lastStr = dynStrListElGet(dynStrListBack(codeStrList));
+            if(dynStrAppendString(temp, dynStrGetString(lastStr))) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            // remove operands from list
+            dynStrListPopBack(codeStrList);
+        }
+        // add arg to list
+        if(dynStrListPushBack(codeStrList, temp)) {
+            dynStrFree(temp);
+            return ERROR_INTERNAL;
+        }
+
+    } // for
 
     return ERROR_SUCCESS;
 }
