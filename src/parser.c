@@ -218,7 +218,7 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
                 }
 
                 dynStrListPushBack(params, dynStrClone(token.data.strval));
-                errCode = symTableInsertVariable(symTable, token.data.strval, funcName);
+                errCode = symTableInsertVariable(symTable, token.data.strval, funcName, false);
             	if(errCode != ERROR_SUCCESS) { //Insert parameter as local variable
 		            dynStrListFree(params);
 		            return errCode;
@@ -851,7 +851,7 @@ int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
 	if(errCode != ERROR_SUCCESS)
 		return errCode;
 
-	errCode = symTableInsertVariable(symTable, token.data.strval, context);
+	errCode = symTableInsertVariable(symTable, token.data.strval, context, false);
 	if(errCode != ERROR_SUCCESS)
 		return errCode;
 

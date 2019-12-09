@@ -165,7 +165,7 @@ namespace Tests {
 		ASSERT_EQ(symTableInsertFunction(table, name, 0), ERROR_SUCCESS);
 		ASSERT_EQ(symTableInsertFunctionDefinition(table, name, 0, dynStrListInit()), ERROR_SEMANTIC_FUNCTION);
 		ASSERT_EQ(symTableInsertFunction(table, name, 1), ERROR_SEMANTIC_ARGC);
-		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SEMANTIC_FUNCTION);
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr, false), ERROR_SEMANTIC_FUNCTION);
 		dynStrFree(name);
 	}
 
@@ -179,18 +179,18 @@ namespace Tests {
 	}
 
 	TEST_F(SymTableTest, insertVariableNullName) {
-		ASSERT_EQ(symTableInsertVariable(table, nullptr, nullptr), ERROR_INTERNAL);
+		ASSERT_EQ(symTableInsertVariable(table, nullptr, nullptr, false), ERROR_INTERNAL);
 	}
 
 	TEST_F(SymTableTest, insertVariableNullTable) {
 		dynStr_t *name = createDynStr("i");
-		ASSERT_EQ(symTableInsertVariable(nullptr, name, nullptr), ERROR_INTERNAL);
+		ASSERT_EQ(symTableInsertVariable(nullptr, name, nullptr, false), ERROR_INTERNAL);
 		dynStrFree(name);
 	}
 
 	TEST_F(SymTableTest, insertVariable) {
 		dynStr_t *name = createDynStr("i");
-		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SUCCESS);
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr, false), ERROR_SUCCESS);
 		ASSERT_EQ(symTableSize(table), 1);
 		symIterator_t iterator = symIteratorBegin(table);
 		iterator = symIteratorNext(iterator);
@@ -201,8 +201,8 @@ namespace Tests {
 		ASSERT_STREQ(iterator.symbol->name->string, "i");
 		ASSERT_EQ(iterator.symbol->next, nullptr);
 		ASSERT_EQ(iterator.symbol->type, SYMBOL_VARIABLE);
-		ASSERT_TRUE(iterator.symbol->info.variable.assigned);
-		ASSERT_EQ(symTableInsertVariable(table, name, nullptr), ERROR_SUCCESS);
+		ASSERT_FALSE(iterator.symbol->info.variable.assigned);
+		ASSERT_EQ(symTableInsertVariable(table, name, nullptr, false), ERROR_SUCCESS);
 		ASSERT_EQ(symTableInsertFunction(table, name, 0), ERROR_SEMANTIC_FUNCTION);
 		dynStrFree(name);
 	}
@@ -268,6 +268,66 @@ namespace Tests {
 		ASSERT_EQ(argument, nullptr);
 	}
 
+	TEST_F(SymTableTest, isVariableAssignedNull) {
+		ASSERT_FALSE(symTableIsVariableAssigned(nullptr, nullptr, nullptr));
+		ASSERT_FALSE(symTableIsVariableAssigned(table, nullptr, nullptr));
+		dynStr_t *name = createDynStr("a");
+		ASSERT_FALSE(symTableIsVariableAssigned(nullptr, name, nullptr));
+		dynStrFree(name);
+	}
+
+	TEST_F(SymTableTest, isVariableAssigned0) {
+		createFunction("main", 0, true, true);
+		dynStr_t *function = createDynStr("main");
+		dynStr_t *varName = createDynStr("a");
+		symTableInsertVariable(table, varName, function, false);
+		ASSERT_FALSE(symTableIsVariableAssigned(table, varName, function));
+		dynStrFree(function);
+		dynStrFree(varName);
+	}
+
+	TEST_F(SymTableTest, isVariableAssigned1) {
+		createFunction("main", 0, true, true);
+		dynStr_t *function = createDynStr("main");
+		dynStr_t *varName = createDynStr("a");
+		symTableInsertVariable(table, varName, nullptr, false);
+		symTableInsertVariable(table, varName, function, false);
+		ASSERT_FALSE(symTableIsVariableAssigned(table, varName, function));
+		dynStrFree(function);
+		dynStrFree(varName);
+	}
+
+	TEST_F(SymTableTest, isVariableAssigned2) {
+		createFunction("main", 0, true, true);
+		dynStr_t *function = createDynStr("main");
+		dynStr_t *varName = createDynStr("a");
+		symTableInsertVariable(table, varName, nullptr, true);
+		symTableInsertVariable(table, varName, function, false);
+		ASSERT_FALSE(symTableIsVariableAssigned(table, varName, function));
+		dynStrFree(function);
+		dynStrFree(varName);
+	}
+
+	TEST_F(SymTableTest, isVariableAssigned3) {
+		createFunction("main", 0, true, true);
+		dynStr_t *function = createDynStr("main");
+		dynStr_t *varName = createDynStr("a");
+		symTableInsertVariable(table, varName, nullptr, true);
+		ASSERT_TRUE(symTableIsVariableAssigned(table, varName, function));
+		dynStrFree(function);
+		dynStrFree(varName);
+	}
+
+	TEST_F(SymTableTest, isVariableAssigned4) {
+		createFunction("main", 0, true, true);
+		dynStr_t *function = createDynStr("main");
+		dynStr_t *varName = createDynStr("a");
+		symTableInsertVariable(table, varName, function, true);
+		ASSERT_TRUE(symTableIsVariableAssigned(table, varName, function));
+		dynStrFree(function);
+		dynStrFree(varName);
+	}
+
 	TEST_F(SymTableTest, getFrameNull) {
 		dynStr_t *name = createDynStr("main");
 		ASSERT_EQ(symTableGetFrame(nullptr, nullptr, nullptr), FRAME_ERROR);
@@ -280,7 +340,7 @@ namespace Tests {
 		createFunction("main", 0, true, true);
 		dynStr_t *name = createDynStr("main");
 		dynStr_t *varName = createDynStr("a");
-		symTableInsertVariable(table, varName, name);
+		symTableInsertVariable(table, varName, name, false);
 		ASSERT_EQ(symTableGetFrame(table, name, nullptr), FRAME_GLOBAL);
 		ASSERT_EQ(symTableGetFrame(table, varName, name), FRAME_LOCAL);
 		ASSERT_EQ(symTableGetFrame(table, varName, nullptr), FRAME_ERROR);

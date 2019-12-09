@@ -120,6 +120,29 @@ symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	return NULL;
 }
 
+bool symTableIsVariableAssigned(symTable_t *table, dynStr_t *name, dynStr_t *context) {
+	if (table == NULL || name == NULL) {
+		return false;
+	}
+	symbol_t *global = symTableFind(table, name, NULL);
+	symbol_t *local = symTableFind(table, name, context);
+	if (global == NULL && local == NULL) {
+		return false;
+	}
+	if (global == NULL && local->type == SYMBOL_VARIABLE &&
+		!local->info.variable.assigned) {
+		return false;
+	}
+	if (global != NULL && global->type == SYMBOL_VARIABLE) {
+		if (local == NULL) {
+			return true;
+		} else if (local->type == SYMBOL_VARIABLE && !local->info.variable.assigned) {
+			return false;
+		}
+	}
+	return true;
+}
+
 symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	if (table == NULL || name == NULL) {
 		return FRAME_ERROR;
@@ -208,11 +231,11 @@ errorCode_t symTableInsertFunctionDefinition(symTable_t *table, dynStr_t *name, 
 	return retVal;
 }
 
-errorCode_t symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context) {
+errorCode_t symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context, bool assignment) {
 	if (table == NULL || name == NULL) {
 		return ERROR_INTERNAL;
 	}
-	symbolInfo_t info = {.variable = {.assigned = true}};
+	symbolInfo_t info = {.variable = {.assigned = assignment}};
 	symbol_t *symbol = symbolInit(dynStrClone(name), SYMBOL_VARIABLE, info, dynStrClone(context));
 	if (symbol == NULL) {
 		symbolFree(symbol);
@@ -280,15 +303,12 @@ dynStr_t *symTableGetArgumentName(symTable_t *table, dynStr_t *function, unsigne
 	}
 	functionSymbol_t info = symbol->info.function;
 	if (info.argc == -1 || info.argc == 0 ||
-		(unsigned long) info.argc < index || info.argv == NULL) {
+		(unsigned long) info.argc <= index || info.argv == NULL) {
 		return NULL;
 	}
 	dynStrListEl_t *element = dynStrListFront(info.argv);
 	for (unsigned long i = 0; i < index; ++i) {
 		element = dynStrListElNext(element);
-	}
-	if (element == NULL) {
-		return NULL;
 	}
 	return element->string;
 }

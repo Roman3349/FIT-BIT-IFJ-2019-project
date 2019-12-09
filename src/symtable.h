@@ -143,9 +143,10 @@ errorCode_t symTableInsertFunctionDefinition(symTable_t *table, dynStr_t *name, 
  * @param table Symbol table
  * @param name Variable name
  * @param context Symbol context (NULL = global, others = function name)
+ * @param assigment Is assigment?
  * @return Execution status
  */
-errorCode_t symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context);
+errorCode_t symTableInsertVariable(symTable_t *table, dynStr_t *name, dynStr_t *context, bool assigment);
 
 /**
  * Inserts a symbol into the table
@@ -171,6 +172,15 @@ size_t symTableSize(symTable_t *table);
  * @return Symbol
  */
 symbol_t *symTableFind(symTable_t *table, dynStr_t *name, dynStr_t *context);
+
+/**
+ * Checks if the variable is assigned
+ * @param table Symbol table
+ * @param name Symbol name
+ * @param context Symbol context
+ * @return Is the variable assigned?
+ */
+bool symTableIsVariableAssigned(symTable_t *table, dynStr_t *name, dynStr_t *context);
 
 /**
  * Returns the argument name of the function
