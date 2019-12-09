@@ -146,7 +146,7 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
 int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only,
         symTable_t* symTable, dynStr_t* context) {
 
-    if(eTokenElement.type == E_TOKEN) {
+    if(eTokenElement.type != E_TOKEN) {
         return ERROR_SEMANTIC_OTHER;
     }
 
@@ -265,10 +265,11 @@ int processCodeBlock(treeElement_t codeBlockElement, symTable_t* symTable, dynSt
     for(unsigned i = 0; i < codeBlockElement.nodeSize; i++) {
 
         int retval = ERROR_SUCCESS;
+	    bool pushToStack = false;
 
         switch (codeBlockElement.data.elements[i].type) {
             case E_S_EXPRESSION:
-                retval = processExpression(codeBlockElement.data.elements[i], false, symTable, context, codeStrList);
+                retval = processExpression(codeBlockElement.data.elements[i], &pushToStack, symTable, context, codeStrList);
                 break;
             case E_S_IF:
                 retval = processIf(codeBlockElement.data.elements[i], symTable, context, codeStrList);
@@ -408,6 +409,8 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack, sy
                         break;
                     }
                 }
+                break;
+            case E_LT:
                 break;
             case E_S_EXPRESSION:
                 retval = processExpression(operationElement.data.elements[i], pushToStack, symTable, context, codeStrList);
@@ -616,8 +619,10 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     // used to make labels unique
     static unsigned ifCounter = 0;
 
+    bool pushToStack = false;
+
     // expression
-    if(processExpression(ifElement.data.elements[0], false, symTable, context, codeStrList)){
+    if(processExpression(ifElement.data.elements[0], &pushToStack, symTable, context, codeStrList)){
         return ERROR_SEMANTIC_OTHER;
     }
 
