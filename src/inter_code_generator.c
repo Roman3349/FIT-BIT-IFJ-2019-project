@@ -140,6 +140,8 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
     //TODO
     // process code content ending
 
+	dynStrListPrint(codeStrList);
+
     return ERROR_SUCCESS;
 }
 
@@ -709,7 +711,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
 
     // add fi (end of if-else)
     temp = dynStrInit();
-    retval = !numberToDynStr(temp, "LABEL $fi%d\n", ifCounter);
+    retval = numberToDynStr(temp, "LABEL $fi%d\n", ifCounter);
 
     if(retval) {
         dynStrFree(temp);

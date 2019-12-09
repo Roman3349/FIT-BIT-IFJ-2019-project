@@ -156,6 +156,15 @@ void dynStrListRemove(dynStrList_t *list, dynStrListEl_t *element) {
 	dynStrListElFree(element);
 }
 
+void dynStrListPrint(dynStrList_t *list) {
+	if (list == NULL) {
+		return;
+	}
+	for (dynStrListEl_t *element = dynStrListFront(list); element != NULL; element = dynStrListElNext(element)) {
+		printf("%s", dynStrGetString(dynStrListElGet(element)));
+	}
+}
+
 dynStrListEl_t *dynStrListElInit(dynStr_t *string) {
 	if (string == NULL) {
 		return NULL;

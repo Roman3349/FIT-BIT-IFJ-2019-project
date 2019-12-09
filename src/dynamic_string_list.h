@@ -132,6 +132,12 @@ dynStrListEl_t *dynStrListBack(dynStrList_t *list);
 void dynStrListRemove(dynStrList_t *list, dynStrListEl_t *element);
 
 /**
+ * Prints the dynamic string list content
+ * @param list Dynamic string list to print
+ */
+void dynStrListPrint(dynStrList_t *list);
+
+/**
  * Initializes a new dynamic string list element
  * @param string Dynamic string
  * @return Initialized dynamic string element
