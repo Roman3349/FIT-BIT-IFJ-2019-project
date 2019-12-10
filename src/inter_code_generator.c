@@ -315,8 +315,9 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
 
     int retval = ERROR_SUCCESS;
     dynStr_t* temp;
+	treeElement_t element = expElement.data.elements[0];
 
-    switch (expElement.data.elements[0].type) {
+    switch (element.type) {
         case E_TOKEN:
             //TODO
             // allocation / dealocation
@@ -327,7 +328,7 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
                     return ERROR_INTERNAL;
                 }
             }
-            retval = processEToken(expElement.data.elements[0], temp, false, symTable, context);
+            retval = processEToken(element, temp, false, symTable, context);
             if(retval) {
                 dynStrFree(temp);
                 return ERROR_INTERNAL;
@@ -352,7 +353,7 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
             }
             break;
         case E_S_EXPRESSION:
-            retval = processExpression(expElement.data.elements[0], pushToStack, symTable, context, codeStrList);
+            retval = processExpression(element, pushToStack, symTable, context, codeStrList);
             break;
         case E_ADD:
         case E_SUB:
@@ -364,16 +365,16 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
         case E_EQ:
         case E_GT:
         case E_LT:
-            retval = processBinaryOperation(expElement.data.elements[0], pushToStack, symTable, context, codeStrList);
+            retval = processBinaryOperation(element, pushToStack, symTable, context, codeStrList);
             break;
         case E_NOT:
-			retval = processUnaryOperation(expElement.data.elements[0], pushToStack, symTable, context, codeStrList);
+			retval = processUnaryOperation(element, pushToStack, symTable, context, codeStrList);
             break;
         case E_S_FUNCTION_CALL:
-            //retval = processFunctionCall(expElement.data.elements[0]);
+            retval = processFunctionCall(element, symTable, context, codeStrList);
             break;
         case E_ASSIGN:
-            retval = processAssign(expElement.data.elements[0], symTable, context, codeStrList);
+            retval = processAssign(element, symTable, context, codeStrList);
             break;
         default:
             return ERROR_SEMANTIC_OTHER;
@@ -932,9 +933,60 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
         dynStrFree(fname);
         return retval;
     }
+	dynStr_t* temp = dynStrInit();
+
+    if (dynStrEqualString(fname, "print")) {
+	    dynStrFree(fname);
+	    treeElement_t args = callElement.data.elements[1];
+	    for (size_t i = 0; i < args.nodeSize; ++i) {
+	    	if (!dynStrAppendString(temp, "WRITE ")) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+	    	if (!dynStrListPushBack(codeStrList, temp)) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+		    retval = processExpression(args.data.elements[i], false, symTable, context, codeStrList);
+		    if (retval) {
+			    dynStrFree(temp);
+			    return retval;
+		    }
+		    temp = dynStrInit();
+		    if(!dynStrAppendString(temp, "\n")) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+		    if (!dynStrListPushBack(codeStrList, temp)) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+		    temp = dynStrInit();
+		    if (i == args.nodeSize - 1) {
+			    break;
+		    }
+		    if (!dynStrAppendString(temp, "WRITE string@\\032\n")) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+		    if (!dynStrListPushBack(codeStrList, temp)) {
+			    dynStrFree(temp);
+			    return ERROR_INTERNAL;
+		    }
+		    temp = dynStrInit();
+	    }
+	    if (!dynStrAppendString(temp, "WRITE string@\\010\n")) {
+		    dynStrFree(temp);
+		    return ERROR_INTERNAL;
+	    }
+	    if (!dynStrListPushBack(codeStrList, temp)) {
+		    dynStrFree(temp);
+		    return ERROR_INTERNAL;
+	    }
+	    return ERROR_SUCCESS;
+    }
 
     // add create frame
-    dynStr_t* temp = dynStrInit();
     if(!dynStrAppendString(temp, "CREATEFRAME\n")) {
         dynStrFree(fname);
         dynStrFree(temp);
