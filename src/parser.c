@@ -593,6 +593,18 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, d
                     return errCode;
                 break;
 
+        	case T_BOOL_NEG:
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+
+				errCode = parseExpression(stack, blockTree, symTable, context);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
+				errCode = processToken(stack, T_EOL, blockTree);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
+        		break;
+
             case T_ID:
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
