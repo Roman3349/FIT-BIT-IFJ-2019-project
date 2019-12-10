@@ -60,12 +60,21 @@
 \tableofcontents
 \newpage
 \section{Úvod}
-Tento dokument slouží jako dokumentace společného projektu do předmětů Formální jazyky a překladače a Algoritmy.
+Tento dokument slouží jako dokumentace společného projektu do předmětů Formální jazyky a pře\-kla\-da\-če a Algoritmy.
 \section{Rozbor částí překladače}
+Naším úkolem bylo vytvořit překladač jazyka \textbf{IFJ19}, který je podmnožinou jazyka Python 3, do cílového jazyka \textbf{IFJcode19}. Jelikož jsme si zaregistrovali variantu projektu II, měli jsme tabulku symbolů implementovat jako tabulku s rozptýlenými položkami.
+\\
+Námi implementovaný překladač se dělí na několik dílčích modulů:
+\begin{itemize}
+  \item Lexikální analyzátor
+  \item Syntaktický analyzátor
+  \item Generátor cílového kódu
+\end{itemize}
 \subsection{Lexikální analýza}
 Lexikální analyzátor má za úkol načítat jednotlivé lexikální jednotky (lexémy) a převádět je na jednotlivé tokeny, které reprezentují daný lexém v dalších částech překladače. 
 
-Část lexikální analýzi překledače jsme naimplementovali v modulu \textbf{scanner.c} pomocí \textit{konečného stavového automatu}, který jsme pro tuto část překladače navrhli.
+Část lexikální analýzi překledače jsme naimplementovali v modulu \textbf{scanner.c} pomocí \textit{konečného stavového automatu}, který jsme pro tuto část překladače navrhli. Nerozpoznatelný vstupní token jsme označili \textsc{t\_unknown} a token reprezentující interní chybu překladače, například chybu alokace paměti \textsc{t\_error}.
+
 Důležitou součástí lexikální analýzy překladače jazyka IFJ19 je také zásobníkový automat, který je použit pro práci s odsazením jednotlivých řádků vstupního souboru.
 \begin{center}
 \includegraphics[height = 390pt]{img/Lexical_Analysis.png}
@@ -182,10 +191,14 @@ V precedenční analýze hojně pracujeme se zásobníkem, na který se uloží 
 \subsection{Optimalizace}
 \section{Implementovaná rozšíření}
 \subsection{BOOLOP}
+Pro implementaci rozšíření BOOLOP jsme přidali další pravidla do precedenční analýzy, konkrétně pravidla pro \textbf{not, or, and} a \textbf{==} a zároveň další sémantická pravidla pro kontrolu datových typů vstupujích do těchto operací.
 \subsection{BASE}
+Implementace rozšíření BASE spočívá v přidání a vypořádání se s dalším způsobem zadávání čí\-sel\-ných konstant. Do lexikální analýzy byly přidány stavy pro přijímání lexémů konstant zapsaných v binární, oktalové a hexadecimální soustavě, jejich převod na tokeny a předání dalším částem pře\-kla\-da\-če.
 \subsection{CYCLES}
 \subsection{FUNEXP}
 \subsection{IFTHEN}
 \subsection{TABUNARY}
+Při implementaci rozšíření TABUNARY jsme se museli vypořádat s rozdílem mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Pokud před tokenem plus nebo mínus předchází jeden operand a následuje druhý, jedná se o binární operátory, pokud ovšem předcházející operand chybí, jedná se po implementaci tohoto rozšíření o unární operátory, narozdíl od základní implementaci, kde by při tomto zápisu nastala syntaktická chyba překladu.
+\section{Rozdělení práce}
 \section{Závěr}
 \end{document}
