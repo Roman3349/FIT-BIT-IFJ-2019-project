@@ -215,6 +215,12 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
 			    return ERROR_INTERNAL;
 		    }
 		    break;
+		case T_KW_NONE:
+			if(!dynStrAppendString(outputDynStr, "nil@nil")){
+				dynStrFree(outputDynStr);
+				return ERROR_INTERNAL;
+			}
+			break;
         default:
             return ERROR_SEMANTIC_OTHER;
     }
@@ -952,6 +958,15 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
 			    dynStrFree(temp);
 			    return retval;
 		    }
+			if (dynStrEqualString(dynStrListElGet(dynStrListBack(codeStrList)), "nil@nil ")) {
+				dynStrListPopBack(codeStrList);
+				temp = dynStrInit();
+				dynStrAppendString(temp, "string@None");
+				if (!dynStrListPushBack(codeStrList, temp)) {
+					dynStrFree(temp);
+					return ERROR_INTERNAL;
+				}
+			}
 		    temp = dynStrInit();
 		    if(!dynStrAppendString(temp, "\n")) {
 			    dynStrFree(temp);
