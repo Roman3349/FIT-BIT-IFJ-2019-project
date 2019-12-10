@@ -30,6 +30,7 @@ struct stack_item {
 
 typedef struct intStack {
 	intStack_item_t* head;
+	int count;
 } intStack_t;
 
 /**
@@ -73,3 +74,20 @@ bool stackPop(intStack_t* stack, int* value);
  * @return No error?
  */
 bool stackTop(intStack_t* stack, int* value);
+
+/**
+ * Return number of indents on stack
+ * @param stack Stack
+ * @param value Returned value
+ * @return No error?
+ */
+bool stackCount(intStack_t* stack, int* value);
+
+/**
+ * Return given indent value
+ * @param stack Stack
+ * @param value Returned value
+ * @param number Number of indent which value is returned
+ * @return No error?
+ */
+bool stackGetIndent(intStack_t* stack, int* value, int number);
