@@ -29,8 +29,5 @@ $(TARGET): $(OBJECTS)
 
 pack: clean
 	rm -rf xondra58.tgz /tmp/ifj
-	tar -czvf xondra58.tgz * ../rozdeleni ../tests
+	tar -czvf xondra58.tgz * ../rozdeleni
 	bash ../is_it_ok.sh xondra58.tgz /tmp/ifj
-
-test: $(TARGET)
-	cd tests && bash tester.sh
