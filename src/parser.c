@@ -93,7 +93,6 @@ treeElement_t syntaxParse(FILE* file, symTable_t* symTable, int* errCode) {
     if(*errCode != ERROR_SUCCESS){
     	treeFree(tree);
     }
-
     return tree;
 }
 
@@ -594,6 +593,18 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, d
                     return errCode;
                 break;
 
+        	case T_BOOL_NEG:
+				if(blockTree == NULL)
+					blockTree = treeAddElement(tree, E_CODE_BLOCK);
+
+				errCode = parseExpression(stack, blockTree, symTable, context);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
+				errCode = processToken(stack, T_EOL, blockTree);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
+        		break;
+
             case T_ID:
 				if(blockTree == NULL)
 					blockTree = treeAddElement(tree, E_CODE_BLOCK);
@@ -724,6 +735,15 @@ int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, 
     treeElement_t* returnTree = treeAddElement(tree, E_S_RETURN);
 
     for(size_t i = 0; i < partSize; i++){
+    	if(return_s[i] == S_EXPRESSION){
+    		token_t topToken = tokenStackTop(stack, &errCode);
+    		if(errCode != ERROR_SUCCESS)
+				return errCode;
+
+    		if(topToken.type == T_EOL || topToken.type == T_EOF) {
+    			break;
+    		}
+    	}
     	errCode = processStatementPart(stack, return_s[i], returnTree, symTable, context);
         if(errCode != ERROR_SUCCESS)
             return errCode;
