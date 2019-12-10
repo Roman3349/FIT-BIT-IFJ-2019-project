@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage[a4paper, text={17cm,24cm}, top=3cm, left=1cm]{geometry}
+\usepackage[a4paper, text={17cm,24cm}, top=3cm, left=1.5cm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{times}
 \usepackage[czech]{babel}
@@ -60,7 +60,7 @@
 \tableofcontents
 \newpage
 \section{Úvod}
-Tento dokument slouží jako dokumentace společného projektu do předmětů Formální jazyky a pře\-kla\-da\-če a Algoritmy.
+Tento dokument byl vytvořen jako dokumentace společného projektu do předmětů Formální jazyky a pře\-kla\-da\-če a Algoritmy. Popisujeme zde, co a jak bylo nebo mělo být naimplementováno a s čím jsme se museli při implementaci potýkat.
 \section{Rozbor částí překladače}
 Naším úkolem bylo vytvořit překladač jazyka \textbf{IFJ19}, který je podmnožinou jazyka Python 3, do cílového jazyka \textbf{IFJcode19}. Jelikož jsme si zaregistrovali variantu projektu II, měli jsme tabulku symbolů implementovat jako tabulku s rozptýlenými položkami.
 \\
@@ -68,8 +68,10 @@ Námi implementovaný překladač se dělí na několik dílčích modulů:
 \begin{itemize}
   \item Lexikální analyzátor
   \item Syntaktický analyzátor
+  \item Sémantický analyzátor
   \item Generátor cílového kódu
 \end{itemize}
+Při samotném překladu se tedy dostane ke slovu jako první lexikální analyzátor, poté přijde na řadu syntaktický analyzátor se sémantickou analýzou a následně generátor cílového kódu. 
 \subsection{Lexikální analýza}
 Lexikální analyzátor má za úkol načítat jednotlivé lexikální jednotky (lexémy) a převádět je na jednotlivé tokeny, které reprezentují daný lexém v dalších částech překladače. 
 
@@ -85,6 +87,10 @@ Důležitou součástí lexikální analýzy překladače jazyka IFJ19 je také 
 \clearpage
 \subsection{Syntaktická analýza}
 Syntaktickou analýzu jsme naimplementovali v modulu \textbf{parser.c} metodou shora dolů, konkrétněji metodou \textit{rekurzivního sestupu}, která je založena na LL--gramatice a LL--tabulce.
+
+Vstupem syntaktické analýzy jsou jednotlivé tokeny z lexikální analýzy.
+
+Syntaktická analýza také naplní tabulku symbolů.
 \subsubsection{LL--Gramatika a LL--Tabulka}
 \begin{enumerate}
     \item $<$code$>$ $\rightarrow$ $<$body$>$  $<$eols$>$  $<$EOF$>$
@@ -121,8 +127,11 @@ Syntaktickou analýzu jsme naimplementovali v modulu \textbf{parser.c} metodou s
     \item $<$eols$>$ $\rightarrow$ EOL $<$eols$>$
 \end{enumerate}
 \subsubsection{Precedenční syntaktická analýza}
-Precedenční syntaktická analýza je využita pro zpracování výrazů a je řízena přecedenční tabulkou. Jelikož jsme se rozhodli pro implementaci rozšíření \textsc{tabunary}, museli jsme se vypořádat s rozdílem mezi unárními operátory plus a mínus a jejich binární podobou, protože do této části syntaktické analýzy přicházejí jako od sebe nerozpoznatelné tokeny.
-V precedenční analýze hojně pracujeme se zásobníkem, na který se uloží každý nově příchozí token, který následně porovnáme s vrcholem zásobníku a podle predenční tabulky provedeme náležitou operaci. Výraz se takto postupně redukuje podle redukčních pravidel a vzniká tak strom. 
+Precedenční syntaktická analýza je využita pro zpracování výrazů a je řízena přecedenční tabulkou. Stejně jako syntaktická analýza je precedenční analýza implementována v modulu \textbf{parser.c}.
+
+Jelikož jsme se rozhodli pro implementaci rozšíření \textsc{tabunary}, museli jsme se vypořádat s rozdílem mezi unárními operátory plus a mínus a jejich binární podobou, protože do této části syntaktické analýzy přicházejí jako od sebe nerozpoznatelné tokeny. 
+
+V precedenční analýze hojně pracujeme se zásobníkem. Každý příchozí token porovnáme se aktuálním obsahem vrcholu zásobníku a podle predenční tabulky provedeme náležitou operaci. Ty jsou typicky dvě, buď zpracovávaný token pouze uložíme na zásobník nebo uvolníme aktuální vrchol zásobníku. Ten redukujeme podle jednoho z předem definovaných pravidel. Výraz se takto postupně zpracováná a postupně redukuje, dokud nenarazíme na konec zpracovávaného výrazu, který je symbolizován znakem \textbf{\$}. Stejný znak se nachází i na konci zásobníku, takže posledním porovnáním u každého výrazu, který je bez chyby, je porovnání \textbf{\$} s \textbf{\$}. Po dokončení všech redukcí a po nalezení konce výrazu nám tedy vznikne výsledný strom.
 \begin{table}[!htbp]
 \catcode`\-=12
 \centering
@@ -191,16 +200,24 @@ V precedenční analýze hojně pracujeme se zásobníkem, na který se uloží 
 \end{table}
 
 \subsection{Sémantická analýza}
+Sémantické kontroly jsou přidruženy k rekurzivnímu sestupu syntaktické analýzy.
+Naimplementovány jsou v modulu \textbf{.c}. Největší část sémantických kontrol spočívá v kontrole datových typů výrazů, které vstupují do různých operací. V případě nejednotnosti těchto datových typů poté probíhá implicitní přetypování. Jelikož jsme se rozhodli pro podporu rozšíření \textsc{boolop}, kromě implicitního přetypování z typu \emph{int} na \emph{float}, musíme podporovat i přetypování z typu \emph{bool} na \emph{int} a \emph{float}.
+
 \subsection{Generátor cílového kódu}
+Generátor cílového kódu byl implementován v modulu \textbf{inter\_code\_generator.c}. Tento modul má za úkol skládat dohromady a vytvářet cílový kód, tedy v našem případě kod \textbf{IFJcode19}.
 \subsection{Optimalizace}
+\subsection{Tabulka symbolů a další datové struktury}
+Tabulka symbolů je implementována jako tabulka s rozptýlenými položkami v modulu \textbf{symtable.c}. Tabulka symbolů uchovává informace o všech jednotkách vyskytujích se ve vstupním programu. 
+
+Pro práci s různě dlouhými vstupními řetezci byl v modulu \textbf{dynamic\_string.c} implementován datový typ dynamický string. V lexikální analýze je také použit již dříve zmíněný zásobník v modulu \textbf{stack.c} pro práci s různýmy úrovněmi zanoření lexémů.
+
+
+Precedenční analýza poté pracuje se zásobníkem z modulu \textbf{tree\_element\_stack.c}, na kterém pro\-bí\-há porovnávání vrcholu tohoto zásobníku s nově přicházejícími tokeny.
 \section{Implementovaná rozšíření}
 \subsection{BOOLOP}
-Pro implementaci rozšíření BOOLOP jsme přidali další pravidla do precedenční analýzy, konkrétně pravidla pro \textbf{not, or, and} a \textbf{==} a zároveň další sémantická pravidla pro kontrolu datových typů vstupujích do těchto operací.
+Pro implementaci rozšíření BOOLOP jsme přidali další pravidla do precedenční analýzy, konkrétně pravidla pro \textbf{not, or, and} a \textbf{==} a zároveň další sémantická pravidla pro kontrolu datových typů vstupujících do těchto operací.
 \subsection{BASE}
 Implementace rozšíření BASE spočívá v přidání a vypořádání se s dalším způsobem zadávání čí\-sel\-ných konstant. Do lexikální analýzy byly přidány stavy pro přijímání lexémů konstant zapsaných v binární, oktalové a hexadecimální soustavě, jejich převod na tokeny a předání dalším částem pře\-kla\-da\-če.
-\subsection{CYCLES}
-\subsection{FUNEXP}
-\subsection{IFTHEN}
 \subsection{TABUNARY}
 Při implementaci rozšíření TABUNARY jsme se museli vypořádat s rozdílem mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Pokud před tokenem plus nebo mínus předchází jeden operand a následuje druhý, jedná se o binární operátory, pokud ovšem předcházející operand chybí, jedná se po implementaci tohoto rozšíření o unární operátory, narozdíl od základní implementaci, kde by při tomto zápisu nastala syntaktická chyba překladu.
 \section{Rozdělení práce}
