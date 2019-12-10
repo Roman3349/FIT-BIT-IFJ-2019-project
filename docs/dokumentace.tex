@@ -76,9 +76,13 @@ Lexikální analyzátor má za úkol načítat jednotlivé lexikální jednotky 
 Část lexikální analýzi překledače jsme naimplementovali v modulu \textbf{scanner.c} pomocí \textit{konečného stavového automatu}, který jsme pro tuto část překladače navrhli. Nerozpoznatelný vstupní token jsme označili \textsc{t\_unknown} a token reprezentující interní chybu překladače, například chybu alokace paměti \textsc{t\_error}.
 
 Důležitou součástí lexikální analýzy překladače jazyka IFJ19 je také zásobníkový automat, který je použit pro práci s odsazením jednotlivých řádků vstupního souboru.
-\begin{center}
-\includegraphics[height = 390pt]{img/Lexical_Analysis.png}
-\end{center}
+\begin{figure}[!htbp]
+    \centering
+    \scalebox{0.70}{\includegraphics{Lexical_Analysis.png}}
+    \caption{Automat lexikální analýzy}
+    \label{obr:1}
+\end{figure}
+\clearpage
 \subsection{Syntaktická analýza}
 Syntaktickou analýzu jsme naimplementovali v modulu \textbf{parser.c} metodou shora dolů, konkrétněji metodou \textit{rekurzivního sestupu}, která je založena na LL--gramatice a LL--tabulce.
 \subsubsection{LL--Gramatika a LL--Tabulka}
