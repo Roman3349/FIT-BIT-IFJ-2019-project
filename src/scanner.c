@@ -58,38 +58,74 @@ token_t scan(FILE* file, intStack_t* stack) {
     int tmp = 0;
     // beginning of the line
     static bool line_beginning = true;
-    // char used for indentation
-    static int offset_char = '\0';
-    // code offset
+    // code offset in current indent
     int offset = 0;
+    // number of processed offsets
+    // init 0 is on stack
+    int offsetCount = 1;
+    // tels how many dedens have to be send if
+    // return from multiple indents is processed
+    static int returnDedent = 0;
+    // return dedent if returning from multiple indentation
+    if(returnDedent) {
+        if(!stackPop(stack, &tmp)) {
+            return output_token; // failed to pop
+        }
+        returnDedent--;
+        output_token.type = T_DEDENT;
+        return output_token;
+    }
 
     // read char
     while ((tmp = fgetc(file)) != EOF) {
-        // process code offset (number of spaces)
+        // process code offset (number of spaces/tabs)
         // at the beginning of the line
-        // TODO
-        // add handling for tabs!
         if (line_beginning) {
+
+            // number of indent offsets on stack
+            int referenceCount;
+            if (!stackCount(stack, &referenceCount)) {
+                return output_token;
+            }
+
+            // currently processed offset if already on stack
+            int referenceOffset = 0;
+            if (referenceCount >= offsetCount) {
+                if (!stackGetIndent(stack, &referenceOffset, offsetCount)) {
+                    return output_token;
+                }
+            }
+
         	switch (tmp) {
 		        case '\n':
 			        // remove empty line and continue with next one
 			        offset = 0;
+			        offsetCount = 1;
 			        continue;
         		case ' ':
+        		    // new block starting with space
+        		    if (referenceCount >= offsetCount && referenceOffset == offset) {
+                        offsetCount++;
+                        offset = 1;
+                    } else if (offset >= 0) { // part of this block
+        		        offset++;
+        		    } else { // error indentation
+        		        output_token.type = T_UNKNOWN;
+        		        return output_token;
+        		    }
+                    continue;
         		case '\t':
-			        // set char used in indentation on first occurrence
-			        if (offset_char == '\0') {
-				        offset_char = tmp;
-				        offset++;
-				        continue;
-			        } else if (tmp == offset_char) {
-				        offset++;
-				        continue;
-			        } else {
-				        // error - there are mixed tabs and spaces in indentation
-				        output_token.type = T_UNKNOWN;
-				        return output_token;
-			        }
+        		    // new block starting with tab
+        		    if (referenceCount >= offsetCount && referenceOffset == offset) {
+                        offsetCount++;
+                        offset = -1;
+                    } else if (offset <= 0) { // part of block
+				        offset--;
+			        } else { // error indentation
+        		        output_token.type = T_UNKNOWN;
+                        return output_token;
+        		    }
+                    continue;
         		case '#':
 			        if (remove_line_comment(file)) {
 				        return output_token; // failed to read from file
@@ -100,50 +136,37 @@ token_t scan(FILE* file, intStack_t* stack) {
 			        // put back last char to be processed later (its not offset char)
 			        ungetc(tmp, file);
 			        line_beginning = false;
-			        int lastOffset; // offset of current block (last on stack)
-			        if (!stackTop(stack, &lastOffset)) {
-				        return output_token; // failed to read from stack
-			        }
-			        // end of code block
-			        if (lastOffset > offset) {
-				        // check offset of previous block:
-				        // pop current offset
-				        if (!stackPop(stack, &lastOffset)) {
-					        return output_token; // pop failed
-				        }
-				        // read previous offset
-				        int previousBlockOffset;
-				        if (!stackTop(stack, &previousBlockOffset)) {
-					        return output_token; // top failed
-				        }
 
-				        // offset is higher than previous block offset
-				        // but lower than current block offset
-				        // error of indentation
-				        if (offset > previousBlockOffset) {
-					        output_token.type = T_UNKNOWN;
-					        return output_token;
-				        }
-					        // offset is lower (return from multiple indent)
-				        else if (offset < previousBlockOffset) {
-					        // force evaluation of indentation next time
-					        line_beginning = true;
-					        // stack value is popped already
-					        for ( ; offset > 0; offset--) {
-						        ungetc(offset_char, file); // undo all offset chars
-					        } // return dedent token
-				        } // else - offset match
-				        output_token.type = T_DEDENT;
-				        return output_token;
-			        } else if (lastOffset < offset) { // start of new block
-				        stackPush(stack, offset);
-				        output_token.type = T_INDENT;
-				        return output_token;
-			        } else { // if (lastOffset == offset)
-				        continue; // still same block, continue with content
+			        // bad indent
+			        if(referenceCount >= offsetCount) {
+                        if (referenceOffset != offset) {
+                            output_token.type = T_UNKNOWN;
+                            return output_token;
+                        }
+                    }
+			        // end of block
+			        if(referenceCount > offsetCount) {
+			            // number of dedents that have to be returned
+			            returnDedent = referenceCount - offsetCount - 1; // -1 current token
+			            int temp;
+			            if(!stackPop(stack, &temp)) {
+			                return output_token;
+			            }
+			            output_token.type = T_DEDENT;
+			            return output_token;
 			        }
-        	}
-        }
+			        // begining of block
+                    else if(referenceCount < offsetCount) {
+                        stackPush(stack, offset);
+                        output_token.type = T_INDENT;
+                        return output_token;
+                    }
+                    // still same block
+                    else {
+                        continue; // process content
+                    }
+        	}// switch
+        }// if (line_beginning)
 
         // return status of auxiliary functions
         int return_status;
