@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
 
     semanticCheck(&tree, symTable, &errCode);
 	if(errCode != ERROR_SUCCESS){
+		treeFree(tree);
 		symTableFree(symTable);
 		fclose(file);
 		return errCode;

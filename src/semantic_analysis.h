@@ -20,6 +20,7 @@
 
 #include "parse_tree.h"
 #include "symtable.h"
+#include "scanner.h"
 
 enum semanticType{
 	SEMANTIC_INT,
@@ -27,6 +28,7 @@ enum semanticType{
 	SEMANTIC_FLOAT,
 	SEMANTIC_BOOL,
 	SEMANTIC_VARIABLE,
+	SEMANTIC_NONE,
 	SEMANTIC_EXPRESSION,
 	SEMANTIC_UNKNOWN
 };
@@ -37,7 +39,7 @@ int semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode);
 
 semanticType_t getOperatorType(treeElement_t operatorTree, int* errCode);
 
-semanticType_t checkOperation(treeElement_t* expressionTree, symTable_t* symTable, int* errCode, dynStr_t* context);
+semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTable, int* errCode, dynStr_t* context);
 
 void convertBoolToInt(treeElement_t* expressionTree, int* errCode);
 
