@@ -93,7 +93,6 @@ treeElement_t syntaxParse(FILE* file, symTable_t* symTable, int* errCode) {
     if(*errCode != ERROR_SUCCESS){
     	treeFree(tree);
     }
-
     return tree;
 }
 
@@ -724,6 +723,15 @@ int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, 
     treeElement_t* returnTree = treeAddElement(tree, E_S_RETURN);
 
     for(size_t i = 0; i < partSize; i++){
+    	if(return_s[i] == S_EXPRESSION){
+    		token_t topToken = tokenStackTop(stack, &errCode);
+    		if(errCode != ERROR_SUCCESS)
+				return errCode;
+
+    		if(topToken.type == T_EOL || topToken.type == T_EOF) {
+    			break;
+    		}
+    	}
     	errCode = processStatementPart(stack, return_s[i], returnTree, symTable, context);
         if(errCode != ERROR_SUCCESS)
             return errCode;
