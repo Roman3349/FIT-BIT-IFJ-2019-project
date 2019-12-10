@@ -1,0 +1,4 @@
+if True != 0:
+    print('OK')
+else:
+    print('ERROR')
