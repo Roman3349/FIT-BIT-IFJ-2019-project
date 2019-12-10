@@ -563,7 +563,7 @@ int processUnaryOperation(treeElement_t operationElement, bool* pushToStack, sym
                     break;
                 }
             }
-            retval = processEToken(operationElement.data.elements[0], temp[0], pushToStack, symTable, context);
+            retval = processEToken(operationElement.data.elements[0], temp[0], false, symTable, context);
             if(retval)
                 break;
             if(*pushToStack) {
@@ -621,7 +621,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     // used to make labels unique
     static unsigned ifCounter = 0;
 
-    bool pushToStack = false;
+    bool pushToStack = true;
 
     // expression
     if(processExpression(ifElement.data.elements[0], &pushToStack, symTable, context, codeStrList)){
@@ -635,6 +635,8 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
 
     int retval = ERROR_SUCCESS;
 
+    //TODO
+    // add single line comparison
     retval = numberToDynStr(temp, "PUSHS bool@true\nJUMPIFEQS $if%d\n", ifCounter);
 
     if(retval){
@@ -741,8 +743,7 @@ int numberToDynStr(dynStr_t* outputStr, char* formatString, long number) {
     }
 
     // print string to buffer
-    snprintf(buffer, strSize, formatString, number);
-    buffer[strSize] = '\0';
+    snprintf(buffer, strSize+1, formatString, number);
 
     // append buffer to dynamic string
     retval = !dynStrAppendString(outputStr, buffer);
