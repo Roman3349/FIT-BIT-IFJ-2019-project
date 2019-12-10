@@ -178,3 +178,17 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
  */
 int processFunctionCallParams(treeElement_t callParamsElement, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
+
+/**
+ * Generates an embedded functions
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateEmbeddedFunctions(dynStrList_t *codeStrList);
+
+/**
+ * Generates len embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateLenFunction(dynStrList_t* codeStrList);

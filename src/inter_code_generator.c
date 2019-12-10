@@ -89,22 +89,21 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
     // name of function to determine if variable is global or local
     dynStr_t* context = NULL;
 
-    // IFJcode19 shebang
-    dynStr_t* header = dynStrInit();
-    if(header == NULL) {
-        return ERROR_INTERNAL;
-    }
-    if(!dynStrAppendString(header , ".IFJcode19\n")) {
-        dynStrFree(header);
-        return ERROR_INTERNAL;
-    }
-    if(!dynStrListPushBack(codeStrList, header)) {
-        dynStrFree(header);
-        return ERROR_INTERNAL;
-    }
+	generateEmbeddedFunctions(codeStrList);
 
-    //TODO
-    // jump na main funkci
+	// Main function label
+	dynStr_t *mainLabel = dynStrInit();
+	if (mainLabel == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrAppendString(mainLabel, "LABEL $$main\n")) {
+		dynStrFree(mainLabel);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushBack(codeStrList, mainLabel)) {
+		dynStrFree(mainLabel);
+		return ERROR_INTERNAL;
+	}
 
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
         int retval = ERROR_SUCCESS;
@@ -136,6 +135,34 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
         if(retval)
             return retval;
     }
+
+	// Main function jump
+	dynStr_t *mainJump = dynStrInit();
+	if (mainJump == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrAppendString(mainJump, "JUMP $$main\n")) {
+		dynStrFree(mainJump);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, mainJump)) {
+		dynStrFree(mainJump);
+		return ERROR_INTERNAL;
+	}
+
+	// IFJcode19 shebang
+	dynStr_t* header = dynStrInit();
+	if(header == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrAppendString(header , ".IFJcode19\n")) {
+		dynStrFree(header);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, header)) {
+		dynStrFree(header);
+		return ERROR_INTERNAL;
+	}
 
     //TODO
     // process code content ending
@@ -1092,6 +1119,9 @@ int processFunctionCallParams(treeElement_t callParamsElement, symTable_t* symTa
     // process arg[i]
     for(unsigned i = 0; i < callParamsElement.nodeSize; i++) {
         bool pushToStack = false;
+        if (dynStrEqualString(context, "len")) {
+        	pushToStack = true;
+        }
 
         //TODO
         // process params and create assignment after loop (because of expressions and function calls)
@@ -1168,4 +1198,29 @@ int processFunctionCallParams(treeElement_t callParamsElement, symTable_t* symTa
     } // for
 
     return ERROR_SUCCESS;
+}
+
+int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
+	int retVal = ERROR_SUCCESS;
+	if ((retVal = generateLenFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+	return retVal;
+}
+
+int generateLenFunction(dynStrList_t* codeStrList) {
+	dynStr_t *string = dynStrInit();
+	const char* code = "LABEL len\n"
+					"DEFVAR LF@%retval\n"
+					"STRLEN LF@%retval LF@%0\n"
+					"RETURN\n";
+	if(!dynStrAppendString(string, code)){
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
 }
