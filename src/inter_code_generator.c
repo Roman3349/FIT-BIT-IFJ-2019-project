@@ -203,6 +203,18 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
                 return ERROR_INTERNAL;
             }
             break;
+		case T_BOOL_TRUE:
+		    if(!dynStrAppendString(outputDynStr, "bool@true")){
+			    dynStrFree(outputDynStr);
+			    return ERROR_INTERNAL;
+		    }
+		    break;
+		case T_BOOL_FALSE:
+		    if(!dynStrAppendString(outputDynStr, "bool@false")){
+			    dynStrFree(outputDynStr);
+			    return ERROR_INTERNAL;
+		    }
+		    break;
         default:
             return ERROR_SEMANTIC_OTHER;
     }
@@ -736,14 +748,14 @@ int numberToDynStr(dynStr_t* outputStr, char* formatString, long number) {
 
     // get size of string
     unsigned strSize = snprintf(NULL, 0, formatString, number);
-    char* buffer = malloc(strSize + 1); // + \0
+    char* buffer = malloc(++strSize); // + \0
     // check allocation
     if(!buffer) {
         return ERROR_INTERNAL;
     }
 
     // print string to buffer
-    snprintf(buffer, strSize+1, formatString, number);
+    snprintf(buffer, strSize, formatString, number);
 
     // append buffer to dynamic string
     retval = !dynStrAppendString(outputStr, buffer);
@@ -760,7 +772,7 @@ int floatToDynStr(dynStr_t* outputStr, char* formatString, double number) {
 
     // get size of string
     unsigned strSize = snprintf(NULL, 0, formatString, number);
-    char* buffer = malloc(strSize + 1); // + \0
+    char* buffer = malloc(++strSize); // + \0
     // check allocation
     if(!buffer) {
         return ERROR_INTERNAL;
@@ -768,7 +780,6 @@ int floatToDynStr(dynStr_t* outputStr, char* formatString, double number) {
 
     // print string to buffer
     snprintf(buffer, strSize, formatString, number);
-    buffer[strSize] = '\0';
 
     // append buffer to dynamic string
     retval = !dynStrAppendString(outputStr, buffer);
