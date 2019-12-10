@@ -29,5 +29,5 @@ $(TARGET): $(OBJECTS)
 
 pack: clean
 	rm -rf xondra58.tgz /tmp/ifj
-	tar -czvf xondra58.tgz * ../rozdeleni
+	tar -czvf xondra58.tgz * ../rozdeleni ../rozsireni
 	bash ../is_it_ok.sh xondra58.tgz /tmp/ifj
