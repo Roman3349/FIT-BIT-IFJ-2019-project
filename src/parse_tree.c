@@ -122,6 +122,7 @@ void printTree(treeElement_t tree, int indent) {
 					printf(" VALUE: False\n");
 					break;
 				default:
+					printf("\n");
 					break;
 			}
             break;
