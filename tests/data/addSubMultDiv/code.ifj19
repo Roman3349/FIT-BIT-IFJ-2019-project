@@ -1,0 +1,5 @@
+# Test kombinace sčítání, odčítání, násobení a dělení
+
+b= 3+4/2-1*4 
+
+print(b)

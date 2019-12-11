@@ -1,0 +1,5 @@
+# Test sčítání integeru a floatu, int by se měl přetypovat
+
+b=3+0.5  
+
+print(b)

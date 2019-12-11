@@ -1,0 +1,4 @@
+# Test sčítání stringu a boolu, chyba kompability ve výrazu s kodem 4
+
+b='Text'+True
+print(b)

@@ -1,0 +1,4 @@
+# Test aritmetických operací kombinace integeru, floatu a boolu
+
+b=(3.0+True)*(6/3.0)  
+print(b)

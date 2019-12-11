@@ -1,0 +1,5 @@
+# Test kombinace sčítání, odčítání, násobení a dělení se závorkami
+
+b=((5-4)*(7-6))/(3-1)
+
+print(b)

@@ -1,0 +1,5 @@
+# Test aritmetických operací integeru s využitím proměnné ve výrazu
+
+a=True
+b=(2.0+a)*(a/3)  
+print(b)
