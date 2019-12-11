@@ -192,6 +192,12 @@ bool symTableIsVariableAssigned(symTable_t *table, dynStr_t *name, dynStr_t *con
 dynStr_t *symTableGetArgumentName(symTable_t *table, dynStr_t *function, unsigned long index);
 
 /**
+ * Clears all variable assigment
+ * @param table Symbol table
+ */
+void symTableClearAssigment(symTable_t *table);
+
+/**
  * Returns the symbol frame type
  * @param table Symbol table
  * @param name Symbol name

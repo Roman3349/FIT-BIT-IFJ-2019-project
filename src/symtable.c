@@ -143,6 +143,21 @@ bool symTableIsVariableAssigned(symTable_t *table, dynStr_t *name, dynStr_t *con
 	return true;
 }
 
+void symTableClearAssigment(symTable_t *table) {
+	if (table == NULL) {
+		return;
+	}
+	for (size_t i = 0; i < table->allocated; ++i) {
+		symbol_t *current = table->array[i];
+		while (current != NULL) {
+			if (current->type == SYMBOL_FUNCTION) {
+				current->info.variable.assigned = false;
+			}
+			current = current->next;
+		}
+	}
+}
+
 symbolFrame_t symTableGetFrame(symTable_t *table, dynStr_t *name, dynStr_t *context) {
 	if (table == NULL || name == NULL) {
 		return FRAME_ERROR;
