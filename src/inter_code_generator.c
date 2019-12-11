@@ -706,13 +706,148 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         return retval;
     }
 
+
+    // workaround because function call doesn't work
+    if(ifCounter == 0) {
+        dynStr_t* tmp = dynStrInit();
+        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempIf\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempIfType\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "POPs GF@$$tempIf\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "TYPE GF@$$tempIfType GF@tempIF\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "PUSH GF@$$tempIf\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQ $$float%d GF@$$tempIfType string@float\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQ $$int%d GF@$$tempIfType string@int\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQ $$bool%d GF@$$tempIfType string@bool\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQ $$string%d GF@$$tempIfType string@string\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQ $$nil%d GF@$$tempIfType string@nil\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "EXIT 4\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "LABEL $$float%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "PUSH float@0.0\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFNEQS $if%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMP $$nil%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "LABEL $$int%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "PUSH int@0\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFNEQS $if%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMP $$nil%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "LABEL $$bool%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "PUSH bool@true\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFEQS $if%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMP $$nil%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "LABEL $$string%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        if(dynStrAppendString(tmp, "PUSH string@\n")) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "JUMPIFNEQS $if%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+        retval = numberToDynStr(tmp, "LABEL $$nil%d\n", ifCounter);
+        if(retval) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+
+        if(dynStrListPushBack(codeStrList, tmp)) {
+            dynStrFree(tmp);
+            return ERROR_INTERNAL;
+        }
+    }
+
     dynStr_t* temp = dynStrInit();
     if(!temp) {
         return ERROR_INTERNAL;
     }
 
-    //TODO
-    // add single line comparison
     retval = numberToDynStr(temp, "PUSHS bool@true\nJUMPIFEQS $if%d\n", ifCounter);
 
     if(retval){
@@ -1405,6 +1540,8 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
     if (!temp) {
         return ERROR_INTERNAL;
     }
+
+
 
     retval = numberToDynStr(temp, "LABEL $while%d\n", whileCounter);
     if (retval) {
