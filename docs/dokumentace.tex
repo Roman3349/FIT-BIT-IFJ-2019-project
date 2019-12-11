@@ -39,10 +39,10 @@
 \begin{large}	
 \catcode`\-=12
     \begin{tabular}{l l l l}
-         Roman Ondráček & xondra58 & \% & vedoucí\\
-         Pavel Raur & xraurp00 & \% &\\
-         František Jeřábek & xjerab25 & \% &\\
-         Radim Lipka & xlipka02 & \% & 
+         Roman Ondráček & xondra58 & 28\% & vedoucí\\
+         Pavel Raur & xraurp00 & 28\% &\\
+         František Jeřábek & xjerab25 & 28\% &\\
+         Radim Lipka & xlipka02 & 16\% & 
     \end{tabular}
 \end{large}
 \end{table}
@@ -250,8 +250,8 @@ Sémantické kontroly jsou přidruženy k rekurzivnímu sestupu syntaktické ana
 Naimplementovány jsou v modulu \textbf{semantic\_analysis.c}. Největší část sémantických kontrol spočívá v kontrole datových typů výrazů, které vstupují do různých operací. V případě nejednotnosti těchto datových typů poté probíhá implicitní přetypování. Jelikož byla implementována podpora rozšíření \textsc{boolop}, kromě implicitního přetypování z typu \emph{int} na \emph{float}, je nutné podporovat i přetypování z typu \emph{bool} na \emph{int} a \emph{float}.
 
 \subsection{Generátor cílového kódu}
-Generátor cílového kódu byl implementován v modulu \textbf{inter\_code\_generator.c}. Úkolem tohoto modulu je vytvářet cílový kód, tedy v našem případě kod \textbf{IFJcode19}.
-\subsection{Optimalizace}
+Generátor cílového kódu byl implementován v modulu \textbf{inter\_code\_generator.c}. Úkolem tohoto modulu je vytvářet cílový kód, tedy v našem případě kód \textbf{IFJcode19}.
+
 \subsection{Tabulka symbolů a další datové struktury}
 Tabulka symbolů je implementována jako tabulka s rozptýlenými položkami v modulu \textbf{symtable.c}. Tabulka symbolů uchovává informace o všech jednotkách vyskytujích se ve vstupním programu. 
 
@@ -282,10 +282,10 @@ Od začátku řešení projektu jsme se pravidelně scházeli nejdříve přibli
 Jako verzovací systém jsme použili \textbf{Git} hostovaný na stránce \textbf{GitHub}. 
 \subsection{Rozdělení práce}
 \begin{itemize}
-  \item Roman Ondráček
-  \item Pavel Raur
-  \item František Jeřábek
-  \item Radim Lipka
+  \item Roman Ondráček - implementace tabulky symbolů, implementace generátoru cílového kodu, pomocné abstraktní datové typy, testování
+  \item Pavel Raur - implementace lexikální analýzy, implementace generátoru cílového kodu
+  \item František Jeřábek - implementace syntaktické analýzy, implementace sémantické analýzy
+  \item Radim Lipka - dokumentace, testování
 \end{itemize}
 \section{Závěr}
 Cílem projektu bylo pochopit a prakticky si vyzkoušet metody a techniky vysvětlované v předmětech IFJ a IAL a ze všeho nejvíc pochopit, z čeho se skládá překladač a jak fungují jeho jednotlivé části. 
