@@ -44,6 +44,7 @@ void stackPush(intStack_t* stack, int value) {
 	item->value = value;
 	item->next = stack->head;
 	stack->head = item;
+	stack->count++;
 }
 
 bool stackPop(intStack_t* stack, int* value) {
@@ -54,6 +55,7 @@ bool stackPop(intStack_t* stack, int* value) {
 	stack->head = item->next;
 	*value = item->value;
 	free(item);
+	stack->count--;
 	return true;
 }
 
@@ -63,4 +65,24 @@ bool stackTop(intStack_t* stack, int* value) {
 	}
 	*value = stack->head->value;
 	return true;
+}
+
+bool stackCount(intStack_t* stack, int* value){
+    if (!stack)
+        return false;
+    *value = stack->count;
+    return true;
+}
+
+bool stackGetIndent(intStack_t* stack, int* value, int number) {
+    if (!stack)
+        return false;
+    if(stack->count - number < 0 || stack->count - number >= stack->count)
+        return false;
+    intStack_item_t* item = stack->head;
+    for(int i = stack->count - number; i > 0; i--) {
+        item = item->next;
+    }
+    *value = item->value;
+    return true;
 }

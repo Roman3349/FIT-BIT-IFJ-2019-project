@@ -23,7 +23,6 @@
 #include "dynamic_string_list.h"
 
 
-
 /*
  * Process body of the program
  * @param codeElement tree element containing the program code
@@ -179,6 +178,16 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
 int processFunctionCallParams(treeElement_t callParamsElement, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
 
+/*
+ * Process while function
+ * @param whileElement tree element containing while function
+ * @param symTable symbol table
+ * @param context local scope function name
+ * @param codeStrList list of dynamic strings where code is generated to
+ * @return Execution status
+ */
+int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
+
 /**
  * Generates an embedded functions
  * @param codeStrList List of dynamic string where the code is generated to
@@ -192,3 +201,24 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList);
  * @return Execution status
  */
 int generateLenFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputi embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputiFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputf embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputfFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputs embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputsFunction(dynStrList_t* codeStrList);
