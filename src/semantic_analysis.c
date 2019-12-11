@@ -134,6 +134,31 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 				op2Type = checkExpression(&operator2, symTable, errCode, context);
 			}
 
+			if(expressionTree->type == E_DIV_INT || expressionTree->type == E_DIV) {
+				switch(op2Type) {
+					case SEMANTIC_INT:
+						if(operator2.data.token->data.intval == 0) {
+							*errCode = ERROR_ZERO_DIVISION;
+							return SEMANTIC_UNKNOWN;
+						}
+						break;
+					case SEMANTIC_FLOAT:
+						if(operator2.data.token->data.floatval == 0.0) {
+							*errCode = ERROR_ZERO_DIVISION;
+							return SEMANTIC_UNKNOWN;
+						}
+						break;
+					case SEMANTIC_BOOL:
+						if(operator2.data.token->type == T_BOOL_FALSE){
+							*errCode = ERROR_ZERO_DIVISION;
+							return SEMANTIC_UNKNOWN;
+						}
+						break;
+					default:
+						break;
+				}
+			}
+
 			if (expressionTree->type == E_ADD) {
 				if (op1Type == SEMANTIC_STRING) {
 					if (op2Type != SEMANTIC_STRING) {
@@ -158,7 +183,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator1, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return SEMANTIC_FLOAT;
+							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
 
 						case SEMANTIC_BOOL:
 							convertBoolToInt(&operator2, errCode);
@@ -187,10 +212,10 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator2, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return SEMANTIC_FLOAT;
+							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
 
 						case SEMANTIC_FLOAT:
-							return SEMANTIC_FLOAT;
+							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
 
 						case SEMANTIC_BOOL:
 							convertBoolToInt(&operator2, errCode);
@@ -200,7 +225,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator2, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return SEMANTIC_FLOAT;
+							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
 
 						case SEMANTIC_UNKNOWN:
 						case SEMANTIC_VARIABLE:
@@ -228,14 +253,14 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertBoolToInt(&operator1, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return SEMANTIC_BOOL;
+							return SEMANTIC_INT;
 
 						case SEMANTIC_FLOAT:
 							convertBoolToInt(&operator1, errCode);
 							convertIntToFloat(&operator1, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return SEMANTIC_BOOL;
+							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
 
 
 						default:
