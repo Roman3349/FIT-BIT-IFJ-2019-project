@@ -33,6 +33,18 @@ dynStr_t *dynStrInit() {
 	return string;
 }
 
+dynStr_t *dynStrInitString(const char* str) {
+	dynStr_t *string = dynStrInit();
+	if (string == NULL) {
+		return NULL;
+	}
+	if (!dynStrAppendString(string, str)) {
+		dynStrFree(string);
+		return NULL;
+	}
+	return string;
+}
+
 void dynStrClear(dynStr_t *string) {
 	if (string == NULL) {
 		return;
@@ -177,5 +189,8 @@ char dynStrGetChar(dynStr_t *string, unsigned long index) {
 }
 
 const char *dynStrGetString(dynStr_t* string) {
+	if (string == NULL) {
+		return NULL;
+	}
 	return string->string;
 }

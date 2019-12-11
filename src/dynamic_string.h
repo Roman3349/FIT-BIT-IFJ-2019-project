@@ -40,6 +40,13 @@ typedef struct dynamic_string {
 dynStr_t *dynStrInit();
 
 /**
+ * Initializes a dynamic string with the content
+ * @param str Dynamic string content
+ * @return Initialized dynamic string
+ */
+dynStr_t *dynStrInitString(const char* str);
+
+/**
  * Clears a dynamic string
  * @param string Dynamic string
  */

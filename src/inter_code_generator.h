@@ -224,3 +224,10 @@ int generateInputfFunction(dynStrList_t* codeStrList);
  * @return Execution status
  */
 int generateInputsFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates print embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generatePrintFunction(dynStrList_t* codeStrList);

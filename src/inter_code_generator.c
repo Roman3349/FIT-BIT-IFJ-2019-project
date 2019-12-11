@@ -1134,7 +1134,7 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
         return ERROR_SEMANTIC_OTHER;
     }
 
-    int retval = ERROR_SUCCESS;
+    int retval;
 
     // function name
     dynStr_t* fname = dynStrInit();
@@ -1144,66 +1144,6 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
         return retval;
     }
 	dynStr_t* temp = dynStrInit();
-
-    if (dynStrEqualString(fname, "print")) {
-	    dynStrFree(fname);
-	    treeElement_t args = callElement.data.elements[1];
-	    for (size_t i = 0; i < args.nodeSize; ++i) {
-	    	if (!dynStrAppendString(temp, "WRITE ")) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-	    	if (!dynStrListPushBack(codeStrList, temp)) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-		    retval = processExpression(args.data.elements[i], false, symTable, context, codeStrList);
-		    if (retval) {
-			    dynStrFree(temp);
-			    return retval;
-		    }
-			if (dynStrEqualString(dynStrListElGet(dynStrListBack(codeStrList)), "nil@nil ")) {
-				dynStrListPopBack(codeStrList);
-				temp = dynStrInit();
-				dynStrAppendString(temp, "string@None");
-				if (!dynStrListPushBack(codeStrList, temp)) {
-					dynStrFree(temp);
-					return ERROR_INTERNAL;
-				}
-			}
-		    temp = dynStrInit();
-		    if(!dynStrAppendString(temp, "\n")) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-		    if (!dynStrListPushBack(codeStrList, temp)) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-		    temp = dynStrInit();
-		    if (i == args.nodeSize - 1) {
-			    break;
-		    }
-		    if (!dynStrAppendString(temp, "WRITE string@\\032\n")) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-		    if (!dynStrListPushBack(codeStrList, temp)) {
-			    dynStrFree(temp);
-			    return ERROR_INTERNAL;
-		    }
-		    temp = dynStrInit();
-	    }
-	    if (!dynStrAppendString(temp, "WRITE string@\\010\n")) {
-		    dynStrFree(temp);
-		    return ERROR_INTERNAL;
-	    }
-	    if (!dynStrListPushBack(codeStrList, temp)) {
-		    dynStrFree(temp);
-		    return ERROR_INTERNAL;
-	    }
-	    return ERROR_SUCCESS;
-    }
 
     // add create frame
     if(!dynStrAppendString(temp, "CREATEFRAME\n")) {
@@ -1221,8 +1161,39 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
     // TODO
     //  remove temporary frame and hardcode it in processFunctionCallParams?
 
-    // create frame and process params
-    if (callElement.nodeSize == 2) {
+	if (dynStrEqualString(fname, "print")) {
+		long argc = callElement.nodeSize == 1 ? 0 : callElement.data.elements[1].nodeSize;
+		dynStrList_t *printArgs = dynStrListInit();
+		dynStr_t *string = dynStrInitString("PUSHS ");
+		int retVal = numberToDynStr(string, "int@%ld", argc);
+		if (retVal) {
+			return retVal;
+		}
+		if (!dynStrListPushBack(printArgs, string)) {
+			dynStrListFree(printArgs);
+			dynStrFree(string);
+			return ERROR_INTERNAL;
+		}
+		bool pushToStack = true;
+		for (long i = 0; i < argc; ++i) {
+			retVal = processExpression(callElement.data.elements[1].data.elements[i], &pushToStack, symTable, context, printArgs);
+			if (retVal) {
+				dynStrFree(temp);
+				return retval;
+			}
+		}
+		for (long i = argc; i >= 0; --i) {
+			dynStrListEl_t *element = dynStrListBack(printArgs);
+			dynStrListPushBack(codeStrList, dynStrClone(dynStrListElGet(element)));
+			dynStrListPopBack(printArgs);
+		}
+		dynStrListFree(printArgs);
+		string = dynStrInitString("\n");
+		if (!dynStrListPushBack(codeStrList, string)) {
+			dynStrFree(string);
+			return ERROR_INTERNAL;
+		}
+	} else if (callElement.nodeSize == 2) { // create frame and process params
 	    retval = processFunctionCallParams(callElement.data.elements[1], symTable, fname, codeStrList);
 	    if (retval) {
 		    return retval;
@@ -1393,6 +1364,9 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
 	if ((retVal = generateInputsFunction(codeStrList)) != ERROR_SUCCESS) {
 		return retVal;
 	}
+	if ((retVal = generatePrintFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
 	return retVal;
 }
 
@@ -1403,6 +1377,50 @@ int generateLenFunction(dynStrList_t* codeStrList) {
 					"STRLEN LF@%retval LF@%0\n"
 					"RETURN\n";
 	if(!dynStrAppendString(string, code)){
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+
+}
+
+int generatePrintFunction(dynStrList_t* codeStrList) {
+	dynStr_t *string = dynStrInit();
+	const char* code = "LABEL print\n"
+						"DEFVAR LF@%retval\n"
+						"MOVE LF@%retval nil@nil\n"
+						"DEFVAR LF@argc\n"
+						"POPS LF@argc\n"
+						"DEFVAR LF@lastArg\n"
+						"DEFVAR LF@counter\n"
+						"MOVE LF@counter int@0\n"
+						"DEFVAR LF@string\n"
+						"MOVE LF@string string@0\n"
+						"DEFVAR LF@type\n"
+						"LABEL $while\n"
+						"JUMPIFEQ $end LF@counter LF@argc\n"
+						"ADD LF@counter LF@counter int@1\n"
+						"POPS LF@string\n"
+						"TYPE LF@type LF@string\n"
+						"JUMPIFEQ $none LF@type string@nil\n"
+						"WRITE LF@string\n"
+						"JUMP $endNone\n"
+						"LABEL $none\n"
+						"WRITE string@None\n"
+						"LABEL $endNone\n"
+						"LT LF@lastArg LF@counter LF@argc\n"
+						"JUMPIFEQ $printNl LF@lastArg bool@false\n"
+						"WRITE string@\\032\n"
+						"JUMP $while\n"
+						"LABEL $printNl\n"
+						"WRITE string@\\010\n"
+						"LABEL $end\n"
+						"RETURN\n";
+	if(!dynStrAppendString(string, code)) {
 		dynStrFree(string);
 		return ERROR_INTERNAL;
 	}
