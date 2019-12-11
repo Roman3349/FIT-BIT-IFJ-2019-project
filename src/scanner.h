@@ -25,6 +25,7 @@
 #include <math.h>
 #include "dynamic_string.h"
 #include "stack.h"
+#include "error.h"
 
 enum execution_status {
 	SUCCESS = 0,
@@ -169,3 +170,19 @@ int process_escape_seq(FILE* file, token_t *token, int c);
  * @return string representation
  */
 char* tokenToString(enum token_type type);
+
+
+/**
+ * Converts token from boolean to integer
+ * @param token token to convert
+ * @param errCode error code
+ */
+void tokenBoolToInt(token_t * token, int* errCode);
+
+
+/**
+ * Converts token from Integer to Float
+ * @param token token to convert
+ * @param errCode error code
+ */
+void tokenIntToFloat(token_t * token, int* errCode);

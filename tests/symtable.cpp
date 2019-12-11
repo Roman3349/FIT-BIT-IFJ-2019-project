@@ -266,6 +266,7 @@ namespace Tests {
 		ASSERT_STREQ(dynStrGetString(argument), "b");
 		argument = symTableGetArgumentName(table, function, 2);
 		ASSERT_EQ(argument, nullptr);
+		dynStrFree(function);
 	}
 
 	TEST_F(SymTableTest, isVariableAssignedNull) {

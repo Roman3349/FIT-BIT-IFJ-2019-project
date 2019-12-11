@@ -1,0 +1,22 @@
+# Relacni operatory s operandem None (v Pythonu 3 se jedna o tzv. antipatern,
+#  kdy by se mel misto porovnavani pouzivat presnejsi operator is (nepodporovany v IFJ19)
+# V zaveru je ukazka implicitni konverze typu Bool (rozsireni BOOLOP)!
+if 4 == None:
+  pass
+else:
+  print('None se nerovna zadnemu cislu.')
+  
+if None == 2.5:
+  pass
+else:
+  print('Ani desetinnemu, ale je kompatibilni se vsemi typy na porovnani.')
+  
+if '' != None:
+  print('Prazdny retezec neni None.')
+else:
+  pass
+  
+if True != 0:
+  print('Bool je pripadne implicitne konvertovan na cislo 1 nebo 1.0.')
+else:
+  pass
