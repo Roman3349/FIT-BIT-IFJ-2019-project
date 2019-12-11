@@ -110,12 +110,17 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_EOF);
 	}
 
-	TEST_F(ScannerTest, tokenErrIndentation) {
-		FILE* file = openFile("errIndentation.ifj19");
+	TEST_F(ScannerTest, mixedIndentation) {
+		FILE* file = openFile("mixedIndentation/code.ifj19");
 		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_KW_DEF);
+		ASSERT_TOKEN_STRING(file, T_ID, "fce");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN(file, T_KW_IF);
-		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
-		ASSERT_TOKEN(file, T_OP_EQ);
 		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
 		ASSERT_TOKEN(file, T_COLON);
 		ASSERT_TOKEN(file, T_EOL);
@@ -123,13 +128,33 @@ namespace Tests {
 		ASSERT_TOKEN(file, T_INDENT);
 		ASSERT_TOKEN_STRING(file, T_ID, "print");
 		ASSERT_TOKEN(file, T_LPAR);
-		ASSERT_TOKEN_STRING(file, T_STRING, "jejda");
+		ASSERT_TOKEN_STRING(file, T_STRING, "OK");
 		ASSERT_TOKEN(file, T_RPAR);
 		ASSERT_TOKEN(file, T_EOL);
 
 		ASSERT_TOKEN(file, T_DEDENT);
-		ASSERT_TOKEN(file, T_KW_ELSE);
-        ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_DEDENT);
+        ASSERT_TOKEN_STRING(file, T_ID, "fce");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_EOF);
+	}
+
+	TEST_F(ScannerTest, errIndentation2) {
+		FILE* file = openFile("errIndentation2/code.ifj19");
+		ASSERT_NE(file, nullptr);
+		ASSERT_TOKEN(file, T_KW_DEF);
+		ASSERT_TOKEN_STRING(file, T_ID, "a");
+		ASSERT_TOKEN(file, T_LPAR);
+		ASSERT_TOKEN(file, T_RPAR);
+		ASSERT_TOKEN(file, T_COLON);
+		ASSERT_TOKEN(file, T_EOL);
+		ASSERT_TOKEN(file, T_INDENT);
+		ASSERT_TOKEN_STRING(file, T_ID, "b");
+		ASSERT_TOKEN(file, T_ASSIGN);
+		ASSERT_TOKEN_INTEGER(file, T_NUMBER, 1);
+		ASSERT_TOKEN(file, T_EOL);
 		ASSERT_TOKEN(file, T_UNKNOWN);
 	}
 

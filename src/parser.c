@@ -637,6 +637,9 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, d
                 case T_NUMBER:
                 case T_LPAR:
                 case T_STRING:
+                case T_KW_NONE:
+                case T_BOOL_TRUE:
+                case T_BOOL_FALSE:
                 case T_STRING_ML:
                 case T_FLOAT: { //Cant ignore expressions. Can contain function call inside
 
