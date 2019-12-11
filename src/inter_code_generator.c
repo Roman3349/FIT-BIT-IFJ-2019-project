@@ -651,10 +651,36 @@ int processUnaryOperation(treeElement_t operationElement, bool* pushToStack, sym
             }
             break;
         case E_S_EXPRESSION:
+            *pushToStack = true;
             retval = processExpression(operationElement.data.elements[0], pushToStack, symTable, context, codeStrList);
             break;
+        case E_ADD:
+        case E_SUB:
+        case E_MUL:
+        case E_DIV:
+        case E_DIV_INT:
+        case E_AND:
+        case E_OR:
+        case E_EQ:
+        case E_GT:
+        case E_LT:
+            *pushToStack = true;
+            retval = processBinaryOperation(operationElement.data.elements[0], pushToStack, symTable, context, codeStrList);
+            break;
+        case E_NOT:
+            *pushToStack = true;
+            retval = processUnaryOperation(operationElement.data.elements[0], pushToStack, symTable, context, codeStrList);
+            break;
+        case E_S_FUNCTION_CALL:
+            *pushToStack = true;
+            retval = processFunctionCall(operationElement.data.elements[0], symTable, context, codeStrList);
+            break;
+        case E_ASSIGN:
+            *pushToStack = true;
+            retval = processAssign(operationElement.data.elements[0], symTable, context, codeStrList);
+            break;
         default:
-            retval = ERROR_SEMANTIC_OTHER;
+            return ERROR_SEMANTIC_OTHER;
     }
     if(retval) {
         dynStrFree(temp[0]);
@@ -681,8 +707,16 @@ int processUnaryOperation(treeElement_t operationElement, bool* pushToStack, sym
         return retval;
     }
 
-    if(!dynStrListPushBack(codeStrList, temp[0])
-    || !dynStrListPushBack(codeStrList, temp[1])) {
+    // push value if any
+    if(!(*pushToStack)) {
+        if (!dynStrListPushBack(codeStrList, temp[0])) {
+            dynStrFree(temp[0]);
+            dynStrFree(temp[1]);
+            return ERROR_INTERNAL;
+        }
+    }
+    // push operation
+    if(!dynStrListPushBack(codeStrList, temp[1])) {
         dynStrFree(temp[0]);
         dynStrFree(temp[1]);
         return ERROR_INTERNAL;
