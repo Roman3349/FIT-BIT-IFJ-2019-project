@@ -259,14 +259,20 @@ Pro práci s různě dlouhými vstupními řetezci byl v modulu \textbf{dynamic\
 
 
 Precedenční analýza poté pracuje se zásobníkem z modulu \textbf{tree\_element\_stack.c}, na kterém pro\-bí\-há porovnávání vrcholu tohoto zásobníku s nově přicházejícími tokeny.
+
 \section{Implementovaná rozšíření}
 \subsection{BOOLOP}
 Pro implementaci rozšíření BOOLOP byla přidána další pravidla do precedenční analýzy, konkrétně pravidla pro \textbf{not, or, and} a \textbf{==} a zároveň další sémantická pravidla pro kontrolu datových typů vstupujících do těchto operací.
+
 \subsection{BASE}
 Implementace rozšíření BASE spočívá v přidání a vypořádání se s dalším způsobem zadávání čí\-sel\-ných konstant. Do lexikální analýzy byly přidány stavy pro přijímání lexémů konstant zapsaných v binární, oktalové a hexadecimální soustavě, jejich převod na tokeny a předání dalším částem pře\-kla\-da\-če.
-\subsection{TABUNARY}
 
-Při implementaci rozšíření TABUNARY bylo nutno rozlišovat mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Pokud před tokenu plus nebo mínus předchází jeden operand a následuje druhý, jedná se o binární operátory, pokud ovšem předcházející operand chybí, jedná se po implementaci tohoto rozšíření o unární operátory, narozdíl od základní implementace, kde by při tomto zápisu nastala syntaktická chyba překladu.
+\subsection{IFTHEN}
+V rozšíření IFTHEN se měl podporovat ternární operátor, \textbf{elif}, a konstrukce \textbf{if} bez části \textbf{else}. Právě poslední zmíněné rozšíření je naším překladačem podporováno.
+
+\subsection{TABUNARY}
+V rozšíření TABUNARY se mělo rozlišovat mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Část tohoto rozšíření, ve které se mělo rozlišovat právě mezi binárními a unárními operátory nebyla implementována. Pro část rozšíření, která se týká odsazování pomocí tabulátorů bylo třeba rozšířit zásobík u lexikální analýzy, aby bral v úvahu i tabulátory a ne jenom mezery.
+
 \section{Týmová spolupráce}
 Od začátku řešení projektu jsme se pravidelně scházeli nejdříve přibližně jedenkrát týdně a s blížícím se termínem odevzdání poté i vícekrát za týden. Pro rychlou komunikaci mezi sebou v reálném čase jsme si zvolili službu \textbf{Slack.com}, kde jsme ihned řešili všechny problémy, které nastaly.
 
@@ -290,6 +296,5 @@ Práce na projektu, ať už studium teorie, návrhy nebo samotná implementace n
   \item cppreference.com, \href{https://en.cppreference.com/}{https://en.cppreference.com/}
   \item GitHub, \href{https://github.com/}{https://github.com/}
   \item Slack, \href{https://slack.com/}{https://slack.com/}
-
 \end{itemize}
 \end{document}
