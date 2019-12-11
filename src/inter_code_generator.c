@@ -1022,7 +1022,7 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
                     return ERROR_INTERNAL;
                 }
                 // add to list
-                if(!dynStrListPushBack(codeStrList, temp)) {
+                if(!dynStrListPushBack(codeStrList, varDef)) {
                     dynStrFree(temp);
                     dynStrFree(varName);
                     dynStrFree(varDef);
@@ -1093,7 +1093,7 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
                     return ERROR_INTERNAL;
                 }
                 // add to list
-                if(!dynStrListPushBack(codeStrList, temp)) {
+                if(!dynStrListPushBack(codeStrList, varDef)) {
                     dynStrFree(temp);
                     dynStrFree(varName);
                     dynStrFree(varDef);
