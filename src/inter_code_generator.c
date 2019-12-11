@@ -1354,6 +1354,9 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
 	if ((retVal = generatePrintFunction(codeStrList)) != ERROR_SUCCESS) {
 		return retVal;
 	}
+	if ((retVal = generateChrFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
 	return retVal;
 }
 
@@ -1514,6 +1517,24 @@ int generateInputiFunction(dynStrList_t* codeStrList) {
 	if(string == NULL) {
 		return ERROR_INTERNAL;
 	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateChrFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL chr\n"
+					   "DEFVAR LF@retval\n"
+					   "INT2CHAR LF@retval LF@%0\n"
+					   "RETURN";
+
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+
 	if(!dynStrListPushFront(codeStrList, string)) {
 		dynStrFree(string);
 		return ERROR_INTERNAL;

@@ -231,3 +231,14 @@ int generateInputsFunction(dynStrList_t* codeStrList);
  * @return Execution status
  */
 int generatePrintFunction(dynStrList_t* codeStrList);
+
+
+/**
+ * Generates chr embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateChrFunction(dynStrList_t* codeStrList);
+
+
+
