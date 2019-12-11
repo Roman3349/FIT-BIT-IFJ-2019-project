@@ -19,7 +19,6 @@
 #include "semantic_analysis.h"
 
 void semanticCheckTree(treeElement_t* element, symTable_t* symtable, int* errCode, dynStr_t* context) {
-	printf("CONTEXT: %s\n", (context != NULL)? context->string : "GLOBAL");
 	switch (element->type) {
 		case E_S_EXPRESSION:
 			checkExpression(&element->data.elements[0], symtable, errCode, context);
@@ -62,9 +61,7 @@ void semanticCheckTree(treeElement_t* element, symTable_t* symtable, int* errCod
 }
 
 void semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode) {
-	printTree(*parseTree,0);
 	semanticCheckTree(parseTree, symTable, errCode, NULL);
-	printTree(*parseTree,0);
 }
 
 
