@@ -86,6 +86,9 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
         return ERROR_INTERNAL;
     }
 
+    // clear assigment to use it in variable definition
+    symTableClearAssigment(symTable);
+
     // name of function to determine if variable is global or local
     dynStr_t* context = NULL;
 
@@ -193,7 +196,7 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
         return ERROR_SEMANTIC_OTHER;
     }
 
-    int retval;
+    int retval = ERROR_SUCCESS;
 
     switch (eTokenElement.data.token->type) {
         case T_NUMBER:
@@ -238,10 +241,12 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
                 return ERROR_INTERNAL;
             }
             if(varDefined) {
-                // tells if variable is needs to be defined
-                *varDefined = !symTableIsVariableAssigned(symTable, eTokenElement.data.token->data.strval, context);
-                // sets value to false
-                retval = symTableInsertVariable(symTable, eTokenElement.data.token->data.strval, context, false);
+                // tells if variable is defined
+                *varDefined = symTableIsVariableAssigned(symTable, eTokenElement.data.token->data.strval, context);
+                // sets value to true
+                if(!(*varDefined)) {
+                    retval = symTableInsertVariable(symTable, eTokenElement.data.token->data.strval, context, true);
+                }
                 if(retval) {
                     return retval;
                 }
@@ -980,7 +985,7 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
                 dynStrFree(temp);
                 return retval;
             }
-            if(dynStrAppendString(temp, dynStrGetString(varName))) {
+            if(!dynStrAppendString(temp, dynStrGetString(varName))) {
                 dynStrFree(temp);
                 dynStrFree(varName);
                 return ERROR_INTERNAL;
