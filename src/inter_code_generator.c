@@ -95,12 +95,8 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
 	generateEmbeddedFunctions(codeStrList);
 
 	// Main function label
-	dynStr_t *mainLabel = dynStrInit();
+	dynStr_t *mainLabel = dynStrInitString("LABEL $$main\n");
 	if (mainLabel == NULL) {
-		return ERROR_INTERNAL;
-	}
-	if(!dynStrAppendString(mainLabel, "LABEL $$main\n")) {
-		dynStrFree(mainLabel);
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushBack(codeStrList, mainLabel)) {
@@ -146,12 +142,8 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
     }
 
 	// Main function jump
-	dynStr_t *mainJump = dynStrInit();
+	dynStr_t *mainJump = dynStrInitString("JUMP $$main\n");
 	if (mainJump == NULL) {
-		return ERROR_INTERNAL;
-	}
-	if(!dynStrAppendString(mainJump, "JUMP $$main\n")) {
-		dynStrFree(mainJump);
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushFront(codeStrList, mainJump)) {
@@ -160,12 +152,8 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
 	}
 
 	// IFJcode19 shebang
-	dynStr_t* header = dynStrInit();
+	dynStr_t* header = dynStrInitString(".IFJcode19\n");
 	if(header == NULL) {
-		return ERROR_INTERNAL;
-	}
-	if(!dynStrAppendString(header , ".IFJcode19\n")) {
-		dynStrFree(header);
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushFront(codeStrList, header)) {
@@ -288,11 +276,8 @@ int processFunctionDefinition(treeElement_t defElement,symTable_t *symTable, dyn
 
     // processing function name
     // (label to jump to when function is called)
-    dynStr_t* temp = dynStrInit();
+    dynStr_t* temp = dynStrInitString("LABEL ");
     if(temp == NULL) {
-        return ERROR_INTERNAL;
-    }
-    if(!dynStrAppendString(temp, "LABEL ")) {
         return ERROR_INTERNAL;
     }
     // dynamic string with function name, to determine variable context
@@ -1183,7 +1168,7 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
 		for (long i = 0; i < argc; ++i) {
 			retVal = processExpression(callElement.data.elements[1].data.elements[i], &pushToStack, symTable, context, printArgs);
 			if (retVal) {
-				dynStrFree(temp);
+				dynStrListFree(printArgs);
 				return retval;
 			}
 		}
@@ -1206,10 +1191,9 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
     }
 
     // add pushframe
-    temp = dynStrInit();
-    if(!dynStrAppendString(temp, "PUSHFRAME\n")) {
+    temp = dynStrInitString("PUSHFRAME\n");
+    if(temp == NULL) {
         dynStrFree(fname);
-        dynStrFree(temp);
         return ERROR_INTERNAL;
     }
     // add to list
@@ -1220,10 +1204,9 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
     }
 
     // call the function
-    temp = dynStrInit();
-    if(!dynStrAppendString(temp, "CALL ")) {
+    temp = dynStrInitString("CALL ");
+    if(temp == NULL) {
         dynStrFree(fname);
-        dynStrFree(temp);
         return ERROR_INTERNAL;
     }
     // function name
@@ -1243,9 +1226,8 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
     }
 
     // pop frame
-    temp = dynStrInit();
-    if(!dynStrAppendString(temp, "POPFRAME\n")) {
-        dynStrFree(temp);
+    temp = dynStrInitString("POPFRAME\n");
+    if(temp == NULL) {
         return ERROR_INTERNAL;
     }
     if(!dynStrListPushBack(codeStrList, temp)) {
@@ -1527,13 +1509,12 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
 }
 
 int generateInputiFunction(dynStrList_t* codeStrList) {
-	dynStr_t *string = dynStrInit();
 	const char* code = "LABEL inputi\n"
-	                   "DEFVAR LF@%retval\n"
-	                   "READ LF@%retval int\n"
-	                   "RETURN\n";
-	if(!dynStrAppendString(string, code)){
-		dynStrFree(string);
+						"DEFVAR LF@%retval\n"
+						"READ LF@%retval int\n"
+						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushFront(codeStrList, string)) {
@@ -1544,13 +1525,12 @@ int generateInputiFunction(dynStrList_t* codeStrList) {
 }
 
 int generateInputfFunction(dynStrList_t* codeStrList) {
-	dynStr_t *string = dynStrInit();
 	const char* code = "LABEL inputf\n"
-	                   "DEFVAR LF@%retval\n"
-	                   "READ LF@%retval float\n"
-	                   "RETURN\n";
-	if(!dynStrAppendString(string, code)){
-		dynStrFree(string);
+						"DEFVAR LF@%retval\n"
+						"READ LF@%retval float\n"
+						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushFront(codeStrList, string)) {
@@ -1561,13 +1541,12 @@ int generateInputfFunction(dynStrList_t* codeStrList) {
 }
 
 int generateInputsFunction(dynStrList_t* codeStrList) {
-	dynStr_t *string = dynStrInit();
 	const char* code = "LABEL inputs\n"
-	                   "DEFVAR LF@%retval\n"
-	                   "READ LF@%retval int\n"
-	                   "RETURN\n";
-	if(!dynStrAppendString(string, code)){
-		dynStrFree(string);
+						"DEFVAR LF@%retval\n"
+						"READ LF@%retval int\n"
+						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
 		return ERROR_INTERNAL;
 	}
 	if(!dynStrListPushFront(codeStrList, string)) {
