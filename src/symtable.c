@@ -150,7 +150,7 @@ void symTableClearAssigment(symTable_t *table) {
 	for (size_t i = 0; i < table->allocated; ++i) {
 		symbol_t *current = table->array[i];
 		while (current != NULL) {
-			if (current->type == SYMBOL_FUNCTION) {
+			if (current->type == SYMBOL_VARIABLE) {
 				current->info.variable.assigned = false;
 			}
 			current = current->next;
