@@ -669,17 +669,18 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
 
     bool pushToStack = true;
 
+    int retval = ERROR_SUCCESS; // return value
+
     // expression
-    if(processExpression(ifElement.data.elements[0], &pushToStack, symTable, context, codeStrList)){
-        return ERROR_SEMANTIC_OTHER;
+    retval = processExpression(ifElement.data.elements[0], &pushToStack, symTable, context, codeStrList);
+    if(retval){
+        return retval;
     }
 
     dynStr_t* temp = dynStrInit();
     if(!temp) {
         return ERROR_INTERNAL;
     }
-
-    int retval = ERROR_SUCCESS;
 
     //TODO
     // add single line comparison
@@ -753,8 +754,9 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     }
 
     // if body
-    if(processCodeBlock(ifElement.data.elements[1], symTable, context, codeStrList)){
-        return ERROR_SEMANTIC_OTHER;
+    retval = processCodeBlock(ifElement.data.elements[1], symTable, context, codeStrList);
+    if(retval) {
+        return retval;
     }
 
     // add fi (end of if-else)
@@ -834,11 +836,11 @@ int processElse(treeElement_t elseElement, symTable_t* symTable, dynStr_t* conte
         return ERROR_SEMANTIC_OTHER;
     }
 
-    if(processCodeBlock(elseElement.data.elements[0], symTable, context, codeStrList)) {
-        return ERROR_SEMANTIC_OTHER;
-    }
+    int retval = ERROR_SUCCESS;
 
-    return ERROR_SUCCESS;
+    retval = processCodeBlock(elseElement.data.elements[0], symTable, context, codeStrList);
+
+    return retval;
 }
 
 int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList) {
@@ -1223,4 +1225,90 @@ int generateLenFunction(dynStrList_t* codeStrList) {
 		return ERROR_INTERNAL;
 	}
 	return ERROR_SUCCESS;
+}
+
+int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList) {
+    if(whileElement.type != E_S_WHILE) {
+        return ERROR_SEMANTIC_OTHER;
+    }
+
+    // used to make labels unique
+    static unsigned whileCounter = 0;
+
+    bool pushToStack = true;
+
+    int retval = ERROR_SUCCESS;
+
+    retval = processExpression(whileElement.data.elements[0], &pushToStack, symTable, context, codeStrList);
+    if(retval){
+        return retval;
+    }
+
+    dynStr_t* temp = dynStrInit();
+    if(!temp) {
+        return ERROR_INTERNAL;
+    }
+
+    retval = numberToDynStr(temp, "LABLE $while%d\n", whileCounter);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code list
+    retval = !dynStrListPushBack(codeStrList, temp);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    //TODO
+    // add type detection
+
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "PUSHS bool@true JUMPIFNEQS $endWhile%d\n",  whileCounter);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to cede list
+    retval = !dynStrListPushBack(codeStrList, temp);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    // Process While body
+    retval = processCodeBlock(whileElement.data.elements[1], symTable, context, codeStrList);
+    if(retval) {
+        return retval;
+    }
+
+    // add jump to beginning
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "JUMP $while%d\n", whileCounter);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    // add to code block
+    retval = !dynStrListPushBack(codeStrList, temp);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    // add end
+    temp = dynStrInit();
+    retval = numberToDynStr(temp, "LABEL $endWhile%d\n", whileCounter);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+    retval = !dynStrListPushBack(codeStrList, temp);
+    if(retval) {
+        dynStrFree(temp);
+        return ERROR_INTERNAL;
+    }
+
+    return ERROR_SUCCESS;
 }
