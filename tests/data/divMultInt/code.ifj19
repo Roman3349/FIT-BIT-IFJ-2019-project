@@ -1,5 +1,5 @@
 # Test kombinace násobení a dělení
 
-a=5*4/2 
+a=5*4/2
 
 print(a)

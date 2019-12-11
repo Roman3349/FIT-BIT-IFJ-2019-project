@@ -25,50 +25,6 @@ const char* FRAME_NAME[] = {
         [FRAME_TEMP] = "TF"
 };
 
-// strlen(s, i, n)  // variables are already defined in temp frame
-const char* substr_def =
-        "LABEL SUBSTR\n"        // function label
-        "DEFVAR $length\n"
-        "STRLEN $length s\n"    // get string length
-        "DEFVAR $temp\n"
-
-        "GT $temp i $length\n"  // check if i > string length
-        "JUMPIFEQ $retNone $temp bool@true\n"
-
-        "LT $temp i int@0\n"    // check if substring begining is in string
-        "JUMPIFEQ $retNone $temp bool@true\n" // jump to return none if i < 0
-
-        "LT $temp n int@0\n"    // check if n < 0
-        "JUMPIFEQ $retNone $temp bool@true\n"
-
-        "GT $temp n $length\n"  // n > length of string
-        "JUMPIFNEQ $notmaxlen $temp bool@true\n"
-            "MOVE n length\n"       // n = length of string (copy all)
-        "LABEL $notmaxlen\n"
-
-        "EQ $temp n int@0\n"    // check if n == 0
-        "JUMPIFNEQ $notempty $temp bool@true\n"
-            "MOVE LF@$retval string@\\000\n" // add NUL char to return variable
-            "RETURN\n"              // return \0 (empty string)
-        "$notempty\n"
-
-        "DEFVAR $tempchar\n"
-        "LABEL $for\n"
-            "JUMPIFEQ $endfor n int@0\n"
-            ""
-
-            // TODO
-            //  add implementation for ord
-
-            "SUB n n int@1\n"
-            "JUMP $for\n"
-        "LABEL $endfor\n"
-
-        "LABEL $retNone\n"      // return None
-        "MOVE LF@$retval nil@nil\n"
-        "RETURN\n"
-        ;
-
 int processCode(treeElement_t codeElement, symTable_t* symTable) {
 
     if(codeElement.type != E_CODE){
@@ -1354,6 +1310,15 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
 	if ((retVal = generatePrintFunction(codeStrList)) != ERROR_SUCCESS) {
 		return retVal;
 	}
+	if ((retVal = generateChrFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+	if ((retVal = generateOrdFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+/*	if ((retVal = generateSubstrFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}*/
 	return retVal;
 }
 
@@ -1399,13 +1364,10 @@ int generatePrintFunction(dynStrList_t* codeStrList) {
 						"LABEL $none\n"
 						"WRITE string@None\n"
 						"LABEL $endNone\n"
-						"LT LF@lastArg LF@counter LF@argc\n"
-						"JUMPIFEQ $printNl LF@lastArg bool@false\n"
 						"WRITE string@\\032\n"
 						"JUMP $while\n"
-						"LABEL $printNl\n"
-						"WRITE string@\\010\n"
 						"LABEL $end\n"
+						"WRITE string@\\010\n"
 						"RETURN\n";
 	if(!dynStrAppendString(string, code)) {
 		dynStrFree(string);
@@ -1524,6 +1486,24 @@ int generateInputiFunction(dynStrList_t* codeStrList) {
 	return ERROR_SUCCESS;
 }
 
+int generateChrFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL chr\n"
+					   "DEFVAR LF@retval\n"
+					   "INT2CHAR LF@retval LF@%0\n"
+					   "RETURN\n";
+
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
 int generateInputfFunction(dynStrList_t* codeStrList) {
 	const char* code = "LABEL inputf\n"
 						"DEFVAR LF@%retval\n"
@@ -1583,15 +1563,15 @@ int generateCheckVariableType(dynStrList_t* codeStrList) {
     return ERROR_SUCCESS;
 }
 
-int generateChangeVariableType(dynStrList_t* dynStrList) {
-    const char* code = "LABEL $$checkType\n"
+int generateChangeVariableType(dynStrList_t* codeStrList) {
+    const char *code = "LABEL $$changeType\n"
                        "DEFVAR LF@retval1\n"
                        "DEFVAR LF@retval2\n"
                        "DEFVAR LF@type1\n"
                        "DEFVAR LF@type2\n"
                        "TYPE LF@type1 LF@arg1\n"
                        "TYPE LF@type2 LF@arg2\n"
-                       "JUMPIFEQ $$checkOK LF@type1 LF@type2\n"
+                       "JUMPIFEQ $$checkOKct LF@type1 LF@type2\n"
                        // not same type
                        "JUMPIFEQ $$float LF@type1 string@float\n"
                        "JUMPIFEQ $$int LF@type1 string@int\n"
@@ -1670,9 +1650,102 @@ int generateChangeVariableType(dynStrList_t* dynStrList) {
                        "LABEL $$bfte\n" // end
                        "JUMP $$intfloat\n"
 
-                       "LABEL $$checkOK\n"
+                       "LABEL $$checkOKct\n"
                        "MOVE LF@retval1 LF@arg1\n"
                        "MOVE LF@retval2 LF@arg2\n"
-                       "RETURN\n"
-                        ;
+                       "RETURN\n";
+    dynStr_t *string = dynStrInitString(code);
+    if(string == NULL) {
+        return ERROR_INTERNAL;
+    }
+    if(!dynStrListPushFront(codeStrList, string)) {
+        dynStrFree(string);
+        return ERROR_INTERNAL;
+    }
+    return ERROR_SUCCESS;
+}
+
+int generateOrdFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL ord\n"
+						"DEFVAR LF@%retval\n"
+						"MOVE LF@%retval nil@nil\n"
+						"DEFVAR LF@s\n"
+						"POPS LF@s\n"
+						"DEFVAR LF@cond\n"
+						"TYPE LF@cond LF@s\n"
+						"JUMPIFEQ $ord$isString LF@cond string@string\n"
+						"EXIT int@4\n"
+						"LABEL $ord$isString\n"
+						"DEFVAR LF@i\n"
+						"POPS LF@i\n"
+						"DEFVAR LF@len\n"
+						"STRLEN LF@len LF@s\n"
+						"LT LF@cond LF@i int@0\n"
+						"JUMPIFEQ $ord$end LF@cond bool@true\n"
+						"LT LF@cond LF@i LF@len\n"
+						"JUMPIFEQ $end LF@cond bool@false\n"
+						"STRI2INT LF@%retval LF@s LF@i\n"
+						"LABEL $ord$end\n"
+						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateSubstrFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL substr\n"        // function label
+	                   "DEFVAR $length\n"
+	                   "STRLEN $length s\n"    // get string length
+	                   "DEFVAR $temp\n"
+
+	                   "GT $temp i $length\n"  // check if i > string length
+	                   "JUMPIFEQ $retNone $temp bool@true\n"
+
+	                   "LT $temp i int@0\n"    // check if substring begining is in string
+	                   "JUMPIFEQ $retNone $temp bool@true\n" // jump to return none if i < 0
+
+	                   "LT $temp n int@0\n"    // check if n < 0
+	                   "JUMPIFEQ $retNone $temp bool@true\n"
+
+	                   "GT $temp n $length\n"  // n > length of string
+	                   "JUMPIFNEQ $notmaxlen $temp bool@true\n"
+	                   "MOVE n length\n"       // n = length of string (copy all)
+	                   "LABEL $notmaxlen\n"
+
+	                   "EQ $temp n int@0\n"    // check if n == 0
+	                   "JUMPIFNEQ $notempty $temp bool@true\n"
+	                   "MOVE LF@$retval string@\\000\n" // add NUL char to return variable
+	                   "RETURN\n"              // return \0 (empty string)
+	                   "$notempty\n"
+
+	                   "DEFVAR $tempchar\n"
+	                   "LABEL $for\n"
+	                   "JUMPIFEQ $endfor n int@0\n"
+	                   ""
+
+	                   // TODO
+	                   //  add implementation for ord
+
+	                   "SUB n n int@1\n"
+	                   "JUMP $for\n"
+	                   "LABEL $endfor\n"
+
+	                   "LABEL $retNone\n"      // return None
+	                   "MOVE LF@$retval nil@nil\n"
+	                   "RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
 }

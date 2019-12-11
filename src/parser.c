@@ -663,24 +663,6 @@ int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, d
 					}
 
                 	break;
-
-//					do{
-//						token = tokenStackPop(stack, &errCode);
-//						if(errCode != ERROR_SUCCESS) {
-//							return errCode;
-//						}
-//						switch(token.type){
-//							case T_STRING:
-//							case T_ID:
-//							case T_STRING_ML:
-//								dynStrFree(token.data.strval);
-//								break;
-//
-//							default:
-//								break;
-//						}
-//					} while (token.type != T_EOL);
-//					break;
 				}
 
             default:

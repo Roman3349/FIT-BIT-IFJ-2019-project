@@ -1,0 +1,4 @@
+# Test relační operace větší než kombinovaný se sčítáním
+
+b=3>1+1
+print(b)

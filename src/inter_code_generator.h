@@ -231,3 +231,40 @@ int generateInputsFunction(dynStrList_t* codeStrList);
  * @return Execution status
  */
 int generatePrintFunction(dynStrList_t* codeStrList);
+
+
+/**
+ * Generates chr embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateChrFunction(dynStrList_t* codeStrList);
+
+
+/**
+ * Generates checkType function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution Status
+ */
+int generateCheckVariableType(dynStrList_t* codeStrList);
+
+/**
+ * Generates changeType function for automatic type cast
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateChangeVariableType(dynStrList_t* codeStrList);
+
+/**
+ * Generates ord embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateOrdFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates substr embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateSubstrFunction(dynStrList_t* codeStrList);

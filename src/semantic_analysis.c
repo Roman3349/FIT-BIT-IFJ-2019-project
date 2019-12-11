@@ -117,9 +117,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 
 		case E_ADD:
 		case E_SUB:
-		case E_MUL:
-		case E_DIV:
-		case E_DIV_INT: {
+		case E_MUL:{
 			treeElement_t operator1 = expressionTree->data.elements[0];
 			semanticType_t op1Type = getOperatorType(operator1, errCode);
 			if (op1Type == SEMANTIC_EXPRESSION)
@@ -127,36 +125,10 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 
 			if (*errCode != ERROR_SUCCESS)
 				return SEMANTIC_UNKNOWN;
-
 			treeElement_t operator2 = expressionTree->data.elements[1];
 			semanticType_t op2Type = getOperatorType(operator2, errCode);
 			if (op2Type == SEMANTIC_EXPRESSION) {
 				op2Type = checkExpression(&operator2, symTable, errCode, context);
-			}
-
-			if(expressionTree->type == E_DIV_INT || expressionTree->type == E_DIV) {
-				switch(op2Type) {
-					case SEMANTIC_INT:
-						if(operator2.data.token->data.intval == 0) {
-							*errCode = ERROR_ZERO_DIVISION;
-							return SEMANTIC_UNKNOWN;
-						}
-						break;
-					case SEMANTIC_FLOAT:
-						if(operator2.data.token->data.floatval == 0.0) {
-							*errCode = ERROR_ZERO_DIVISION;
-							return SEMANTIC_UNKNOWN;
-						}
-						break;
-					case SEMANTIC_BOOL:
-						if(operator2.data.token->type == T_BOOL_FALSE){
-							*errCode = ERROR_ZERO_DIVISION;
-							return SEMANTIC_UNKNOWN;
-						}
-						break;
-					default:
-						break;
-				}
 			}
 
 			if (expressionTree->type == E_ADD) {
@@ -183,7 +155,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator1, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
+							return SEMANTIC_FLOAT;
 
 						case SEMANTIC_BOOL:
 							convertBoolToInt(&operator2, errCode);
@@ -212,10 +184,10 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator2, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
+							return SEMANTIC_FLOAT;
 
 						case SEMANTIC_FLOAT:
-							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
+							return SEMANTIC_FLOAT;
 
 						case SEMANTIC_BOOL:
 							convertBoolToInt(&operator2, errCode);
@@ -225,7 +197,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator2, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
+							return SEMANTIC_FLOAT;
 
 						case SEMANTIC_UNKNOWN:
 						case SEMANTIC_VARIABLE:
@@ -260,7 +232,7 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 							convertIntToFloat(&operator1, errCode);
 							if (*errCode != ERROR_SUCCESS)
 								return SEMANTIC_UNKNOWN;
-							return (expressionTree->type == E_DIV_INT)? SEMANTIC_INT : SEMANTIC_FLOAT;
+							return SEMANTIC_FLOAT;
 
 
 						default:
@@ -293,6 +265,174 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 					}
 
 					return SEMANTIC_UNKNOWN;
+
+				default:
+					*errCode = ERROR_SEMANTIC_EXPRESSION;
+					return SEMANTIC_UNKNOWN;
+			}
+			break;
+		}
+
+		case E_DIV:
+		case E_DIV_INT: {
+			treeElement_t operator1 = expressionTree->data.elements[0];
+			semanticType_t op1Type = getOperatorType(operator1, errCode);
+			if (op1Type == SEMANTIC_EXPRESSION)
+				op1Type = checkExpression(&operator1, symTable, errCode, context);
+
+			if (*errCode != ERROR_SUCCESS)
+				return SEMANTIC_UNKNOWN;
+			treeElement_t operator2 = expressionTree->data.elements[1];
+			semanticType_t op2Type = getOperatorType(operator2, errCode);
+			if (op2Type == SEMANTIC_EXPRESSION) {
+				op2Type = checkExpression(&operator2, symTable, errCode, context);
+			}
+
+			switch(op2Type) {
+				case SEMANTIC_INT:
+					if(operator2.data.token->data.intval == 0) {
+						*errCode = ERROR_ZERO_DIVISION;
+						return SEMANTIC_UNKNOWN;
+					}
+					break;
+				case SEMANTIC_FLOAT:
+					if(operator2.data.token->data.floatval == 0.0) {
+						*errCode = ERROR_ZERO_DIVISION;
+						return SEMANTIC_UNKNOWN;
+					}
+					break;
+				case SEMANTIC_BOOL:
+					if(operator2.data.token->type == T_BOOL_FALSE){
+						*errCode = ERROR_ZERO_DIVISION;
+						return SEMANTIC_UNKNOWN;
+					}
+					break;
+				default:
+					break;
+			}
+
+			if (*errCode != ERROR_SUCCESS)
+				return SEMANTIC_UNKNOWN;
+
+			switch (op1Type) {
+				case SEMANTIC_INT:
+					switch (op2Type) {
+						case SEMANTIC_INT:
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_FLOAT:
+							convertIntToFloat(&operator1, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_BOOL:
+							convertBoolToInt(&operator2, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							break;
+
+						case SEMANTIC_UNKNOWN:
+							return SEMANTIC_UNKNOWN;
+						case SEMANTIC_VARIABLE:
+							if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context))
+								*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+
+
+						default:
+							*errCode = ERROR_SEMANTIC_EXPRESSION;
+							return SEMANTIC_UNKNOWN;
+					}
+					break;
+
+				case SEMANTIC_FLOAT:
+					switch (op2Type) {
+
+						case SEMANTIC_INT:
+							convertIntToFloat(&operator2, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_FLOAT:
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_BOOL:
+							convertBoolToInt(&operator2, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+
+							convertIntToFloat(&operator2, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_UNKNOWN:
+						case SEMANTIC_VARIABLE:
+							if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context))
+								*errCode = ERROR_SEMANTIC_FUNCTION;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						default:
+							*errCode = ERROR_SEMANTIC_EXPRESSION;
+							return SEMANTIC_UNKNOWN;
+					}
+
+				case SEMANTIC_BOOL:
+					switch (op2Type) {
+						case SEMANTIC_BOOL:
+							return SEMANTIC_BOOL;
+
+						case SEMANTIC_UNKNOWN:
+						case SEMANTIC_VARIABLE:
+							if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context))
+								*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+
+						case SEMANTIC_INT:
+							convertBoolToInt(&operator1, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						case SEMANTIC_FLOAT:
+							convertBoolToInt(&operator1, errCode);
+							convertIntToFloat(&operator1, errCode);
+							if (*errCode != ERROR_SUCCESS)
+								return SEMANTIC_UNKNOWN;
+							return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+						default:
+							*errCode = ERROR_SEMANTIC_EXPRESSION;
+							return SEMANTIC_UNKNOWN;
+					}
+
+				case SEMANTIC_VARIABLE:
+					if (!symTableIsVariableAssigned(symTable, operator1.data.token->data.strval, context)) {
+						*errCode = ERROR_SEMANTIC_FUNCTION;
+						return SEMANTIC_UNKNOWN;
+					}
+
+					if(op2Type == SEMANTIC_VARIABLE) {
+						if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context)) {
+							*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+						}
+					}
+
+
+					return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
+
+				case SEMANTIC_UNKNOWN:
+					if(op2Type == SEMANTIC_VARIABLE) {
+						if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context)) {
+							*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+						}
+					}
+
+					return (expressionTree->type == E_DIV)? SEMANTIC_FLOAT : SEMANTIC_INT;
 
 				default:
 					*errCode = ERROR_SEMANTIC_EXPRESSION;
