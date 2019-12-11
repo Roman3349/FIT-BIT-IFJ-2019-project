@@ -83,7 +83,7 @@ token_t scan(FILE* file, intStack_t* stack) {
         if (line_beginning) {
 
             // number of indent offsets on stack
-            int referenceCount;
+            int referenceCount = 0;
             if (!stackCount(stack, &referenceCount)) {
                 return output_token;
             }
