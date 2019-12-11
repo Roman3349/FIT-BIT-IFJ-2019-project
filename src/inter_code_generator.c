@@ -322,8 +322,8 @@ int processCodeBlock(treeElement_t codeBlockElement, symTable_t* symTable, dynSt
                 retval = processIf(codeBlockElement.data.elements[i], symTable, context, codeStrList);
                 break;
             case E_S_WHILE:
-                 //retval = processWhile(codeBlockElement.data.elements[i]);
-                break;
+                 retval = processWhile(codeBlockElement.data.elements[i], symTable, context, codeStrList);
+		        break;
             default:
                 return ERROR_SEMANTIC_OTHER;
         }
@@ -1260,7 +1260,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         return ERROR_INTERNAL;
     }
 
-    retval = numberToDynStr(temp, "LABLE $while%d\n", whileCounter);
+    retval = numberToDynStr(temp, "LABEL $while%d\n", whileCounter);
     if (retval) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
@@ -1276,7 +1276,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
     // add type detection
 
     temp = dynStrInit();
-    retval = numberToDynStr(temp, "PUSHS bool@true JUMPIFNEQS $endWhile%d\n", whileCounter);
+    retval = numberToDynStr(temp, "PUSHS bool@true\nJUMPIFNEQS $endWhile%d\n", whileCounter);
     if (retval) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
