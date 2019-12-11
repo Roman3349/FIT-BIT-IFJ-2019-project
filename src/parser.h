@@ -54,7 +54,9 @@ typedef enum statementPart statementPart_t;
 
 /**
  * Parse line of source code in file and creates derivation tree representation
- * @param file    source file
+ * @param file source file
+ * @param symTable symbol table
+ * @param errCode error code
  * @returns derivation  tree representation of one line
  * @pre file is opened in read mode
  */
@@ -63,32 +65,40 @@ treeElement_t syntaxParse(FILE * file, symTable_t* symTable, int* errCode);
 
 /**
  * Parses while structure after while keyword
- * @param file source file
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseWhile(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses code block
- * @param file source file
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseBlock(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses function call
- * @param file source file
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseFunctionCall(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
 
 /**
  * Parses pass keyword
- * @param file source file
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -96,6 +106,9 @@ int parsePass(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dy
 /**
  * Parses return keyword and value
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -103,6 +116,9 @@ int parseReturn(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, 
 /**
  * Parses if keyword
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseIf(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -110,6 +126,9 @@ int parseIf(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynS
 /**
  * Parses else keyword
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -118,6 +137,8 @@ int parseElse(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dy
 /**
  * Parses function definition
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
  * @return parsing error code
  */
 int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable);
@@ -125,6 +146,9 @@ int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTa
 /**
  * Parses function definition parameters
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param functionName defining function name
  * @return parsing error code
  */
 int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* functionName);
@@ -132,6 +156,10 @@ int parseFunctionDefParams(tokenStack_t* stack, treeElement_t* tree, symTable_t*
 /**
  * Parses function call parameters
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
+ * @param functionName name of calling function
  * @return parsing error code
  */
 int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context, dynStr_t* functionName);
@@ -140,6 +168,7 @@ int parseFunctionCallParams(tokenStack_t* stack, treeElement_t* tree, symTable_t
  * Check if next token matches expected token eventually prints error message
  * @param stack token stack
  * @param expectedToken expected token
+ * @param tree parse tree
  * @return processing error code
  */
 int processToken(tokenStack_t* stack, enum token_type expectedToken, treeElement_t* tree);
@@ -155,6 +184,9 @@ int statementPartToTokenType(statementPart_t statementPart, enum token_type* typ
 /**
  * Parses expression
  * @param stack token stack
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return parsing error code
  */
 int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -163,6 +195,9 @@ int parseExpression(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTab
  * Processes statement part
  * @param stack token stack
  * @param part statement part
+ * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return processing error code
  */
 int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
@@ -171,6 +206,8 @@ int processStatementPart(tokenStack_t* stack, statementPart_t part, treeElement_
  * Parses assignment
  * @param stack token stack
  * @param tree parse tree
+ * @param symTable symbol table
+ * @param context parser context
  * @return processing error code
  */
 int parseAssignment(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTable, dynStr_t* context);
