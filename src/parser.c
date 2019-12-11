@@ -176,8 +176,12 @@ int parseFunctionDef(tokenStack_t* stack, treeElement_t* tree, symTable_t* symTa
 			if(errCode != ERROR_SUCCESS)
 				return errCode;
 			if(token.type == T_ID) {
-				processToken(stack, T_ID, defFunTree);
+				errCode = processToken(stack, T_ID, defFunTree);
+				if(errCode != ERROR_SUCCESS)
+					return errCode;
 				context = token.data.strval;
+			} else {
+				return ERROR_SYNTAX;
 			}
 		} else if (functionDef_s[i] == S_DEF_PARAMS) {
 			errCode = parseFunctionDefParams(stack, defFunTree, symTable, context);

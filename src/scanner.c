@@ -83,7 +83,7 @@ token_t scan(FILE* file, intStack_t* stack) {
         if (line_beginning) {
 
             // number of indent offsets on stack
-            int referenceCount;
+            int referenceCount = 0;
             if (!stackCount(stack, &referenceCount)) {
                 return output_token;
             }
@@ -248,6 +248,9 @@ token_t scan(FILE* file, intStack_t* stack) {
             case ',' :
                 output_token.type = T_COMMA;
                 break;
+			case '\r':
+				// Skip CR
+				continue;
             case '\n':
                 line_beginning = true;
                 output_token.type = T_EOL;
@@ -716,6 +719,26 @@ int remove_line_comment(FILE* file) {
         }
     }
     return SUCCESS;
+}
+
+void tokenBoolToInt(token_t * token, int* errCode) {
+	if(token->type != T_BOOL_FALSE && token->type != T_BOOL_TRUE) {
+		*errCode = ERROR_INTERNAL;
+		return;
+	}
+
+	token->data.intval = (token->type == T_BOOL_TRUE)? 1 : 0;
+	token->type = T_NUMBER;
+}
+
+void tokenIntToFloat(token_t * token, int* errCode){
+	if(token->type != T_NUMBER) {
+		*errCode = ERROR_INTERNAL;
+		return;
+	}
+
+	token->type = T_FLOAT;
+	token->data.floatval = (double) token->data.intval;
 }
 
 char* tokenToString (enum token_type type) {

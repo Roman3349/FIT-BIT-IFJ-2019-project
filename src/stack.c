@@ -21,6 +21,7 @@
 intStack_t* stackInit() {
 	intStack_t* stack = malloc(sizeof(intStack_t));
 	stack->head = NULL;
+	stack->count = 0;
 	return stack;
 }
 
