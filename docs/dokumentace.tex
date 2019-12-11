@@ -250,7 +250,7 @@ V precedenční analýze hojně pracujeme se zásobníkem. Každý příchozí t
 
 \subsection{Sémantická analýza}
 Sémantické kontroly jsou přidruženy k rekurzivnímu sestupu syntaktické analýzy.
-Naimplementovány jsou v modulu \textbf{.c}. Největší část sémantických kontrol spočívá v kontrole datových typů výrazů, které vstupují do různých operací. V případě nejednotnosti těchto datových typů poté probíhá implicitní přetypování. Jelikož jsme se rozhodli pro podporu rozšíření \textsc{boolop}, kromě implicitního přetypování z typu \emph{int} na \emph{float}, musíme podporovat i přetypování z typu \emph{bool} na \emph{int} a \emph{float}.
+Naimplementovány jsou v modulu \textbf{semantic\_analysis.c}. Největší část sémantických kontrol spočívá v kontrole datových typů výrazů, které vstupují do různých operací. V případě nejednotnosti těchto datových typů poté probíhá implicitní přetypování. Jelikož jsme se rozhodli pro podporu rozšíření \textsc{boolop}, kromě implicitního přetypování z typu \emph{int} na \emph{float}, musíme podporovat i přetypování z typu \emph{bool} na \emph{int} a \emph{float}.
 
 \subsection{Generátor cílového kódu}
 Generátor cílového kódu byl implementován v modulu \textbf{inter\_code\_generator.c}. Tento modul má za úkol skládat dohromady a vytvářet cílový kód, tedy v našem případě kod \textbf{IFJcode19}.
@@ -269,6 +269,29 @@ Pro implementaci rozšíření BOOLOP jsme přidali další pravidla do preceden
 Implementace rozšíření BASE spočívá v přidání a vypořádání se s dalším způsobem zadávání čí\-sel\-ných konstant. Do lexikální analýzy byly přidány stavy pro přijímání lexémů konstant zapsaných v binární, oktalové a hexadecimální soustavě, jejich převod na tokeny a předání dalším částem pře\-kla\-da\-če.
 \subsection{TABUNARY}
 Při implementaci rozšíření TABUNARY jsme se museli vypořádat s rozdílem mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Pokud před tokenem plus nebo mínus předchází jeden operand a následuje druhý, jedná se o binární operátory, pokud ovšem předcházející operand chybí, jedná se po implementaci tohoto rozšíření o unární operátory, narozdíl od základní implementaci, kde by při tomto zápisu nastala syntaktická chyba překladu.
-\section{Rozdělení práce}
+\section{Týmová spolupráce}
+Od začátku řešení projektu jsme se pravidelně scházeli nejdříve přibližně jedenkrát týdně a s blížícím se termínem odevzdání poté i vícekrát za týden. Pro rychlou komunikaci mezi sebou v reálném čase jsme si zvolili službu \textbf{Slack.com}, kde jsme ihned řešili všechny problémy, které nastaly.
+
+Jako verzovací systém jsme použili \textbf{Git} hostovaný na stránce \textbf{GitHub}. 
+\subsection{Rozdělení práce}
+\begin{itemize}
+  \item Roman Ondráček
+  \item Pavel Raur
+  \item František Jeřábek
+  \item Radim Lipka
+\end{itemize}
 \section{Závěr}
+Cílem projektu bylo pochopit a prakticky si vyzkoušet metody a techniky vysvětlované v předmětech IFJ a IAL a ze všeho nejvíc pochopit, z čeho se skládá překladač a jak fungují jeho jednotlivé části. 
+
+Práce na projektu, ať už studium teorie, návrhy nebo samotná implementace nám přinesla řadu zkušeností, nových znalostí a rozšířila nám obzory na poli překladačů, jazyků a algoritmů.
+\section{Použitá literatura, nástroje, programy}
+\begin{itemize}
+  \item Alexandr Meduna a Roman Lukáš, Formální jazyky a překladače, prezentace k přednáškám
+  \item Jan M. Honzík, Ivana Burgetová, Bohuslav Křena, Algoritmy, prezentace k přednáškám
+  \item Zbyněk Křivka a Radim Kocman, Demonstrační cvičení IFJ, Implementace překladače IFJ19 
+  \item cppreference.com, \href{https://en.cppreference.com/}{https://en.cppreference.com/}
+  \item GitHub, \href{https://github.com/}{https://github.com/}
+  \item Slack, \href{https://slack.com/}{https://slack.com/}
+
+\end{itemize}
 \end{document}
