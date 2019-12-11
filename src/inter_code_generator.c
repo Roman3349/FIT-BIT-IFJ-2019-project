@@ -1399,13 +1399,10 @@ int generatePrintFunction(dynStrList_t* codeStrList) {
 						"LABEL $none\n"
 						"WRITE string@None\n"
 						"LABEL $endNone\n"
-						"LT LF@lastArg LF@counter LF@argc\n"
-						"JUMPIFEQ $printNl LF@lastArg bool@false\n"
 						"WRITE string@\\032\n"
 						"JUMP $while\n"
-						"LABEL $printNl\n"
-						"WRITE string@\\010\n"
 						"LABEL $end\n"
+						"WRITE string@\\010\n"
 						"RETURN\n";
 	if(!dynStrAppendString(string, code)) {
 		dynStrFree(string);
