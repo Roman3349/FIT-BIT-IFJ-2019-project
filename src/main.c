@@ -20,6 +20,7 @@
 #include "error.h"
 #include "inter_code_generator.h"
 #include "parser.h"
+#include "semantic_analysis.h"
 
 /**
  * Main function
@@ -45,6 +46,14 @@ int main(int argc, char *argv[]) {
 		fclose(file);
 		return errCode;
     }
+
+    semanticCheck(&tree, symTable, &errCode);
+	if(errCode != ERROR_SUCCESS){
+		treeFree(tree);
+		symTableFree(symTable);
+		fclose(file);
+		return errCode;
+	}
 
 	processCode(tree);
 	symTableFree(symTable);

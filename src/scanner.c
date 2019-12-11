@@ -721,6 +721,26 @@ int remove_line_comment(FILE* file) {
     return SUCCESS;
 }
 
+void tokenBoolToInt(token_t * token, int* errCode) {
+	if(token->type != T_BOOL_FALSE && token->type != T_BOOL_TRUE) {
+		*errCode = ERROR_INTERNAL;
+		return;
+	}
+
+	token->data.intval = (token->type == T_BOOL_TRUE)? 1 : 0;
+	token->type = T_NUMBER;
+}
+
+void tokenIntToFloat(token_t * token, int* errCode){
+	if(token->type != T_NUMBER) {
+		*errCode = ERROR_INTERNAL;
+		return;
+	}
+
+	token->type = T_FLOAT;
+	token->data.floatval = (double) token->data.intval;
+}
+
 char* tokenToString (enum token_type type) {
 	char *arr[] = {
 		"EOL",
