@@ -23,7 +23,7 @@
 #include "dynamic_string_list.h"
 
 
-/*
+/**
  * Process body of the program
  * @param codeElement tree element containing the program code
  * @param symTable symbol table
@@ -32,7 +32,7 @@
  */
 int processCode(treeElement_t codeElement, symTable_t* symTable);
 
-/*
+/**
  * Process element with token
  * @param eTokenElement tree element with token
  * @param outputDynStr dynamic string where output will be writen to
@@ -46,7 +46,7 @@ int processCode(treeElement_t codeElement, symTable_t* symTable);
 int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only,
         symTable_t* symTable, dynStr_t* context, bool* varDefined);
 
-/*
+/**
  * Process definition of new function
  * @param defElement tree element with function definition
  * @param symTable symbol table
@@ -57,7 +57,7 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
 int processFunctionDefinition(treeElement_t defElement, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process block of code
  * @param codeBlockElement tree element containing block of code to process
  * @param symTable symbol table
@@ -68,7 +68,7 @@ int processFunctionDefinition(treeElement_t defElement, symTable_t* symTable,
 int processCodeBlock(treeElement_t codeBlockElement, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process expression
  * @param expElement tree element with expression
  * @param pushToStack if true, generates pushs instruction
@@ -82,7 +82,7 @@ int processCodeBlock(treeElement_t codeBlockElement, symTable_t* symTable,
 int processExpression(treeElement_t expElement, bool* pushToStack, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process operation with 2 operands
  * @param operationElement tree element containing operation to process
  * @param pushToStack if true, generates pushs instruction
@@ -96,7 +96,7 @@ int processExpression(treeElement_t expElement, bool* pushToStack, symTable_t* s
 int processBinaryOperation(treeElement_t operationElement, bool* pushToStack,
         symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process operation operation with only 1 operand
  * @param operationElement tree element with operation to process
  * @param pushToStack if true, generates pushs instruction
@@ -110,7 +110,7 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack,
 int processUnaryOperation(treeElement_t operationElement, bool* pushToStack,
         symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process if statement
  * @param ifElement tree element containing if statement
  * @param symTable symbol table
@@ -120,7 +120,7 @@ int processUnaryOperation(treeElement_t operationElement, bool* pushToStack,
  */
 int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Convert number to dynamic string
  * @param outputStr dynamic string where number will be put to
  * @param formatString printf style format string
@@ -130,7 +130,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
  */
 int numberToDynStr(dynStr_t* outputStr, char* formatString, long number);
 
-/*
+/**
  * Convert float to dynamic string
  * @param outputStr dynamic string where number will be put to
  * @param formatString printf style format string
@@ -140,7 +140,7 @@ int numberToDynStr(dynStr_t* outputStr, char* formatString, long number);
  */
 int floatToDynStr(dynStr_t* outputStr, char* formatString, double number);
 
-/*
+/**
  * Process else statement
  * @param elseElement tree element with else code block to process
  * @param symTable symbol table
@@ -150,7 +150,7 @@ int floatToDynStr(dynStr_t* outputStr, char* formatString, double number);
  */
 int processElse(treeElement_t elseElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process assignment of variable
  * @param assignElement element with assign expression
  * @param symTable symbol table
@@ -160,7 +160,7 @@ int processElse(treeElement_t elseElement, symTable_t* symTable, dynStr_t* conte
  */
 int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Create temporary frame and process function call
  * @param callElement tree element containing function call
  * @param context local scope function name
@@ -169,7 +169,7 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
  */
 int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process function params in temporary frame
  * @param callParamsElement tree element containing called function parameters
  * @param symTable symbol table
@@ -180,7 +180,7 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
 int processFunctionCallParams(treeElement_t callParamsElement, symTable_t* symTable,
         dynStr_t* context, dynStrList_t* codeStrList);
 
-/*
+/**
  * Process while function
  * @param whileElement tree element containing while function
  * @param symTable symbol table
