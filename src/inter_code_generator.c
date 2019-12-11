@@ -953,7 +953,7 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
         return ERROR_SEMANTIC_OTHER;
     }
 
-    if(callElement.nodeSize != 2) {
+    if(!(callElement.nodeSize == 1 || callElement.nodeSize == 2)) {
         return ERROR_SEMANTIC_OTHER;
     }
 
@@ -1045,9 +1045,11 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
     //  remove temporary frame and hardcode it in processFunctionCallParams?
 
     // create frame and process params
-    retval = processFunctionCallParams(callElement.data.elements[1], symTable, fname, codeStrList);
-    if(retval) {
-        return retval;
+    if (callElement.nodeSize == 2) {
+	    retval = processFunctionCallParams(callElement.data.elements[1], symTable, fname, codeStrList);
+	    if (retval) {
+		    return retval;
+	    }
     }
 
     // add pushframe
@@ -1205,6 +1207,15 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
 	if ((retVal = generateLenFunction(codeStrList)) != ERROR_SUCCESS) {
 		return retVal;
 	}
+	if ((retVal = generateInputiFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+	if ((retVal = generateInputfFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+	if ((retVal = generateInputsFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
 	return retVal;
 }
 
@@ -1214,6 +1225,57 @@ int generateLenFunction(dynStrList_t* codeStrList) {
 					"DEFVAR LF@%retval\n"
 					"STRLEN LF@%retval LF@%0\n"
 					"RETURN\n";
+	if(!dynStrAppendString(string, code)){
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateInputiFunction(dynStrList_t* codeStrList) {
+	dynStr_t *string = dynStrInit();
+	const char* code = "LABEL inputi\n"
+	                   "DEFVAR LF@%retval\n"
+	                   "READ LF@%retval int\n"
+	                   "RETURN\n";
+	if(!dynStrAppendString(string, code)){
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateInputfFunction(dynStrList_t* codeStrList) {
+	dynStr_t *string = dynStrInit();
+	const char* code = "LABEL inputf\n"
+	                   "DEFVAR LF@%retval\n"
+	                   "READ LF@%retval float\n"
+	                   "RETURN\n";
+	if(!dynStrAppendString(string, code)){
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateInputsFunction(dynStrList_t* codeStrList) {
+	dynStr_t *string = dynStrInit();
+	const char* code = "LABEL inputs\n"
+	                   "DEFVAR LF@%retval\n"
+	                   "READ LF@%retval int\n"
+	                   "RETURN\n";
 	if(!dynStrAppendString(string, code)){
 		dynStrFree(string);
 		return ERROR_INTERNAL;

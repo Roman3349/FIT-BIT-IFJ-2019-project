@@ -192,3 +192,24 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList);
  * @return Execution status
  */
 int generateLenFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputi embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputiFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputf embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputfFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates inputs embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateInputsFunction(dynStrList_t* codeStrList);
