@@ -267,6 +267,9 @@ Pro implementaci rozšíření BOOLOP byla přidána další pravidla do precede
 \subsection{BASE}
 Implementace rozšíření BASE spočívá v přidání a vypořádání se s dalším způsobem zadávání čí\-sel\-ných konstant. Do lexikální analýzy byly přidány stavy pro přijímání lexémů konstant zapsaných v binární, oktalové a hexadecimální soustavě, jejich převod na tokeny a předání dalším částem pře\-kla\-da\-če.
 
+\subsection{FUNEXP}
+Rozšíření FUNEXP požadovalo podporu volání funkce jako součást výrazu a také výrazy jako parametry funkce při jejím volání. Do precedenční analýzy pro to byla přidány pravidla, která toto umožňují.
+
 \subsection{IFTHEN}
 V rozšíření IFTHEN se měl podporovat ternární operátor, \textbf{elif}, a konstrukce \textbf{if} bez části \textbf{else}. Právě poslední zmíněné rozšíření je naším překladačem podporováno.
 
