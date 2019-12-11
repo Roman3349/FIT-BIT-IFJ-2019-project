@@ -242,3 +242,17 @@ int generateChrFunction(dynStrList_t* codeStrList);
 
 
 
+
+/**
+ * Generates ord embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateOrdFunction(dynStrList_t* codeStrList);
+
+/**
+ * Generates substr embedded function
+ * @param codeStrList List of dynamic string where the code is generated to
+ * @return Execution status
+ */
+int generateSubstrFunction(dynStrList_t* codeStrList);

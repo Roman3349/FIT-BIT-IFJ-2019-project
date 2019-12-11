@@ -25,50 +25,6 @@ const char* FRAME_NAME[] = {
         [FRAME_TEMP] = "TF"
 };
 
-// strlen(s, i, n)  // variables are already defined in temp frame
-const char* substr_def =
-        "LABEL SUBSTR\n"        // function label
-        "DEFVAR $length\n"
-        "STRLEN $length s\n"    // get string length
-        "DEFVAR $temp\n"
-
-        "GT $temp i $length\n"  // check if i > string length
-        "JUMPIFEQ $retNone $temp bool@true\n"
-
-        "LT $temp i int@0\n"    // check if substring begining is in string
-        "JUMPIFEQ $retNone $temp bool@true\n" // jump to return none if i < 0
-
-        "LT $temp n int@0\n"    // check if n < 0
-        "JUMPIFEQ $retNone $temp bool@true\n"
-
-        "GT $temp n $length\n"  // n > length of string
-        "JUMPIFNEQ $notmaxlen $temp bool@true\n"
-            "MOVE n length\n"       // n = length of string (copy all)
-        "LABEL $notmaxlen\n"
-
-        "EQ $temp n int@0\n"    // check if n == 0
-        "JUMPIFNEQ $notempty $temp bool@true\n"
-            "MOVE LF@$retval string@\\000\n" // add NUL char to return variable
-            "RETURN\n"              // return \0 (empty string)
-        "$notempty\n"
-
-        "DEFVAR $tempchar\n"
-        "LABEL $for\n"
-            "JUMPIFEQ $endfor n int@0\n"
-            ""
-
-            // TODO
-            //  add implementation for ord
-
-            "SUB n n int@1\n"
-            "JUMP $for\n"
-        "LABEL $endfor\n"
-
-        "LABEL $retNone\n"      // return None
-        "MOVE LF@$retval nil@nil\n"
-        "RETURN\n"
-        ;
-
 int processCode(treeElement_t codeElement, symTable_t* symTable) {
 
     if(codeElement.type != E_CODE){
@@ -1357,6 +1313,12 @@ int generateEmbeddedFunctions(dynStrList_t *codeStrList) {
 	if ((retVal = generateChrFunction(codeStrList)) != ERROR_SUCCESS) {
 		return retVal;
 	}
+	if ((retVal = generateOrdFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
+	if ((retVal = generateSubstrFunction(codeStrList)) != ERROR_SUCCESS) {
+		return retVal;
+	}
 	return retVal;
 }
 
@@ -1563,6 +1525,91 @@ int generateInputsFunction(dynStrList_t* codeStrList) {
 						"DEFVAR LF@%retval\n"
 						"READ LF@%retval int\n"
 						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateOrdFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL ord\n"
+						"DEFVAR LF@%retval\n"
+						"MOVE LF@%retval nil@nil\n"
+						"DEFVAR LF@s\n"
+						"POPS LF@s\n"
+						"DEFVAR LF@cond\n"
+						"TYPE LF@cond LF@s\n"
+						"JUMPIFEQ $ord$isString LF@cond string@string\n"
+						"EXIT int@4\n"
+						"LABEL $ord$isString\n"
+						"DEFVAR LF@i\n"
+						"POPS LF@i\n"
+						"DEFVAR LF@len\n"
+						"STRLEN LF@len LF@s\n"
+						"LT LF@cond LF@i int@0\n"
+						"JUMPIFEQ $ord$end LF@cond bool@true\n"
+						"LT LF@cond LF@i LF@len\n"
+						"JUMPIFEQ $end LF@cond bool@false\n"
+						"STRI2INT LF@%retval LF@s LF@i\n"
+						"LABEL $ord$end\n"
+						"RETURN\n";
+	dynStr_t *string = dynStrInitString(code);
+	if(string == NULL) {
+		return ERROR_INTERNAL;
+	}
+	if(!dynStrListPushFront(codeStrList, string)) {
+		dynStrFree(string);
+		return ERROR_INTERNAL;
+	}
+	return ERROR_SUCCESS;
+}
+
+int generateSubstrFunction(dynStrList_t* codeStrList) {
+	const char* code = "LABEL substr\n"        // function label
+	                   "DEFVAR $length\n"
+	                   "STRLEN $length s\n"    // get string length
+	                   "DEFVAR $temp\n"
+
+	                   "GT $temp i $length\n"  // check if i > string length
+	                   "JUMPIFEQ $retNone $temp bool@true\n"
+
+	                   "LT $temp i int@0\n"    // check if substring begining is in string
+	                   "JUMPIFEQ $retNone $temp bool@true\n" // jump to return none if i < 0
+
+	                   "LT $temp n int@0\n"    // check if n < 0
+	                   "JUMPIFEQ $retNone $temp bool@true\n"
+
+	                   "GT $temp n $length\n"  // n > length of string
+	                   "JUMPIFNEQ $notmaxlen $temp bool@true\n"
+	                   "MOVE n length\n"       // n = length of string (copy all)
+	                   "LABEL $notmaxlen\n"
+
+	                   "EQ $temp n int@0\n"    // check if n == 0
+	                   "JUMPIFNEQ $notempty $temp bool@true\n"
+	                   "MOVE LF@$retval string@\\000\n" // add NUL char to return variable
+	                   "RETURN\n"              // return \0 (empty string)
+	                   "$notempty\n"
+
+	                   "DEFVAR $tempchar\n"
+	                   "LABEL $for\n"
+	                   "JUMPIFEQ $endfor n int@0\n"
+	                   ""
+
+	                   // TODO
+	                   //  add implementation for ord
+
+	                   "SUB n n int@1\n"
+	                   "JUMP $for\n"
+	                   "LABEL $endfor\n"
+
+	                   "LABEL $retNone\n"      // return None
+	                   "MOVE LF@$retval nil@nil\n"
+	                   "RETURN\n";
 	dynStr_t *string = dynStrInitString(code);
 	if(string == NULL) {
 		return ERROR_INTERNAL;
