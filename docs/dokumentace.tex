@@ -52,7 +52,7 @@
 \end{Large}
 \\[5mm]
 \begin{Large}
-			    \textsc{boolop, base, cycles, funexp, ifthen, tabunary} 
+			    \textsc{boolop, base, funexp, ifthen tabunary} 
 \end{Large}
 \end{center}
 \end{titlepage}
@@ -93,7 +93,7 @@ Vstupem syntaktické analýzy jsou jednotlivé tokeny z lexikální analýzy.
 Syntaktická analýza také naplní tabulku symbolů.
 \subsubsection{LL--Gramatika a LL--Tabulka}
 \begin{enumerate}
-    \item $<$code$>$ $\rightarrow$ $<$body$>$  $<$eols$>$  $<$EOF$>$
+    \item $<$code$>$ $\rightarrow$ $<$body$>$  $<$eols$>$  EOF
     \item $<$body$>$ $\rightarrow$ $<$definitions$>$ $<$statements$>$
     \item $<$definitions$>$ $\rightarrow$ $<$eols$>$ $<$definition$>$ $<$definitions$>$
     \item $<$definition$>$ $\rightarrow$ $\epsilon$
@@ -104,7 +104,7 @@ Syntaktická analýza také naplní tabulku symbolů.
     \item $<$function\_params$>$ $\rightarrow$ $<$function\_param$>$ $<$function\_nparam$>$
     \item $<$function\_nparam$>$ $\rightarrow$ , $<$function\_param$>$ $<$function\_nparam$>$
     \item $<$function\_nparam$>$ $\rightarrow$ $\epsilon$
-    \item $<$function\_param$>$ $\rightarrow$ $<$expression$>$
+    \item $<$function\_param$>$ $\rightarrow$ IDENTIFIER
     \item $<$statements$>$ $\rightarrow$ $\epsilon$
     \item $<$statements$>$ $\rightarrow$ $<$statement$>$ EOL $<$eols$>$ $<$statements$>$
     \item $<$statement$>$ $\rightarrow$ $<$returnRule$>$
@@ -126,6 +126,55 @@ Syntaktická analýza také naplní tabulku symbolů.
     \item $<$eols$>$ $\rightarrow$ $\epsilon$
     \item $<$eols$>$ $\rightarrow$ EOL $<$eols$>$
 \end{enumerate}
+
+\begin{table}[!htbp]
+\catcode`\-=12
+\centering
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+    \hline
+       & {\rotatebox[origin=c]{90}{DEF}} & {\rotatebox[origin=c]{90}{ID}} & (
+       & ) & {\rotatebox[origin=c]{90}{INDENT}} & {\rotatebox[origin=c]{90}{DEDENT}} & {\rotatebox[origin=c]{90}{RETURN}} & {\rotatebox[origin=c]{90}{IF}} & {\rotatebox[origin=c]{90}{ELSE}} & : & {\rotatebox[origin=c]{90}{WHILE}} & {\rotatebox[origin=c]{90}{PASS}} & {\rotatebox[origin=c]{90}{EOF}} & {\rotatebox[origin=c]{90}{EOL}} & = & ,\\ 
+    \hline
+        $<$code$>$ & 1 & 1 &  &  &  &  &  &  &  &  &  &  &  & 1 &  &\\
+    \hline
+        $<$body$>$ & 2 & 2 &  &  &  &  &  &  &  &  &  &  &  & 2 &  &\\
+    \hline
+        $<$defs$>$ & 3 & 3 &  &  &  &  &  &  &  &  &  &  &  & 3 &  &\\
+    \hline
+        $<$def$>$ & 5 & 6 &  &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$f\_call$>$ &  & 7 &  &  &  &  &  &  &  &  &  &  &  &  & &\\
+    \hline
+       $<$f\_params$>$&  & 9 &  &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$f\_nparam$>$ &  & 10 &  &  &  &  &  &  &  &  &  &  &  &  &  & 10\\
+    \hline
+        $<$f\_param$>$ &  & 12 &  &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$stats$>$ &  &  &  &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$stat$>$ &  & 17 &  &  &  &  & 15 & 16 &  &  & 18 & 19 &  &  &  &\\
+    \hline
+        $<$retRule$>$ &  &  &  &  &  &  & 20 &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$ret\_exp$>$ &  &  & 22 &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$condition$>$ &  &  &  &  &  &  &  & 24 &  &  &  &  &  &  &  &\\
+    \hline
+        $<$else\_cond$>$ &  &  &  &  &  &  &  &  & 26 &  &  &  &  &  &  &\\
+    \hline
+        $<$cond\_exp$>$ &  &  & 27 &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$assignment$>$ &  & 29 &  &  &  &  &  &  &  &  &  &  &  &  &  &\\
+    \hline
+        $<$whileRule$>$ &  &  &  &  &  &  &  &  &  &  & 30 &  &  &  &  &\\
+    \hline
+        $<$eols$>$ & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 31 & 32 & 31 & 31\\
+    \hline
+    \end{tabular}
+    \caption{LL--Tabulka}
+    \label{tab:1}
+\end{table}
 \subsubsection{Precedenční syntaktická analýza}
 Precedenční syntaktická analýza je využita pro zpracování výrazů a je řízena přecedenční tabulkou. Stejně jako syntaktická analýza je precedenční analýza implementována v modulu \textbf{parser.c}.
 
@@ -145,7 +194,7 @@ V precedenční analýze hojně pracujeme se zásobníkem. Každý příchozí t
          E $\rightarrow +$E & E $\rightarrow$ E $==$ E & E $\rightarrow not$ E \\
     \end{tabular}
     \caption{Redukční pravidla}
-    \label{tab:1}
+    \label{tab:2}
 \end{table}
 \begin{table}[!htbp]
 \catcode`\-=12
@@ -196,7 +245,7 @@ V precedenční analýze hojně pracujeme se zásobníkem. Každý příchozí t
     \hline
     \end{tabular}
     \caption{Tabulka precedenční syntaktické analýzy}
-    \label{tab:2}
+    \label{tab:3}
 \end{table}
 
 \subsection{Sémantická analýza}
