@@ -35,12 +35,53 @@ enum semanticType{
 
 typedef enum semanticType semanticType_t;
 
-int semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode);
 
+/**
+ * Check semantic in tree element
+ * @param parseTree parse tree to check
+ * @param symTable symbol table
+ * @param errCode error code
+ */
+void semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode);
+
+/**
+ * Returns semantic type for expression operators
+ * @param operatorTree operator tree element
+ * @param errCode error code
+ * @return semantic type
+ */
 semanticType_t getOperatorType(treeElement_t operatorTree, int* errCode);
 
+/**
+ * Checks semantic for expression
+ * @param expressionTree expression tree
+ * @param symTable symbol table
+ * @param errCode error code
+ * @param context expression context
+ * @return expression result type
+ */
 semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTable, int* errCode, dynStr_t* context);
 
+/**
+ * Converts tree boolean values to integer
+ * @param expressionTree tree to convert
+ * @param errCode error code
+ */
 void convertBoolToInt(treeElement_t* expressionTree, int* errCode);
 
+
+/**
+ * Converts tree integer values to float
+ * @param expressionTree tree to convert
+ * @param errCode error code
+ */
 void convertIntToFloat(treeElement_t* expressionTree, int* errCode);
+
+/**
+ * Helper function for recursive semantic check
+ * @param element tree element
+ * @param symtable symbol table
+ * @param errCode error code
+ * @param context context
+ */
+void semanticCheckTree(treeElement_t* element, symTable_t* symtable, int* errCode, dynStr_t* context);
