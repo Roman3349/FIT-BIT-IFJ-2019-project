@@ -61,15 +61,10 @@ void semanticCheckTree(treeElement_t* element, symTable_t* symtable, int* errCod
 	}
 }
 
-int semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode) {
+void semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode) {
 	printTree(*parseTree,0);
-	printf("=========================\n");
 	semanticCheckTree(parseTree, symTable, errCode, NULL);
-	if(*errCode != ERROR_SUCCESS){
-		printf("!!!!!!!!!!!!!!!!!!!!ERROR!!!!!!!!!!!!!!!!!!!!!\n");
-	}
 	printTree(*parseTree,0);
-	return 0;
 }
 
 
@@ -112,7 +107,6 @@ semanticType_t getOperatorType(treeElement_t operatorTree, int* errCode) {
 					return SEMANTIC_UNKNOWN;
 			}
 		case E_S_FUNCTION_CALL:
-			//TODO: IMPLEMENT function call semantic analysis
 			return SEMANTIC_UNKNOWN;
 
 		default:
@@ -253,11 +247,29 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 					}
 
 				case SEMANTIC_VARIABLE:
-					if (!symTableIsVariableAssigned(symTable, operator1.data.token->data.strval, context))
+					if (!symTableIsVariableAssigned(symTable, operator1.data.token->data.strval, context)) {
 						*errCode = ERROR_SEMANTIC_FUNCTION;
+						return SEMANTIC_UNKNOWN;
+					}
+
+					if(op2Type == SEMANTIC_VARIABLE) {
+						if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context)) {
+							*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+						}
+					}
+
+
 					return SEMANTIC_UNKNOWN;
 
 				case SEMANTIC_UNKNOWN:
+					if(op2Type == SEMANTIC_VARIABLE) {
+						if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context)) {
+							*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+						}
+					}
+
 					return SEMANTIC_UNKNOWN;
 
 				default:
@@ -417,8 +429,17 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 					}
 
 				case SEMANTIC_VARIABLE:
-					if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context))
+					if (!symTableIsVariableAssigned(symTable, operator1.data.token->data.strval, context)) {
 						*errCode = ERROR_SEMANTIC_FUNCTION;
+						return SEMANTIC_UNKNOWN;
+					}
+
+					if (op2Type == SEMANTIC_VARIABLE){
+						if (!symTableIsVariableAssigned(symTable, operator2.data.token->data.strval, context)) {
+							*errCode = ERROR_SEMANTIC_FUNCTION;
+							return SEMANTIC_UNKNOWN;
+						}
+					}
 					return SEMANTIC_UNKNOWN;
 
 				case SEMANTIC_UNKNOWN:
@@ -472,7 +493,42 @@ semanticType_t checkExpression(treeElement_t* expressionTree, symTable_t* symTab
 		}
 
 		case E_TOKEN:
+			switch(expressionTree->data.token->type) {
+
+
+				case T_NUMBER:
+					return SEMANTIC_INT;
+				case T_FLOAT:
+					return SEMANTIC_FLOAT;
+				case T_STRING_ML:
+				case T_STRING:
+					return SEMANTIC_STRING;
+				case T_ID:
+					if (!symTableIsVariableAssigned(symTable, expressionTree->data.token->data.strval, context)) {
+						*errCode = ERROR_SEMANTIC_FUNCTION;
+						return SEMANTIC_UNKNOWN;
+					}
+					return SEMANTIC_VARIABLE;
+				case T_KW_NONE:
+					return  SEMANTIC_NONE;
+				case T_BOOL_FALSE:
+				case T_BOOL_TRUE:
+					return  SEMANTIC_BOOL;
+
+				default:
+					break;
+			}
 			break;
+
+		case E_S_FUNCTION_CALL:
+			if(expressionTree->nodeSize > 1){
+				if(expressionTree->data.elements[1].type == E_S_FUNCTION_CALL_PARAMS) {
+					for(unsigned int i = 0; i < expressionTree->data.elements[1].nodeSize; i++) {
+						checkExpression(&expressionTree->data.elements[1].data.elements[i].data.elements[0], symTable, errCode, context);
+					}
+				}
+			}
+			return SEMANTIC_UNKNOWN;
 
 		default:
 			*errCode = ERROR_SEMANTIC_OTHER;
