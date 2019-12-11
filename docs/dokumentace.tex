@@ -1,5 +1,5 @@
 \documentclass[12pt]{article}
-\usepackage[a4paper, text={17cm,24cm}, top=3cm, left=1.5cm]{geometry}
+\usepackage[a4paper, text={17cm,24cm}, top=3cm, left=2cm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{times}
 \usepackage[czech]{babel}
@@ -81,8 +81,8 @@ Při samotném překladu se tedy dostane ke slovu jako první lexikální analyz
 Důležitou součástí lexikální analýzy překladače jazyka IFJ19 je také zásobníkový automat, který je použit pro práci s odsazením jednotlivých řádků vstupního souboru.
 \begin{figure}[!htbp]
     \centering
-    \scalebox{0.70}{\includegraphics{img/Lexical_Analysis.png}}
-    \caption{Automat lexikální analýzy}
+    \includegraphics[width = \textwidth]{img/Lexical_Analysis.png}
+	\caption{Automat lexikální analýzy}
     \label{obr:1}
 \end{figure}
 \clearpage
@@ -260,6 +260,8 @@ Pro práci s různě dlouhými vstupními řetezci byl v modulu \textbf{dynamic\
 
 Precedenční analýza poté pracuje se zásobníkem z modulu \textbf{tree\_element\_stack.c}, na kterém pro\-bí\-há porovnávání vrcholu tohoto zásobníku s nově přicházejícími tokeny.
 
+\newpage
+
 \section{Implementovaná rozšíření}
 \subsection{BOOLOP}
 Pro implementaci rozšíření BOOLOP byla přidána další pravidla do precedenční analýzy, konkrétně pravidla pro \textbf{not, or, and} a \textbf{==} a zároveň další sémantická pravidla pro kontrolu datových typů vstupujících do těchto operací.
@@ -275,6 +277,8 @@ V rozšíření IFTHEN se měl podporovat ternární operátor, \textbf{elif}, a
 
 \subsection{TABUNARY}
 V rozšíření TABUNARY se mělo rozlišovat mezi unárním a bi\-nár\-ním mínusem a plusem v precedenční analýze a podporou odsazování jak pomocí mezer, tak pomocí tabulátorů i prolínání těchto dvou způsobů odsazení. Část tohoto rozšíření, ve které se mělo rozlišovat právě mezi binárními a unárními operátory nebyla implementována. Pro část rozšíření, která se týká odsazování pomocí tabulátorů bylo třeba rozšířit zásobík u lexikální analýzy, aby bral v úvahu i tabulátory a ne jenom mezery.
+
+\newpage
 
 \section{Týmová spolupráce}
 Od začátku řešení projektu jsme se pravidelně scházeli nejdříve přibližně jedenkrát týdně a s blížícím se termínem odevzdání poté i vícekrát za týden. Pro rychlou komunikaci mezi sebou v reálném čase jsme si zvolili službu \textbf{Slack.com}, kde jsme ihned řešili všechny problémy, které nastaly.
