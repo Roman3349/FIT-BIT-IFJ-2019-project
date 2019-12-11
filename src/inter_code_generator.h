@@ -39,10 +39,12 @@ int processCode(treeElement_t codeElement, symTable_t* symTable);
  * @param id_only tels if there should be FRAME_TYPE@id or id only in the output
  * @param symTable symbol table
  * @param context local scope function name
+ * @param varDefined returns status if variable is defined (true) or not (false)
+ *                   ignored if NULL
  * @return execution status
  */
 int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only,
-        symTable_t* symTable, dynStr_t* context);
+        symTable_t* symTable, dynStr_t* context, bool* varDefined);
 
 /*
  * Process definition of new function

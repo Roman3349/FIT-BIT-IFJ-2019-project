@@ -105,22 +105,28 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
 		return ERROR_INTERNAL;
 	}
 
+	static int cblockVarNameCounter = 0;
+
     for (unsigned i = 0; i < codeElement.nodeSize; i++) {
         int retval = ERROR_SUCCESS;
+
+        bool pushToStack = true;
         dynStr_t* temp;
 
         // process code content
         switch (codeElement.data.elements[i].type) {
             case E_TOKEN:
+                retval = processExpression(codeElement.data.elements[i], &pushToStack, symTable, context, codeStrList);
                 temp = dynStrInit();
-                retval = processEToken(codeElement.data.elements[i], temp, false, symTable, context);
-                if(retval) {
+                if(numberToDynStr(temp, "DEFVAR GF@cblockVar%d\nPOP GF@cblockVar%d\n", cblockVarNameCounter)){
                     dynStrFree(temp);
-                    return retval;
+                    retval = ERROR_INTERNAL;
+                    break;
                 }
-                if(!dynStrListPushBack(codeStrList, temp)) {
+                if(dynStrListPushBack(codeStrList, temp)) {
                     dynStrFree(temp);
-                    return ERROR_INTERNAL;
+                    retval = ERROR_INTERNAL;
+                    break;
                 }
                 break;
             case E_S_FUNCTION_DEF:
@@ -173,7 +179,7 @@ int processCode(treeElement_t codeElement, symTable_t* symTable) {
 }
 
 int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_only,
-        symTable_t* symTable, dynStr_t* context) {
+        symTable_t* symTable, dynStr_t* context, bool* varDefined) {
 
     if(eTokenElement.type != E_TOKEN) {
         return ERROR_SEMANTIC_OTHER;
@@ -186,6 +192,8 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
     if(id_only && eTokenElement.data.token->type != T_ID) {
         return ERROR_SEMANTIC_OTHER;
     }
+
+    int retval;
 
     switch (eTokenElement.data.token->type) {
         case T_NUMBER:
@@ -228,6 +236,15 @@ int processEToken(treeElement_t eTokenElement, dynStr_t* outputDynStr, bool id_o
             // add name
             if(!dynStrAppendString(outputDynStr, dynStrGetString(eTokenElement.data.token->data.strval))) {
                 return ERROR_INTERNAL;
+            }
+            if(varDefined) {
+                // tells if variable is needs to be defined
+                *varDefined = !symTableIsVariableAssigned(symTable, eTokenElement.data.token->data.strval, context);
+                // sets value to false
+                retval = symTableInsertVariable(symTable, eTokenElement.data.token->data.strval, context, false);
+                if(retval) {
+                    return retval;
+                }
             }
             break;
 		case T_BOOL_TRUE:
@@ -275,7 +292,7 @@ int processFunctionDefinition(treeElement_t defElement,symTable_t *symTable, dyn
     }
     // dynamic string with function name, to determine variable context
     dynStr_t* function_name = dynStrInit();
-    retval = processEToken(defElement.data.elements[0], function_name, true, symTable, context);
+    retval = processEToken(defElement.data.elements[0], function_name, true, symTable, context, NULL);
 
     if(retval) {
         dynStrFree(function_name);
@@ -364,7 +381,7 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
                     return ERROR_INTERNAL;
                 }
             }
-            retval = processEToken(element, temp, false, symTable, context);
+            retval = processEToken(element, temp, false, symTable, context, NULL);
             if(retval) {
                 dynStrFree(temp);
                 return ERROR_INTERNAL;
@@ -452,7 +469,7 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack, sy
                         break;
                     }
                 }
-                retval = processEToken(operationElement.data.elements[i], temp[i], false, symTable, context);
+                retval = processEToken(operationElement.data.elements[i], temp[i], false, symTable, context, NULL);
                 if (retval) {
                     break;
                 }
@@ -641,7 +658,7 @@ int processUnaryOperation(treeElement_t operationElement, bool* pushToStack, sym
                     break;
                 }
             }
-            retval = processEToken(operationElement.data.elements[0], temp[0], false, symTable, context);
+            retval = processEToken(operationElement.data.elements[0], temp[0], false, symTable, context, NULL);
             if(retval)
                 break;
             if(*pushToStack) {
@@ -923,8 +940,16 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
         return ERROR_SEMANTIC_OTHER;
     }
 
-    dynStr_t* temp;
-    int retval = ERROR_SUCCESS;
+    dynStr_t* temp; // temporary stores the line of code
+
+    dynStr_t* varName; // temporary stores variable name
+
+    dynStr_t* varDef; // temporary stores variable definition
+
+    int retval = ERROR_SUCCESS; // return code
+
+    bool varDefined = true;
+
     bool pushToStack = false;
 
     switch (assignElement.data.elements[1].type) {
@@ -949,31 +974,73 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
                 dynStrListPopBack(codeStrList);
             }
             // get variable id
-            retval = processEToken(assignElement.data.elements[0], temp, false, symTable, context);
+            varName = dynStrInit();
+            retval = processEToken(assignElement.data.elements[0], varName, false, symTable, context, &varDefined);
             if(retval) {
                 dynStrFree(temp);
                 return retval;
+            }
+            if(dynStrAppendString(temp, dynStrGetString(varName))) {
+                dynStrFree(temp);
+                dynStrFree(varName);
+                return ERROR_INTERNAL;
             }
             if(pushToStack) {
                 // add eol to pop
                 if (!dynStrAppendString(temp, "\n")) {
                     dynStrFree(temp);
+                    dynStrFree(varName);
                     return ERROR_INTERNAL;
                 }
             } else {
                 if(!dynStrAppendString(temp, " ")) {
                     dynStrFree(temp);
+                    dynStrFree(varName);
                     return ERROR_INTERNAL;
                 }
                 // add operands to binary operation
                 dynStr_t* lastStr = dynStrListElGet(dynStrListBack(codeStrList));
                 if(!dynStrAppendString(temp, dynStrGetString(lastStr))) {
                     dynStrFree(temp);
+                    dynStrFree(varName);
                     return ERROR_INTERNAL;
                 }
                 // remove operands from list
                 dynStrListPopBack(codeStrList);
             }
+            // add definition
+            if(!varDefined) {
+                varDef = dynStrInit();
+                if(!dynStrAppendString(varDef, "DEFVAR ")) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // append var name
+                if(!dynStrAppendString(varDef, dynStrGetString(varName))) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // append eol
+                if(!dynStrAppendString(varDef, "\n")) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // add to list
+                if(!dynStrListPushBack(codeStrList, temp)) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+            }
+            // free temp variable with name
+            dynStrFree(varName);
             break;
         case E_TOKEN: // value or id ( l = r )
             temp = dynStrInit();
@@ -983,31 +1050,73 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
             }
 
             // process left side
-            retval = processEToken(assignElement.data.elements[0], temp, false, symTable, context);
+            varName = dynStrInit();
+            retval = processEToken(assignElement.data.elements[0], varName, false, symTable, context, &varDefined);
             if(retval) {
                 dynStrFree(temp);
                 return retval;
             }
+            if(dynStrAppendString(temp, dynStrGetString(varName))) {
+                dynStrFree(temp);
+                dynStrFree(varName);
+                return ERROR_INTERNAL;
+            }
             if(!dynStrAppendString(temp, " ")) {
                 dynStrFree(temp);
+                dynStrFree(varName);
                 return ERROR_INTERNAL;
             }
             // process right side
-            retval = processEToken(assignElement.data.elements[1], temp, false, symTable, context);
+            retval = processEToken(assignElement.data.elements[1], temp, false, symTable, context, NULL);
             if(retval) {
                 dynStrFree(temp);
+                dynStrFree(varName);
                 return retval;
             }
             // add eol
             if(!dynStrAppendString(temp, "\n")){
                 dynStrFree(temp);
+                dynStrFree(varName);
                 return ERROR_INTERNAL;
             }
+            // add definition
+            if(!varDefined) {
+                varDef = dynStrInit();
+                if(!dynStrAppendString(varDef, "DEFVAR ")) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // append var name
+                if(!dynStrAppendString(varDef, dynStrGetString(varName))) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // append eol
+                if(!dynStrAppendString(varDef, "\n")) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+                // add to list
+                if(!dynStrListPushBack(codeStrList, temp)) {
+                    dynStrFree(temp);
+                    dynStrFree(varName);
+                    dynStrFree(varDef);
+                    return ERROR_INTERNAL;
+                }
+            }
+            // free name
+            dynStrFree(varName);
             break;
         default:
             return ERROR_SEMANTIC_OTHER;
     }
-    // add to list
+    // add temp to list
     if(!dynStrListPushBack(codeStrList, temp)) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
@@ -1029,7 +1138,7 @@ int processFunctionCall(treeElement_t callElement, symTable_t* symTable, dynStr_
 
     // function name
     dynStr_t* fname = dynStrInit();
-    retval = processEToken(callElement.data.elements[0], fname, true, symTable, context);
+    retval = processEToken(callElement.data.elements[0], fname, true, symTable, context, NULL);
     if(retval) {
         dynStrFree(fname);
         return retval;
