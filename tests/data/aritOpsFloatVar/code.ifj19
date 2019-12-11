@@ -1,0 +1,5 @@
+# Test aritmetických operací float s využitím proměnné ve výrazu
+
+a=8.0
+b=(a-3.0)*(a/4)  
+print(b)

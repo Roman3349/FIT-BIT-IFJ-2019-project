@@ -1,0 +1,5 @@
+# Test sčítání boolu a integeru, bool by se měl přetypovat
+
+b=True+3  
+
+print(b)
