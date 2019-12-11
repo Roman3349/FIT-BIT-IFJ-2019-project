@@ -1555,3 +1555,124 @@ int generateInputsFunction(dynStrList_t* codeStrList) {
 	}
 	return ERROR_SUCCESS;
 }
+
+int generateCheckVariableType(dynStrList_t* codeStrList) {
+    const char* code = "LABEL $$checkType\n"
+                       "DEFVAR LF@retval\n"
+                       "DEFVAR LF@type1\n"
+                       "DEFVAR LF@type2\n"
+                       "TYPE LF@type1 LF@arg1\n"
+                       "TYPE LF@type2 LF@arg2\n"
+                       "JUMPIFEQ $$checkOK LF@type1 LF@type2\n"
+                       // not same type
+                       "MOVE LF@retval bool@false\n"
+                       "RETURN\n"
+
+                       "LABEL $$checkOK\n"
+                       "MOVE LF@retval bool@true\n"
+                       "RETURN\n"
+                       ;
+    dynStr_t *string = dynStrInitString(code);
+    if(string == NULL) {
+        return ERROR_INTERNAL;
+    }
+    if(!dynStrListPushFront(codeStrList, string)) {
+        dynStrFree(string);
+        return ERROR_INTERNAL;
+    }
+    return ERROR_SUCCESS;
+}
+
+int generateChangeVariableType(dynStrList_t* dynStrList) {
+    const char* code = "LABEL $$checkType\n"
+                       "DEFVAR LF@retval1\n"
+                       "DEFVAR LF@retval2\n"
+                       "DEFVAR LF@type1\n"
+                       "DEFVAR LF@type2\n"
+                       "TYPE LF@type1 LF@arg1\n"
+                       "TYPE LF@type2 LF@arg2\n"
+                       "JUMPIFEQ $$checkOK LF@type1 LF@type2\n"
+                       // not same type
+                       "JUMPIFEQ $$float LF@type1 string@float\n"
+                       "JUMPIFEQ $$int LF@type1 string@int\n"
+                       "JUMPIFEQ $$bool LF@type1 string@bool\n"
+                       "JUMPIFEQ $$nil LF@type1 string@nil\n"
+                       "EXIT 4\n"
+
+                       "LABEL $$float\n"
+                       "JUMPIFEQ $$floatint LF@type2 string@int\n"
+                       "JUMPIFEQ $$floatbool LF@type2 string@bool\n"
+                       "JUMPIFEQ $$nil LF@type2 string@nil\n"
+                       "EXIT 4\n"
+
+                       "LABEL $$int\n"
+                       "JUMPIFEQ $$intfloat LF@type2 string@float\n"
+                       "JUMPIFEQ $$intbool LF@type2 string@bool\n"
+                       "JUMPIFEQ $$nil LF@type2 string@nil\n"
+                       "EXIT 4\n"
+
+                       "LABEL $$bool\n"
+                       "JUMPIFEQ $$boolfloat LF@type2 string@float\n"
+                       "JUMPIFEQ $$boolint LF@type2 string@int\n"
+                       "JUMPIFEQ $$nil LF@type2 string@nil\n"
+                       "EXIT 4\n"
+
+                       "LABEL $$nil\n"
+                       "MOVE LF@retval1 LF@arg1\n"
+                       "MOVE LF@retval2 LF@arg2\n"
+                       "RETURN\n"
+
+                       "LABEL $$floatint\n"
+                       "INT2FLOAT LF@retval2 LF@arg2\n"
+                       "MOVE LF@retval1 LF@arg1\n"
+                       "RETURN\n"
+
+                       "LABEL $$floatbool\n"
+                       "JUMPIFEQ $$fbt LF@arg2 bool@true\n"
+                       "MOVE LF@arg2 int@0\n" // 0
+                       "JUMP $$fbte\n" // jump to end
+                       "LABEL $$fbt\n"
+                       "MOVE LF@arg2 int@1\n" // 1
+                       "LABEL $$fbte\n" // end
+                       "JUMP $$floatint\n"
+
+                       "LABEL $$intfloat\n"
+                       "INT2FLOAT LF@retval1 LF@arg1\n"
+                       "MOVE LF@retval2 LF@arg2\n"
+                       "RETURN\n"
+
+                       "LABEL $$intbool\n"
+                       "JUMPIFEQ $$ibt LF@arg2 bool@true\n"
+                       "MOVE LF@retval2 int@0\n" // 0
+                       "JUMP $$ibte\n" // jump to end
+                       "LABEL $$ibt\n"
+                       "MOVE LF@retval2 int@1\n" // 1
+                       "LABEL $$ibte\n" // end
+                       "MOVE LF@retval1 LF@arg1\n"
+                       "RETURN\n"
+
+                       "LABEL $$boolint\n"
+                       "JUMPIFEQ $$bit LF@arg1 bool@true\n"
+                       "MOVE LF@retval1 int@0\n" // 0
+                       "JUMP $$bie\n" // jump to end
+                       "LABEL $$bit\n"
+                       "MOVE LF@retval1 int@1\n" // 1
+                       "LABEL $$bite\n" // end
+                       "MOVE LF@retval2 LF@arg2\n"
+                       "RETURN\n"
+
+                       "LABEL $$boolfloat\n"
+                       "JUMPIFEQ $$bft LF@arg1 bool@true\n"
+                       "MOVE LF@arg1 int@0\n" // 0
+                       "JUMP $$bfte\n" // jump to end
+                       "LABEL $$bft\n"
+                       "MOVE LF@arg1 int@1\n" // 1
+                       "LABEL $$bfte\n" // end
+                       "JUMP $$intfloat\n"
+
+                       "LABEL $$checkOK\n"
+                       "MOVE LF@retval1 LF@arg1\n"
+                       "MOVE LF@retval2 LF@arg2\n"
+                       "RETURN\n"
+                        ;
+}
