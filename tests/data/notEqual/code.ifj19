@@ -1,0 +1,8 @@
+# Test relační operace nerovná se
+
+a=6.0
+if a!=5:
+	print(0)
+else:
+	print(1) 
+
