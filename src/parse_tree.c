@@ -102,7 +102,7 @@ void printTree(treeElement_t tree, int indent) {
     }
     switch(tree.type) {
         case E_TOKEN:
-            printf("TOKEN: %s; ", tokenToString(tree.data.token->type));
+            printf("TOKEN: %s  ", tokenToString(tree.data.token->type));
             switch(tree.data.token->type){
 				case T_NUMBER:
 					printf(" VALUE: %ld\n", tree.data.token->data.intval);
