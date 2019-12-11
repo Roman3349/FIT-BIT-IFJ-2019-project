@@ -62,7 +62,6 @@ void semanticCheckTree(treeElement_t* element, symTable_t* symtable, int* errCod
 
 void semanticCheck(treeElement_t* parseTree, symTable_t* symTable, int* errCode) {
 	semanticCheckTree(parseTree, symTable, errCode, NULL);
-	printTree(*parseTree, 0);
 }
 
 
