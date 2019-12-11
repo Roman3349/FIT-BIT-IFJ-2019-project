@@ -318,11 +318,14 @@ int processCodeBlock(treeElement_t codeBlockElement, symTable_t* symTable, dynSt
             case E_S_EXPRESSION:
                 retval = processExpression(codeBlockElement.data.elements[i], &pushToStack, symTable, context, codeStrList);
                 break;
+            case E_ASSIGN:
+                retval = processAssign(codeBlockElement.data.elements[i], symTable, context, codeStrList);
+                break;
             case E_S_IF:
                 retval = processIf(codeBlockElement.data.elements[i], symTable, context, codeStrList);
                 break;
             case E_S_WHILE:
-                 //retval = processWhile(codeBlockElement.data.elements[i]);
+                retval = processWhile(codeBlockElement.data.elements[i], symTable, context, codeStrList);
                 break;
             default:
                 return ERROR_SEMANTIC_OTHER;
@@ -355,7 +358,7 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
             //TODO
             // allocation / dealocation
             temp = dynStrInit();
-            if(pushToStack) {
+            if(*pushToStack) {
                 if (!dynStrAppendString(temp, "PUSHS ")) {
                     dynStrFree(temp);
                     return ERROR_INTERNAL;
@@ -366,15 +369,21 @@ int processExpression(treeElement_t expElement, bool* pushToStack,
                 dynStrFree(temp);
                 return ERROR_INTERNAL;
             }
-            if(pushToStack) {
-                // add eol after pushs varname
-                if (!dynStrAppendString(temp, "\n")) {
+            // add eol after value
+            if (!dynStrAppendString(temp, "\n")) {
+                dynStrFree(temp);
+                return ERROR_INTERNAL;
+            }
+            // add move operation if not pushing
+            if(!(*pushToStack)){
+                // add to list
+                if(!dynStrListPushBack(codeStrList, temp)) {
                     dynStrFree(temp);
                     return ERROR_INTERNAL;
                 }
-            } else {
-                // add space after varname
-                if (!dynStrAppendString(temp, " ")) {
+                // add operation
+                temp = dynStrInit();
+                if (!dynStrAppendString(temp, "MOVE ")) {
                     dynStrFree(temp);
                     return ERROR_INTERNAL;
                 }
@@ -425,15 +434,15 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack, sy
 
     int retval = ERROR_SUCCESS;
 
-    if (operationElement.data.elements[0].type == E_S_EXPRESSION ||
-        operationElement.data.elements[1].type == E_S_EXPRESSION) {
+    if (operationElement.data.elements[0].type != E_TOKEN ||
+        operationElement.data.elements[1].type != E_TOKEN) {
         *pushToStack = true;
     }
 
     dynStr_t *temp[3] = {NULL, NULL, NULL};
 
     // extract data in reverse order (for pushing them to stack)
-    for (unsigned i = 2; i > 0; i--) {
+    for (int i = 1; i >= 0; i--) {
         switch (operationElement.data.elements[i].type) {
             case E_TOKEN:
                 temp[i] = dynStrInit();
@@ -443,7 +452,7 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack, sy
                         break;
                     }
                 }
-                retval = processEToken(operationElement.data.elements[i], temp[i], pushToStack, symTable, context);
+                retval = processEToken(operationElement.data.elements[i], temp[i], false, symTable, context);
                 if (retval) {
                     break;
                 }
@@ -458,19 +467,42 @@ int processBinaryOperation(treeElement_t operationElement, bool* pushToStack, sy
                     }
                 }
                 break;
-            case E_LT:
-                break;
             case E_S_EXPRESSION:
                 retval = processExpression(operationElement.data.elements[i], pushToStack, symTable, context, codeStrList);
+                break;
+            case E_ADD:
+            case E_SUB:
+            case E_MUL:
+            case E_DIV:
+            case E_DIV_INT:
+            case E_AND:
+            case E_OR:
+            case E_EQ:
+            case E_GT:
+            case E_LT:
+                retval = processBinaryOperation(operationElement.data.elements[i], pushToStack, symTable, context, codeStrList);
+                break;
+            case E_NOT:
+                retval = processUnaryOperation(operationElement.data.elements[i], pushToStack, symTable, context, codeStrList);
+                break;
+            case E_S_FUNCTION_CALL:
+                retval = processFunctionCall(operationElement.data.elements[i], symTable, context, codeStrList);
+                break;
+            case E_ASSIGN:
+                retval = processAssign(operationElement.data.elements[i], symTable, context, codeStrList);
                 break;
             default:
                 return ERROR_SEMANTIC_OTHER;
         }
         if (retval) {
             // free dynamic strings if they are not appended to the codeStrList
-            if (i != 1 || operationElement.data.elements[1].type != E_S_EXPRESSION) {
-                dynStrFree(temp[1]);
-                dynStrFree(temp[0]);
+            if (operationElement.data.elements[i].type == E_TOKEN) {
+                dynStrFree(temp[i]);
+            }
+            if(!(*pushToStack)) {
+                if (operationElement.data.elements[(i + 1) % 2].type == E_TOKEN) {
+                    dynStrFree(temp[(i + 1) % 2]);
+                }
             }
             return retval;
         }
@@ -1240,6 +1272,10 @@ int generateLenFunction(dynStrList_t* codeStrList) {
 
 int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* context, dynStrList_t* codeStrList) {
     if (whileElement.type != E_S_WHILE) {
+        return ERROR_SEMANTIC_OTHER;
+    }
+
+    if (whileElement.nodeSize != 2) {
         return ERROR_SEMANTIC_OTHER;
     }
 
