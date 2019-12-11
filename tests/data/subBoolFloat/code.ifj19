@@ -1,5 +1,5 @@
 # Test odečítání boolu a floatu, bool by se měl přetypovat
 
-b=False+3.4
+b=False+3.5
 
 print(b)
