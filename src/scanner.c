@@ -248,6 +248,9 @@ token_t scan(FILE* file, intStack_t* stack) {
             case ',' :
                 output_token.type = T_COMMA;
                 break;
+			case '\r':
+				// Skip CR
+				continue;
             case '\n':
                 line_beginning = true;
                 output_token.type = T_EOL;
