@@ -1129,7 +1129,7 @@ int processAssign(treeElement_t assignElement, symTable_t* symTable, dynStr_t* c
                 dynStrFree(temp);
                 return retval;
             }
-            if(dynStrAppendString(temp, dynStrGetString(varName))) {
+            if(!dynStrAppendString(temp, dynStrGetString(varName))) {
                 dynStrFree(temp);
                 dynStrFree(varName);
                 return ERROR_INTERNAL;
@@ -1553,11 +1553,11 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
     if(whileCounter == 0) {
         // define variables on firs while processing
         dynStr_t* tmp = dynStrInit();
-        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempWhile\n")) {
+        if(!dynStrAppendString(tmp, "DEFVAR GF@$$tempWhile\n")) {
             dynStrFree(tmp);
             return ERROR_INTERNAL;
         }
-        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempWhileType\n")) {
+        if(!dynStrAppendString(tmp, "DEFVAR GF@$$tempWhileType\n")) {
             dynStrFree(tmp);
             return ERROR_INTERNAL;
         }
@@ -1570,15 +1570,15 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
     }
     // add if body
     temp = dynStrInit();
-    if(dynStrAppendString(temp, "POPs GF@$$tempWhile\n")) {
+    if(!dynStrAppendString(temp, "POPs GF@$$tempWhile\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "TYPE GF@$$tempWhileType GF@tempWhile\n")) {
+    if(!dynStrAppendString(temp, "TYPE GF@$$tempWhileType GF@$$tempWhile\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH GF@$$tempWhile\n")) {
+    if(!dynStrAppendString(temp, "PUSHS GF@$$tempWhile\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -1607,7 +1607,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "EXIT 4\n")) {
+    if(!dynStrAppendString(temp, "EXIT int@4\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -1616,7 +1616,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH float@0.0\n")) {
+    if(!dynStrAppendString(temp, "PUSHS float@0x0p+0\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -1635,7 +1635,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    retval = numberToDynStr(temp, "PUSH int@0\n", whileCounter);
+    retval = numberToDynStr(temp, "PUSHS int@0\n", whileCounter);
     if(retval) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
@@ -1655,7 +1655,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH bool@true\n")) {
+    if(!dynStrAppendString(temp, "PUSHS bool@true\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -1674,7 +1674,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH string@\n")) {
+    if(!dynStrAppendString(temp, "PUSHS string@\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
