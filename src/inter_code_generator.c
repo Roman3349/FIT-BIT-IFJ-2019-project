@@ -1535,20 +1535,6 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
         return ERROR_INTERNAL;
     }
 
-
-
-    retval = numberToDynStr(temp, "LABEL $while%d\n", whileCounter);
-    if (retval) {
-        dynStrFree(temp);
-        return ERROR_INTERNAL;
-    }
-    // add to code list
-    retval = !dynStrListPushBack(codeStrList, temp);
-    if (retval) {
-        dynStrFree(temp);
-        return ERROR_INTERNAL;
-    }
-
     // workaround because function call doesn't work
     if(whileCounter == 0) {
         // define variables on firs while processing
@@ -1568,7 +1554,20 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
             return ERROR_INTERNAL;
         }
     }
-    // add if body
+
+	retval = numberToDynStr(temp, "LABEL $while%d\n", whileCounter);
+	if (retval) {
+		dynStrFree(temp);
+		return ERROR_INTERNAL;
+	}
+	// add to code list
+	retval = !dynStrListPushBack(codeStrList, temp);
+	if (retval) {
+		dynStrFree(temp);
+		return ERROR_INTERNAL;
+	}
+
+    // add while body
     temp = dynStrInit();
     if(!dynStrAppendString(temp, "POPS GF@$$tempWhile\n")) {
         dynStrFree(temp);
