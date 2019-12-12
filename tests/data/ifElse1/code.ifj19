@@ -1,0 +1,19 @@
+if 1:
+    print('OK')
+else:
+    print('ERROR')
+
+if 0:
+    print('ERROR')
+else:
+    print('OK')
+
+if True:
+    print('OK')
+else:
+    print('ERROR')
+
+if False:
+    print('ERROR')
+else:
+    print('OK')
