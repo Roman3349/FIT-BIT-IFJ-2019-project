@@ -710,11 +710,11 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     if(ifCounter == 0) {
         // define variables on firs if processing
         dynStr_t* tmp = dynStrInit();
-        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempIf\n")) {
+        if(!dynStrAppendString(tmp, "DEFVAR GF@$$tempIf\n")) {
             dynStrFree(tmp);
             return ERROR_INTERNAL;
         }
-        if(dynStrAppendString(tmp, "DEFVAR GF@$$tempIfType\n")) {
+        if(!dynStrAppendString(tmp, "DEFVAR GF@$$tempIfType\n")) {
             dynStrFree(tmp);
             return ERROR_INTERNAL;
         }
@@ -727,15 +727,15 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     }
     // add if body
     dynStr_t* temp = dynStrInit();
-    if(dynStrAppendString(temp, "POPs GF@$$tempIf\n")) {
+    if(!dynStrAppendString(temp, "POPs GF@$$tempIf\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "TYPE GF@$$tempIfType GF@tempIF\n")) {
+    if(!dynStrAppendString(temp, "TYPE GF@$$tempIfType GF@$$tempIf\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH GF@$$tempIf\n")) {
+    if(!dynStrAppendString(temp, "PUSHS GF@$$tempIf\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -764,7 +764,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "EXIT 4\n")) {
+    if(!dynStrAppendString(temp, "EXIT int@4\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -773,7 +773,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH float@0.0\n")) {
+    if(!dynStrAppendString(temp, "PUSHS float@0x0p+0\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -792,7 +792,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    retval = numberToDynStr(temp, "PUSH int@0\n", ifCounter);
+    retval = numberToDynStr(temp, "PUSHS int@0\n", ifCounter);
     if(retval) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
@@ -812,7 +812,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH bool@true\n")) {
+    if(!dynStrAppendString(temp, "PUSHS bool@true\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -831,7 +831,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
-    if(dynStrAppendString(temp, "PUSH string@\n")) {
+    if(!dynStrAppendString(temp, "PUSHS string@\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
