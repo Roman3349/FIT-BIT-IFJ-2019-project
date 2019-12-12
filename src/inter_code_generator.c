@@ -1499,6 +1499,8 @@ int generatePrintFunction(dynStrList_t* codeStrList) {
 						"LABEL $none\n"
 						"WRITE string@None\n"
 						"LABEL $endNone\n"
+						"LT LF@lastArg LF@counter LF@argc\n"
+						"JUMPIFEQ $end LF@lastArg bool@false\n"
 						"WRITE string@\\032\n"
 						"JUMP $while\n"
 						"LABEL $end\n"
