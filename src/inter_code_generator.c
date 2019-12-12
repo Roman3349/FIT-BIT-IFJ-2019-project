@@ -727,7 +727,7 @@ int processIf(treeElement_t ifElement, symTable_t* symTable, dynStr_t* context, 
     }
     // add if body
     dynStr_t* temp = dynStrInit();
-    if(!dynStrAppendString(temp, "POPs GF@$$tempIf\n")) {
+    if(!dynStrAppendString(temp, "POPS GF@$$tempIf\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
@@ -1570,7 +1570,7 @@ int processWhile(treeElement_t whileElement, symTable_t* symTable, dynStr_t* con
     }
     // add if body
     temp = dynStrInit();
-    if(!dynStrAppendString(temp, "POPs GF@$$tempWhile\n")) {
+    if(!dynStrAppendString(temp, "POPS GF@$$tempWhile\n")) {
         dynStrFree(temp);
         return ERROR_INTERNAL;
     }
