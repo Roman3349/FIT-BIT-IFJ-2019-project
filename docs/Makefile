@@ -3,12 +3,20 @@
 # License: CC BY-NC-SA
 
 PROJECT=dokumentace
+PRESENTATION=prezentace
 TEX=pdflatex
 
-all:
+all: docs presentation
+
+docs:
 	$(TEX) $(PROJECT).tex
 	$(TEX) $(PROJECT).tex
- clean:
+
+presentation:
+	$(TEX) $(PRESENTATION).tex
+	$(TEX) $(PRESENTATION).tex
+
+clean:
 	rm -f *.toc *.aux *.log *.dvi *.ps *.lot *.out *.znd *.zdx
 
 cleanall:
